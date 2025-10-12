@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopify Store Test - Shipping Protection Cart</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f5f5;
+    }
+
+    /* Header */
+    .header {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e5;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: #000;
+    }
+
+    .nav {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+    }
+
+    .nav a {
+      color: #000;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+
+    .nav a:hover {
+      opacity: 0.6;
+    }
+
+    .cart-icon {
+      position: relative;
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    .cart-count {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: #000;
+      color: #fff;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* Products */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 32px;
+    }
+
+    .product-card {
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-image {
+      width: 100%;
+      height: 300px;
+      object-fit: cover;
+      background: #f5f5f5;
+    }
+
+    .product-info {
+      padding: 20px;
+    }
+
+    .product-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #000;
+    }
+
+    .product-price {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #000;
+    }
+
+    .add-to-cart-btn {
+      width: 100%;
+      background: #000;
+      color: #fff;
+      border: none;
+      padding: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .add-to-cart-btn:hover {
+      background: #333;
+    }
+
+    .add-to-cart-btn:active {
+      transform: scale(0.98);
+    }
+
+    h1 {
+      margin-bottom: 32px;
+      font-size: 32px;
+    }
+
+    /* Testing panel */
+    .test-panel {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #fff;
+      border: 2px solid #000;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+    }
+
+    .test-panel h3 {
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+
+    .test-panel button {
+      width: 100%;
+      background: #000;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .test-panel button:hover {
+      background: #333;
+    }
+
+    @media (max-width: 768px) {
+      .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+      }
+
+      .header {
+        padding: 16px 20px;
+      }
+
+      .test-panel {
+        left: 20px;
+        right: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Mock Shopify Store Header -->
+  <header class="header">
+    <div class="logo">DEMO STORE</div>
+    <nav class="nav">
+      <a href="#">Shop</a>
+      <a href="#">About</a>
+      <a href="#">Contact</a>
+      <a href="/cart" class="cart-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <span class="cart-count" id="cart-count">0</span>
+      </a>
+    </nav>
+  </header>
+
+  <!-- Products -->
+  <div class="container">
+    <h1>Featured Products</h1>
+    <div class="products-grid" id="products-grid">
+      <!-- Products will be loaded here -->
+    </div>
+  </div>
+
+  <!-- Testing Panel -->
+  <div class="test-panel">
+    <h3>🧪 Test Controls</h3>
+    <button onclick="openShippingProtectionCart()">Open Cart</button>
+    <button onclick="testAddToCart()">Add Test Product</button>
+    <button onclick="clearCart()">Clear Cart</button>
+    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e5e5;">
+      <small style="display: block; color: #666; margin-bottom: 8px;">✅ Protection Toggle Active</small>
+    </div>
+  </div>
+
+  <!-- Mock Shopify Object -->
+  <script>
+    window.Shopify = {
+      shop: 'example-store.myshopify.com'
+    };
+
+    // Mock cart data
+    let mockCart = {
+      items: [],
+      item_count: 0,
+      total_price: 0
+    };
+
+    // Protection product (matches settings API)
+    const PROTECTION_PRODUCT = {
+      id: 99999999,
+      variant_id: 99999999,
+      product_title: 'Shipping Protection',
+      variant_title: null,
+      title: 'Shipping Protection',
+      price: 490,
+      quantity: 1,
+      final_line_price: 490,
+      image: null,
+      featured_image: { url: null }
+    };
+
+    // Mock products
+    const mockProducts = [
+      {
+        id: 1,
+        title: 'Classic White T-Shirt',
+        variant_title: 'Medium',
+        price: 2999,
+        image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop'
+      },
+      {
+        id: 2,
+        title: 'Blue Denim Jeans',
+        variant_title: '32W x 34L',
+        price: 7999,
+        image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&h=400&fit=crop'
+      },
+      {
+        id: 3,
+        title: 'Leather Sneakers',
+        variant_title: 'Size 10',
+        price: 12999,
+        image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&h=400&fit=crop'
+      },
+      {
+        id: 4,
+        title: 'Cotton Hoodie',
+        variant_title: 'Large / Black',
+        price: 5999,
+        image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&h=400&fit=crop'
+      },
+      {
+        id: 5,
+        title: 'Wool Beanie',
+        variant_title: 'One Size',
+        price: 1999,
+        image: 'https://images.unsplash.com/photo-1576871337622-98d48d1cf531?w=400&h=400&fit=crop'
+      },
+      {
+        id: 6,
+        title: 'Canvas Backpack',
+        variant_title: 'Navy',
+        price: 8999,
+        image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop'
+      }
+    ];
+
+    // Render products
+    function renderProducts() {
+      const grid = document.getElementById('products-grid');
+      grid.innerHTML = mockProducts.map(product => `
+        <div class="product-card">
+          <img src="${product.image}" alt="${product.title}" class="product-image">
+          <div class="product-info">
+            <h3 class="product-title">${product.title}</h3>
+            <p class="product-price">$${(product.price / 100).toFixed(2)}</p>
+            <button class="add-to-cart-btn" onclick="addToCart(${product.id})">
+              Add to Cart
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Add to cart function
+    function addToCart(productId) {
+      const product = mockProducts.find(p => p.id === productId);
+      if (!product) return;
+
+      const existingItem = mockCart.items.find(item => item.id === productId);
+      
+      if (existingItem) {
+        existingItem.quantity += 1;
+        existingItem.final_line_price = existingItem.price * existingItem.quantity;
+      } else {
+        mockCart.items.push({
+          id: productId,
+          product_title: product.title,
+          variant_title: product.variant_title,
+          title: product.title,
+          price: product.price,
+          quantity: 1,
+          final_line_price: product.price,
+          image: product.image,
+          featured_image: { url: product.image }
+        });
+      }
+
+      mockCart.item_count = mockCart.items.reduce((sum, item) => sum + item.quantity, 0);
+      mockCart.total_price = mockCart.items.reduce((sum, item) => sum + item.final_line_price, 0);
+      
+      updateCartCount();
+      
+      // Open cart after adding
+      if (typeof openShippingProtectionCart === 'function') {
+        openShippingProtectionCart();
+      }
+    }
+
+    // Test add to cart
+    function testAddToCart() {
+      addToCart(1);
+    }
+
+    // Clear cart
+    function clearCart() {
+      mockCart = {
+        items: [],
+        item_count: 0,
+        total_price: 0
+      };
+      updateCartCount();
+      alert('Cart cleared! Close and reopen cart to see changes.');
+    }
+
+    // Update cart count
+    function updateCartCount() {
+      document.getElementById('cart-count').textContent = mockCart.item_count;
+    }
+
+    // Mock Shopify Cart API
+    window.fetch = (function(originalFetch) {
+      return function(url, options) {
+        console.log('Mock fetch:', url, options);
+
+        // Mock cart.js endpoint
+        if (url === '/cart.js') {
+          return Promise.resolve({
+            json: () => Promise.resolve(mockCart)
+          });
+        }
+
+        // Mock cart/change.js endpoint
+        if (url === '/cart/change.js') {
+          const body = JSON.parse(options.body);
+          const itemIndex = body.line - 1;
+          
+          if (mockCart.items[itemIndex]) {
+            if (body.quantity === 0) {
+              mockCart.items.splice(itemIndex, 1);
+            } else {
+              mockCart.items[itemIndex].quantity = body.quantity;
+              mockCart.items[itemIndex].final_line_price = 
+                mockCart.items[itemIndex].price * body.quantity;
+            }
+          }
+
+          mockCart.item_count = mockCart.items.reduce((sum, item) => sum + item.quantity, 0);
+          mockCart.total_price = mockCart.items.reduce((sum, item) => sum + item.final_line_price, 0);
+          
+          updateCartCount();
+
+          return Promise.resolve({
+            json: () => Promise.resolve(mockCart)
+          });
+        }
+
+        // Mock cart/add.js endpoint
+        if (url === '/cart/add.js') {
+          const body = JSON.parse(options.body);
+          const variantId = body.id;
+
+          // Check if it's the protection product
+          if (variantId === PROTECTION_PRODUCT.id) {
+            // Add protection product to cart
+            const existingProtection = mockCart.items.find(item => item.id === PROTECTION_PRODUCT.id);
+            
+            if (!existingProtection) {
+              mockCart.items.push({ ...PROTECTION_PRODUCT });
+              mockCart.item_count = mockCart.items.reduce((sum, item) => sum + item.quantity, 0);
+              mockCart.total_price = mockCart.items.reduce((sum, item) => sum + item.final_line_price, 0);
+              updateCartCount();
+            }
+
+            return Promise.resolve({
+              ok: true,
+              json: () => Promise.resolve({ success: true, item: PROTECTION_PRODUCT })
+            });
+          }
+
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ success: true })
+          });
+        }
+
+        // Mock settings API endpoint
+        if (url.includes('/api/settings')) {
+          return originalFetch(url, options);
+        }
+
+        // Fall back to original fetch
+        return originalFetch(url, options);
+      };
+    })(window.fetch);
+
+    // Initialize
+    renderProducts();
+    updateCartCount();
+  </script>
+
+  <!-- Load the cart script -->
+  <script src="http://localhost:3001/cart.js"></script>
+</body>
+</html>
+
