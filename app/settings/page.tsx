@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [settings, setSettings] = useState({
     protectionProductId: '',
     price: '4.90',
@@ -14,6 +16,11 @@ export default function SettingsPage() {
   const [shopDomain, setShopDomain] = useState('example-store.myshopify.com');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/login');
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -59,10 +66,17 @@ export default function SettingsPage() {
   return (
     <main style={styles.main}>
       <div style={styles.container}>
-        <h1 style={styles.title}>Protection Settings</h1>
-        <p style={styles.subtitle}>
-          Customize your shipping protection product
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <div>
+            <h1 style={styles.title}>Protection Settings</h1>
+            <p style={styles.subtitle}>
+              Customize your shipping protection product
+            </p>
+          </div>
+          <button onClick={handleLogout} style={styles.logoutButton}>
+            Logout
+          </button>
+        </div>
 
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>Store Information</h2>
@@ -413,6 +427,17 @@ const styles = {
     fontSize: '14px',
     lineHeight: '1.6',
     color: '#1e40af'
+  },
+  logoutButton: {
+    background: '#ef4444',
+    color: '#fff',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    transition: 'background 0.2s'
   }
 };
 
