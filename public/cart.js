@@ -29,7 +29,7 @@
         <div id="sp-cart-sidebar" class="sp-cart-sidebar">
           <!-- Header -->
           <div class="sp-cart-header">
-            <h2>Your Cart</h2>
+            <h2 id="sp-cart-title">Your Cart</h2>
             <button id="sp-cart-close" class="sp-cart-close" aria-label="Close cart">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -584,10 +584,31 @@
         sidebar.style.color = design.cartTextColor;
       }
 
-      // Apply to cart header
-      const header = document.querySelector('.sp-cart-header h2');
-      if (header) {
-        header.style.color = design.cartTextColor;
+      // Apply cart title and alignment
+      const titleEl = document.getElementById('sp-cart-title');
+      const headerEl = document.querySelector('.sp-cart-header');
+      if (titleEl && design.cartTitle) {
+        titleEl.textContent = design.cartTitle;
+        titleEl.style.color = design.cartTextColor;
+      }
+      if (headerEl && design.cartTitleAlignment) {
+        if (design.cartTitleAlignment === 'center') {
+          headerEl.style.justifyContent = 'center';
+          headerEl.style.position = 'relative';
+          const closeBtn = document.querySelector('.sp-cart-close');
+          if (closeBtn) {
+            closeBtn.style.position = 'absolute';
+            closeBtn.style.right = '20px';
+          }
+        } else {
+          headerEl.style.justifyContent = 'space-between';
+          headerEl.style.position = 'static';
+          const closeBtn = document.querySelector('.sp-cart-close');
+          if (closeBtn) {
+            closeBtn.style.position = 'static';
+            closeBtn.style.right = 'auto';
+          }
+        }
       }
 
       const closeBtn = document.querySelector('.sp-cart-close');
@@ -719,10 +740,11 @@
     if (!contentEl) return;
 
     if (!state.cart || state.cart.item_count === 0) {
+      const emptyText = state.settings?.design?.emptyCartText || 'Your cart is empty';
       contentEl.innerHTML = `
         <div class="sp-cart-empty">
           <div class="sp-cart-empty-icon">🛒</div>
-          <h3>Your cart is empty</h3>
+          <h3>${emptyText}</h3>
           <p>Add some products to get started!</p>
         </div>
       `;
@@ -748,7 +770,8 @@
         if (comparePrice > item.final_line_price) {
           const savings = comparePrice - item.final_line_price;
           const savingsColor = state.settings?.design?.savingsTextColor || '#2ea818';
-          savingsHTML = `<p class="sp-cart-item-savings" style="color: ${savingsColor};">You save ${formatMoney(savings)}</p>`;
+          const savingsText = state.settings?.design?.savingsText || 'Save';
+          savingsHTML = `<p class="sp-cart-item-savings" style="color: ${savingsColor};">${savingsText} ${formatMoney(savings)}</p>`;
         }
       }
       

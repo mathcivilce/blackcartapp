@@ -36,6 +36,10 @@ export async function GET(request: NextRequest) {
           showSavings: true,
           showContinueShopping: true,
           showTotalOnButton: true,
+          cartTitle: 'Cart',
+          cartTitleAlignment: 'left',
+          emptyCartText: 'Your cart is empty',
+          savingsText: 'Save',
         }
       });
     }
@@ -62,6 +66,10 @@ export async function GET(request: NextRequest) {
         showSavings: true,
         showContinueShopping: true,
         showTotalOnButton: true,
+        cartTitle: 'Cart',
+        cartTitleAlignment: 'left',
+        emptyCartText: 'Your cart is empty',
+        savingsText: 'Save',
       }
     });
   } catch (error) {
@@ -87,6 +95,10 @@ export async function GET(request: NextRequest) {
         showSavings: true,
         showContinueShopping: true,
         showTotalOnButton: true,
+        cartTitle: 'Cart',
+        cartTitleAlignment: 'left',
+        emptyCartText: 'Your cart is empty',
+        savingsText: 'Save',
       }
     });
   }

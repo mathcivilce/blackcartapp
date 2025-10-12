@@ -16,6 +16,10 @@ export default function DesignPage() {
     showSavings: true,
     showContinueShopping: true,
     showTotalOnButton: true,
+    cartTitle: 'Cart',
+    cartTitleAlignment: 'left',
+    emptyCartText: 'Your cart is empty',
+    savingsText: 'Save',
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -217,6 +221,69 @@ export default function DesignPage() {
           </div>
 
           <div style={styles.card}>
+            <h2 style={styles.sectionTitle}>Text & Labels</h2>
+            
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Cart Title</label>
+              <input
+                type="text"
+                name="cartTitle"
+                value={design.cartTitle}
+                onChange={handleInputChange}
+                style={styles.textInput}
+              />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Cart Title Alignment</label>
+              <div style={styles.buttonGroup}>
+                <button
+                  type="button"
+                  onClick={() => setDesign(prev => ({ ...prev, cartTitleAlignment: 'left' }))}
+                  style={{
+                    ...styles.alignButton,
+                    ...(design.cartTitleAlignment === 'left' ? styles.alignButtonActive : {})
+                  }}
+                >
+                  Left
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDesign(prev => ({ ...prev, cartTitleAlignment: 'center' }))}
+                  style={{
+                    ...styles.alignButton,
+                    ...(design.cartTitleAlignment === 'center' ? styles.alignButtonActive : {})
+                  }}
+                >
+                  Center
+                </button>
+              </div>
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Empty cart message</label>
+              <input
+                type="text"
+                name="emptyCartText"
+                value={design.emptyCartText}
+                onChange={handleInputChange}
+                style={styles.textInput}
+              />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Automatic discount savings text</label>
+              <input
+                type="text"
+                name="savingsText"
+                value={design.savingsText}
+                onChange={handleInputChange}
+                style={styles.textInput}
+              />
+            </div>
+          </div>
+
+          <div style={styles.card}>
             <h2 style={styles.sectionTitle}>Display options</h2>
             
             <div style={styles.checkboxGroup}>
@@ -272,9 +339,18 @@ export default function DesignPage() {
             background: design.backgroundColor
           }}>
             {/* Cart Header */}
-            <div style={styles.cartHeader}>
-              <h2 style={{ ...styles.cartTitle, color: design.cartTextColor }}>Cart</h2>
-              <button style={{ ...styles.closeButton, color: design.cartTextColor }}>✕</button>
+            <div style={{
+              ...styles.cartHeader,
+              justifyContent: design.cartTitleAlignment === 'center' ? 'center' : 'space-between',
+              position: 'relative' as const,
+            }}>
+              <h2 style={{ ...styles.cartTitle, color: design.cartTextColor }}>{design.cartTitle}</h2>
+              {design.cartTitleAlignment === 'left' && (
+                <button style={{ ...styles.closeButton, color: design.cartTextColor }}>✕</button>
+              )}
+              {design.cartTitleAlignment === 'center' && (
+                <button style={{ ...styles.closeButton, color: design.cartTextColor, position: 'absolute' as const, right: '20px' }}>✕</button>
+              )}
             </div>
 
             {/* Cart Items */}
@@ -286,7 +362,7 @@ export default function DesignPage() {
                   <p style={{ ...styles.itemVariant, color: design.cartTextColor }}>Variant</p>
                   <p style={{ ...styles.itemPrice, color: design.cartTextColor }}>$29.99</p>
                   {design.showSavings && (
-                    <p style={{ ...styles.itemSavings, color: design.savingsTextColor }}>Save $10.00</p>
+                    <p style={{ ...styles.itemSavings, color: design.savingsTextColor }}>{design.savingsText} $10.00</p>
                   )}
                 </div>
                 <div style={styles.itemQuantity}>
@@ -352,6 +428,8 @@ const styles = {
     position: 'sticky' as const,
     top: '20px',
     alignSelf: 'flex-start' as const,
+    height: 'fit-content' as const,
+    maxHeight: 'calc(100vh - 40px)',
   },
   card: {
     background: '#111',
@@ -443,6 +521,35 @@ const styles = {
     color: '#fff',
     fontSize: '14px',
     cursor: 'pointer',
+  },
+  buttonGroup: {
+    display: 'flex',
+    gap: '8px',
+  },
+  alignButton: {
+    flex: 1,
+    padding: '10px 20px',
+    fontSize: '14px',
+    background: '#000',
+    color: '#888',
+    border: '1px solid #333',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  alignButtonActive: {
+    background: '#1c8cd9',
+    color: '#fff',
+    borderColor: '#1c8cd9',
+  },
+  textInput: {
+    width: '100%',
+    padding: '12px',
+    fontSize: '14px',
+    border: '1px solid #333',
+    borderRadius: '6px',
+    background: '#000',
+    color: '#fff',
   },
   checkbox: {
     width: '18px',
