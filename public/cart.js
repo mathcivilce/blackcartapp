@@ -87,6 +87,24 @@
 
   function injectCSS() {
     const css = `
+      /* Hide native Shopify cart drawer/popup */
+      cart-drawer,
+      cart-notification,
+      .cart-drawer,
+      .cart-popup,
+      .mini-cart,
+      #cart-drawer,
+      #mini-cart,
+      [id*="cart-drawer"],
+      [class*="cart-drawer"],
+      [id*="CartDrawer"],
+      [class*="CartDrawer"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+
       /* Overlay */
       .sp-cart-overlay {
         position: fixed;
@@ -854,25 +872,38 @@
       'a[href*="/cart"]',
       '.cart-link',
       '.header-cart',
-      '[data-cart-icon]'
+      '[data-cart-icon]',
+      '[href="#cart"]',
+      '.cart-icon',
+      '#cart-icon',
+      '.header__icon--cart',
+      'cart-icon-bubble',
+      '[id*="cart"]',
+      '[class*="cart"]'
     ];
 
-    cartSelectors.forEach(selector => {
-      document.querySelectorAll(selector).forEach(link => {
-        link.addEventListener('click', (e) => {
+    // Use event delegation on document for dynamically loaded elements
+    document.addEventListener('click', (e) => {
+      const target = e.target.closest(cartSelectors.join(','));
+      if (target) {
+        // Check if it's a cart link (not other cart-related elements)
+        const href = target.getAttribute('href');
+        if (href && (href === '/cart' || href.includes('/cart') || href === '#cart')) {
           e.preventDefault();
+          e.stopPropagation();
           openCart();
-        });
-      });
-    });
+        }
+      }
+    }, true); // Use capture phase to intercept early
   }
 
   function interceptAddToCart() {
-    // Listen for successful add to cart
+    // Intercept form submissions
     document.addEventListener('submit', (e) => {
       const form = e.target;
       if (form.getAttribute('action')?.includes('/cart/add')) {
         e.preventDefault();
+        e.stopPropagation();
         
         const formData = new FormData(form);
         
@@ -889,6 +920,44 @@
           console.error('Error adding to cart:', error);
         });
       }
+    });
+
+    // Intercept "Add to Cart" button clicks
+    document.addEventListener('click', (e) => {
+      const target = e.target;
+      const button = target.closest('button[name="add"], button[type="submit"]');
+      
+      if (button) {
+        const form = button.closest('form[action*="/cart/add"]');
+        if (form) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const formData = new FormData(form);
+          
+          fetch('/cart/add.js', {
+            method: 'POST',
+            body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+            // Successfully added to cart
+            openCart();
+          })
+          .catch(error => {
+            console.error('Error adding to cart:', error);
+          });
+        }
+      }
+    }, true); // Use capture phase
+
+    // Listen for Shopify's cart events
+    document.addEventListener('cart:updated', () => {
+      openCart();
+    });
+
+    document.addEventListener('product:added-to-cart', () => {
+      openCart();
     });
   }
 
