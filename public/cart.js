@@ -535,11 +535,16 @@
     console.log('Applying settings:', state.settings);
 
     const container = document.getElementById('sp-protection-container');
-    if (container && state.settings.enabled && state.settings.protectionProductId) {
+    if (container && state.settings.enabled) {
       console.log('Showing protection container');
       container.style.display = 'block';
+      
+      // If no product ID is set, show a note to merchant
+      if (!state.settings.protectionProductId) {
+        console.warn('Protection enabled but no product ID set. Please configure in settings.');
+      }
     } else {
-      console.log('Protection container hidden. Enabled:', state.settings.enabled, 'ProductId:', state.settings.protectionProductId);
+      console.log('Protection container hidden. Enabled:', state.settings.enabled);
     }
 
     // Apply custom color
