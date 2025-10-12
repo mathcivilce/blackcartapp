@@ -25,8 +25,8 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Redirect to dashboard/settings
-        router.push('/settings');
+        // Redirect to dashboard (main page)
+        router.push(data.redirectTo || '/');
       } else {
         setError(data.error || 'Login failed');
       }

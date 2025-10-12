@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true,
+      redirectTo: '/', // Redirect to dashboard instead of settings
       user: {
         id: data.user.id,
         email: data.user.email,
