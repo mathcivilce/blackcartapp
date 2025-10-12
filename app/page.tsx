@@ -42,7 +42,7 @@ export default function Home() {
         <h3>📦 Installation</h3>
         <p style={{ marginBottom: '12px' }}>Merchants will add this to their Shopify theme:</p>
         <code style={{ background: '#fff', padding: '12px', display: 'block', borderRadius: '4px', fontSize: '14px' }}>
-          {'<script src="https://yourapp.vercel.app/cart.js"></script>'}
+          {'<script src="https://blackcartapp.netlify.app/cart.js"></script>'}
         </code>
       </div>
 

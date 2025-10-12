@@ -454,7 +454,19 @@
 
         // Mock settings API endpoint
         if (url.includes('/api/settings')) {
-          return originalFetch(url, options);
+          const mockSettings = {
+            enabled: true,
+            protectionProductId: 99999999,
+            price: 490,
+            toggleColor: '#2196F3',
+            toggleText: 'Shipping Protection',
+            description: 'Protect your order from damage, loss, or theft during shipping.'
+          };
+          
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(mockSettings)
+          });
         }
 
         // Fall back to original fetch

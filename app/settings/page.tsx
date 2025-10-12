@@ -173,44 +173,90 @@ export default function SettingsPage() {
           
           <div style={styles.preview}>
             <div style={styles.previewToggle}>
-              <input 
-                type="checkbox" 
-                id="preview-checkbox"
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  accentColor: settings.toggleColor,
-                  cursor: 'pointer'
-                }}
-              />
+              {/* Shield Icon */}
+              <div style={{ flexShrink: 0 }}>
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="24" cy="24" r="24" fill="#E3F2FD"/>
+                  <path d="M24 12L16 16V22C16 27.55 19.84 32.74 25 34C30.16 32.74 34 27.55 34 22V16L24 12Z" fill={settings.toggleColor}/>
+                  <path d="M21 24L23 26L27 22" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              
+              {/* Text Content */}
               <div style={{ flex: 1 }}>
-                <label 
-                  htmlFor="preview-checkbox"
-                  style={{
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'block',
-                    marginBottom: '4px'
-                  }}
-                >
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  margin: '0 0 4px 0',
+                  color: '#000'
+                }}>
                   {settings.toggleText}
-                </label>
+                </h3>
                 <p style={{
                   fontSize: '13px',
                   color: '#666',
-                  margin: '0 0 4px 0'
+                  margin: 0,
+                  lineHeight: '1.4'
                 }}>
                   {settings.description}
                 </p>
-                <p style={{
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: settings.toggleColor,
-                  margin: 0
+              </div>
+              
+              {/* Price and Toggle */}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-end',
+                gap: '8px',
+                flexShrink: 0
+              }}>
+                <span style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  color: '#000'
                 }}>
-                  +${settings.price}
-                </p>
+                  ${settings.price}
+                </span>
+                <label style={{
+                  position: 'relative',
+                  display: 'inline-block',
+                  width: '51px',
+                  height: '31px',
+                  cursor: 'pointer'
+                }}>
+                  <input 
+                    type="checkbox" 
+                    id="preview-checkbox"
+                    style={{
+                      opacity: 0,
+                      width: 0,
+                      height: 0
+                    }}
+                  />
+                  <span style={{
+                    position: 'absolute',
+                    cursor: 'pointer',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: '#ccc',
+                    transition: '0.3s',
+                    borderRadius: '31px',
+                  }}>
+                    <span style={{
+                      position: 'absolute',
+                      content: '""',
+                      height: '23px',
+                      width: '23px',
+                      left: '4px',
+                      bottom: '4px',
+                      backgroundColor: 'white',
+                      transition: '0.3s',
+                      borderRadius: '50%'
+                    }}></span>
+                  </span>
+                </label>
               </div>
             </div>
           </div>
