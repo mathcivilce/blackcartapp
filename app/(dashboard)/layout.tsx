@@ -19,6 +19,7 @@ export default function DashboardLayout({
     { name: 'Dashboard', path: '/', icon: '📊' },
     { name: 'Settings', path: '/settings', icon: '⚙️' },
     { name: 'Customization', path: '/customization', icon: '🎨' },
+    { name: '  Design', path: '/customization/design', icon: '🎨', submenu: true },
   ];
 
   return (
@@ -30,16 +31,17 @@ export default function DashboardLayout({
         </div>
 
         <nav style={styles.nav}>
-          {menuItems.map((item) => (
+          {menuItems.map((item: any) => (
             <button
               key={item.path}
               onClick={() => router.push(item.path)}
               style={{
                 ...styles.navItem,
-                ...(pathname === item.path ? styles.navItemActive : {})
+                ...(pathname === item.path ? styles.navItemActive : {}),
+                ...(item.submenu ? styles.navItemSubmenu : {})
               }}
             >
-              <span style={styles.navIcon}>{item.icon}</span>
+              <span style={styles.navIcon}>{item.submenu ? '└' : item.icon}</span>
               <span style={styles.navText}>{item.name}</span>
             </button>
           ))}
@@ -114,6 +116,10 @@ const styles = {
     background: '#111',
     color: '#fff',
     borderLeft: '3px solid #fff',
+  },
+  navItemSubmenu: {
+    paddingLeft: '40px',
+    fontSize: '14px',
   },
   navIcon: {
     fontSize: '18px',
