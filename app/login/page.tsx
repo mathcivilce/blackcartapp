@@ -40,11 +40,6 @@ export default function LoginPage() {
   return (
     <div style={styles.container}>
       <div style={styles.loginBox}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>🛒 BlackCart</h1>
-          <p style={styles.subtitle}>Shipping Protection for Shopify</p>
-        </div>
-
         <form onSubmit={handleLogin} style={styles.form}>
           {error && (
             <div style={styles.error}>
@@ -90,12 +85,6 @@ export default function LoginPage() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        <div style={styles.footer}>
-          <p style={styles.footerText}>
-            Need access? Contact support@blackcart.app
-          </p>
-        </div>
       </div>
     </div>
   );
@@ -107,32 +96,17 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: '#000',
     padding: '20px',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
   },
   loginBox: {
-    background: '#fff',
+    background: '#000',
     borderRadius: '12px',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    border: '1px solid #333',
     padding: '48px',
     width: '100%',
     maxWidth: '420px'
-  },
-  header: {
-    textAlign: 'center' as const,
-    marginBottom: '32px'
-  },
-  title: {
-    fontSize: '32px',
-    fontWeight: '700',
-    marginBottom: '8px',
-    color: '#1a202c'
-  },
-  subtitle: {
-    fontSize: '14px',
-    color: '#718096',
-    margin: 0
   },
   form: {
     display: 'flex',
@@ -147,47 +121,39 @@ const styles = {
   label: {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#2d3748'
+    color: '#fff'
   },
   input: {
     padding: '12px 16px',
     fontSize: '16px',
-    border: '2px solid #e2e8f0',
+    border: '1px solid #333',
     borderRadius: '8px',
     outline: 'none',
     transition: 'border-color 0.2s',
-    fontFamily: 'inherit'
+    fontFamily: 'inherit',
+    background: '#000',
+    color: '#fff'
   },
   button: {
     padding: '14px',
     fontSize: '16px',
     fontWeight: '600',
     color: '#fff',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    border: 'none',
+    background: '#000',
+    border: '2px solid #fff',
     borderRadius: '8px',
     cursor: 'pointer',
-    transition: 'transform 0.2s',
+    transition: 'all 0.2s',
     marginTop: '8px'
   },
   error: {
     padding: '12px',
-    background: '#fed7d7',
-    color: '#c53030',
+    background: '#2a0000',
+    color: '#ff6b6b',
     borderRadius: '8px',
     fontSize: '14px',
-    textAlign: 'center' as const
-  },
-  footer: {
-    marginTop: '24px',
-    paddingTop: '24px',
-    borderTop: '1px solid #e2e8f0',
-    textAlign: 'center' as const
-  },
-  footerText: {
-    fontSize: '13px',
-    color: '#718096',
-    margin: 0
+    textAlign: 'center' as const,
+    border: '1px solid #ff6b6b'
   }
 };
 
