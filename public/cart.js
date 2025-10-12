@@ -76,7 +76,7 @@
             </div>
 
             <button id="sp-cart-checkout" class="sp-cart-checkout-btn">
-              Proceed to Checkout • <span id="sp-checkout-total">$0.00</span>
+              <span id="sp-checkout-text">Proceed to Checkout</span><span id="sp-checkout-total-separator" style="display: none;"> • </span><span id="sp-checkout-total"></span>
             </button>
             <p class="sp-cart-note">Or continue shopping</p>
           </div>
@@ -252,6 +252,12 @@
         font-weight: 600;
         color: #000;
         margin: 0;
+      }
+
+      .sp-cart-item-savings {
+        font-size: 12px;
+        font-weight: 500;
+        margin: 4px 0 0 0;
       }
 
       .sp-cart-item-controls {
@@ -547,12 +553,11 @@
       console.log('Protection container hidden. Enabled:', state.settings.enabled);
     }
 
-    // Apply custom color
+    // Apply protection toggle settings
     if (state.settings.toggleColor) {
       document.documentElement.style.setProperty('--sp-toggle-color', state.settings.toggleColor);
     }
 
-    // Apply custom text
     const titleEl = document.getElementById('sp-protection-title');
     if (titleEl && state.settings.toggleText) {
       titleEl.textContent = state.settings.toggleText;
@@ -566,6 +571,44 @@
     const priceEl = document.getElementById('sp-protection-price');
     if (priceEl && state.settings.price) {
       priceEl.textContent = formatMoney(state.settings.price);
+    }
+
+    // Apply design settings
+    if (state.settings.design) {
+      const design = state.settings.design;
+      
+      // Apply to cart sidebar
+      const sidebar = document.getElementById('sp-cart-sidebar');
+      if (sidebar) {
+        sidebar.style.background = design.backgroundColor;
+        sidebar.style.color = design.cartTextColor;
+      }
+
+      // Apply to cart header
+      const header = document.querySelector('.sp-cart-header h2');
+      if (header) {
+        header.style.color = design.cartTextColor;
+      }
+
+      const closeBtn = document.querySelector('.sp-cart-close');
+      if (closeBtn) {
+        closeBtn.style.color = design.cartTextColor;
+      }
+
+      // Apply to checkout button
+      const checkoutBtn = document.getElementById('sp-cart-checkout');
+      if (checkoutBtn) {
+        checkoutBtn.style.background = design.buttonColor;
+        checkoutBtn.style.color = design.buttonTextColor;
+        checkoutBtn.style.borderRadius = `${design.cornerRadius}px`;
+      }
+
+      // Apply continue shopping note
+      const noteEl = document.querySelector('.sp-cart-note');
+      if (noteEl) {
+        noteEl.style.display = design.showContinueShopping ? 'block' : 'none';
+        noteEl.style.color = design.cartTextColor;
+      }
     }
   }
 
@@ -697,6 +740,18 @@
     const itemsHTML = visibleItems.map((item) => {
       const lineNumber = state.cart.items.indexOf(item) + 1;
       
+      // Calculate savings if compare_at_price exists
+      const showSavings = state.settings?.design?.showSavings !== false;
+      let savingsHTML = '';
+      if (showSavings && item.variant_options && item.variant_options.includes('compare_at_price')) {
+        const comparePrice = item.variant_options.compare_at_price || item.original_line_price;
+        if (comparePrice > item.final_line_price) {
+          const savings = comparePrice - item.final_line_price;
+          const savingsColor = state.settings?.design?.savingsTextColor || '#2ea818';
+          savingsHTML = `<p class="sp-cart-item-savings" style="color: ${savingsColor};">You save ${formatMoney(savings)}</p>`;
+        }
+      }
+      
       return `
         <div class="sp-cart-item" data-line="${lineNumber}">
           <img 
@@ -708,6 +763,7 @@
             <h3 class="sp-cart-item-title">${item.product_title}</h3>
             ${item.variant_title ? `<p class="sp-cart-item-variant">${item.variant_title}</p>` : ''}
             <p class="sp-cart-item-price">${formatMoney(item.final_line_price)}</p>
+            ${savingsHTML}
             <div class="sp-cart-item-controls">
               <div class="sp-quantity-controls">
                 <button 
@@ -742,8 +798,29 @@
 
   function updateSubtotal(cents) {
     const checkoutTotal = document.getElementById('sp-checkout-total');
-    if (checkoutTotal) {
-      checkoutTotal.textContent = formatMoney(cents);
+    const checkoutSeparator = document.getElementById('sp-checkout-total-separator');
+    const checkoutText = document.getElementById('sp-checkout-text');
+    
+    // Update button text from design settings
+    if (checkoutText && state.settings?.design?.buttonText) {
+      checkoutText.textContent = state.settings.design.buttonText;
+    }
+
+    // Show/hide total on button based on design settings
+    if (state.settings?.design?.showTotalOnButton) {
+      if (checkoutTotal) {
+        checkoutTotal.textContent = formatMoney(cents);
+      }
+      if (checkoutSeparator) {
+        checkoutSeparator.style.display = 'inline';
+      }
+    } else {
+      if (checkoutTotal) {
+        checkoutTotal.textContent = '';
+      }
+      if (checkoutSeparator) {
+        checkoutSeparator.style.display = 'none';
+      }
     }
 
     const checkoutBtn = document.getElementById('sp-cart-checkout');

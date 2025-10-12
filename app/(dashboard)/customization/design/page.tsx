@@ -130,7 +130,7 @@ export default function DesignPage() {
                   value={design.cornerRadius}
                   onChange={handleInputChange}
                   min="0"
-                  max="50"
+                  max="30"
                   style={styles.slider}
                 />
                 <input
@@ -351,7 +351,7 @@ const styles = {
   rightColumn: {
     position: 'sticky' as const,
     top: '20px',
-    height: 'fit-content',
+    alignSelf: 'flex-start' as const,
   },
   card: {
     background: '#111',
@@ -474,6 +474,9 @@ const styles = {
     borderRadius: '12px',
     overflow: 'hidden',
     boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+    minHeight: '600px',
+    display: 'flex',
+    flexDirection: 'column' as const,
   },
   cartHeader: {
     display: 'flex',
@@ -496,7 +499,7 @@ const styles = {
   },
   cartItems: {
     padding: '20px',
-    maxHeight: '300px',
+    flex: 1,
     overflowY: 'auto' as const,
   },
   cartItem: {

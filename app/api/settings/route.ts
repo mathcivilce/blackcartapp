@@ -23,6 +23,20 @@ export async function GET(request: NextRequest) {
         toggleColor: '#2196F3',
         toggleText: 'Shipping Protection',
         description: 'Protect your order from damage, loss, or theft during shipping.',
+        design: {
+          backgroundColor: '#FFFFFF',
+          cartAccentColor: '#f6f6f7',
+          cartTextColor: '#000000',
+          savingsTextColor: '#2ea818',
+          cornerRadius: 21,
+          buttonText: 'Proceed to Checkout',
+          buttonColor: '#1c8cd9',
+          buttonTextColor: '#FFFFFF',
+          buttonTextHoverColor: '#e9e9e9',
+          showSavings: true,
+          showContinueShopping: true,
+          showTotalOnButton: true,
+        }
       });
     }
 
@@ -34,6 +48,21 @@ export async function GET(request: NextRequest) {
       toggleColor: settings?.toggle_color ?? '#2196F3',
       toggleText: settings?.toggle_text ?? 'Shipping Protection',
       description: settings?.description ?? 'Protect your order from damage, loss, or theft during shipping.',
+      // Design settings
+      design: {
+        backgroundColor: '#FFFFFF',
+        cartAccentColor: '#f6f6f7',
+        cartTextColor: '#000000',
+        savingsTextColor: '#2ea818',
+        cornerRadius: 21,
+        buttonText: 'Proceed to Checkout',
+        buttonColor: '#1c8cd9',
+        buttonTextColor: '#FFFFFF',
+        buttonTextHoverColor: '#e9e9e9',
+        showSavings: true,
+        showContinueShopping: true,
+        showTotalOnButton: true,
+      }
     });
   } catch (error) {
     console.error('Settings API error:', error);
@@ -45,6 +74,20 @@ export async function GET(request: NextRequest) {
       toggleColor: '#2196F3',
       toggleText: 'Shipping Protection',
       description: 'Protect your order from damage, loss, or theft during shipping.',
+      design: {
+        backgroundColor: '#FFFFFF',
+        cartAccentColor: '#f6f6f7',
+        cartTextColor: '#000000',
+        savingsTextColor: '#2ea818',
+        cornerRadius: 21,
+        buttonText: 'Proceed to Checkout',
+        buttonColor: '#1c8cd9',
+        buttonTextColor: '#FFFFFF',
+        buttonTextHoverColor: '#e9e9e9',
+        showSavings: true,
+        showContinueShopping: true,
+        showTotalOnButton: true,
+      }
     });
   }
 }
