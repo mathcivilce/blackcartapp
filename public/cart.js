@@ -5,7 +5,7 @@
   const CONFIG = {
     appUrl: (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
       ? 'http://localhost:3001' 
-      : 'https://yourapp.vercel.app',
+      : 'https://blackcartapp.vercel.app',
     shopDomain: window.Shopify?.shop || 'example-store.myshopify.com'
   };
 
