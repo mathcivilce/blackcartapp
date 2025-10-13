@@ -55,10 +55,17 @@ export default function SettingsPage() {
   }, []);
 
   const handleToggleCart = async (newValue: boolean) => {
+    console.log('🔘 Button clicked. Changing cart_active to:', newValue);
+    console.log('🔘 Current cartActive state:', cartActive);
+    
     // If same value, do nothing
-    if (newValue === cartActive) return;
+    if (newValue === cartActive) {
+      console.log('⚠️ Same value, skipping');
+      return;
+    }
     
     setCartActive(newValue);
+    console.log('✅ State updated to:', newValue);
     
     try {
       const response = await fetch('/api/user/settings/toggle-cart', {
@@ -67,16 +74,26 @@ export default function SettingsPage() {
         body: JSON.stringify({ cart_active: newValue })
       });
 
+      console.log('📡 API Response:', response.status, response.ok);
+
       if (!response.ok) {
-        console.error('Failed to save cart_active');
+        console.error('❌ Failed to save cart_active, reverting');
+        const errorData = await response.json();
+        console.error('Error details:', errorData);
         setCartActive(!newValue); // Revert on error
+        setSaveMessage(`Failed to ${newValue ? 'activate' : 'deactivate'} cart. Please try again.`);
+        setTimeout(() => setSaveMessage(''), 3000);
       } else {
-        setSaveMessage(`Cart ${newValue ? 'activated' : 'deactivated'} successfully!`);
+        const data = await response.json();
+        console.log('✅ API Success:', data);
+        setSaveMessage(`✓ Cart ${newValue ? 'activated' : 'deactivated'} successfully!`);
         setTimeout(() => setSaveMessage(''), 3000);
       }
     } catch (error) {
-      console.error('Failed to save cart_active:', error);
+      console.error('❌ Error saving cart_active:', error);
       setCartActive(!newValue); // Revert on error
+      setSaveMessage(`Error: Failed to ${newValue ? 'activate' : 'deactivate'} cart.`);
+      setTimeout(() => setSaveMessage(''), 3000);
     }
   };
 
@@ -268,7 +285,9 @@ export default function SettingsPage() {
       {saveMessage && (
         <div style={{
           ...styles.message,
-          ...(saveMessage.includes('success') ? styles.messageSuccess : styles.messageError)
+          ...(saveMessage.includes('✓') || saveMessage.toLowerCase().includes('success') 
+            ? styles.messageSuccess 
+            : styles.messageError)
         }}>
           {saveMessage}
         </div>
