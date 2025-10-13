@@ -21,13 +21,14 @@ export async function GET(request: NextRequest) {
   // Token-based authentication (preferred method)
   if (token) {
     try {
-      const { data: store, error } = await supabase
+      // First get the store
+      const { data: store, error: storeError } = await supabase
         .from('stores')
-        .select('*, settings(*)')
+        .select('*')
         .eq('access_token', token)
         .single();
 
-      if (error || !store) {
+      if (storeError || !store) {
         const response = NextResponse.json({ error: 'Invalid token' }, { status: 401 });
         // Add CORS headers
         response.headers.set('Access-Control-Allow-Origin', '*');
@@ -36,7 +37,12 @@ export async function GET(request: NextRequest) {
         return response;
       }
 
-      const settings = store.settings?.[0]; // Get first settings record
+      // Then get settings for this store
+      const { data: settings, error: settingsError } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('store_id', store.id)
+        .single();
       
       // Debug logging
       console.log('🔍 Store found:', store.id, store.shop_domain);
@@ -45,6 +51,8 @@ export async function GET(request: NextRequest) {
         console.log('🔍 Button text in DB:', settings.button_text);
         console.log('🔍 Cart title in DB:', settings.cart_title);
         console.log('🔍 Settings ID:', settings.id);
+      } else {
+        console.log('🔍 Settings error:', settingsError);
       }
       
       const response = NextResponse.json({
