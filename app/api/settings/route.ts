@@ -40,6 +40,19 @@ export async function GET(request: NextRequest) {
           cartTitleAlignment: 'left',
           emptyCartText: 'Your cart is empty',
           savingsText: 'Save',
+          displayCompareAtPrice: true,
+          closeButtonSize: 'medium',
+          closeButtonColor: '#637381',
+          closeButtonBorder: 'none',
+          closeButtonBorderColor: '#000000',
+        },
+        addons: {
+          enabled: true,
+          title: 'Shipping Protection',
+          description: 'Protect your order from damage, loss, or theft during shipping.',
+          price: 4.90,
+          productId: null,
+          acceptByDefault: false,
         }
       });
     }
@@ -47,29 +60,43 @@ export async function GET(request: NextRequest) {
     // Transform database format to API format
     return NextResponse.json({
       enabled: settings?.enabled ?? true,
-      protectionProductId: settings?.protection_product_id || null,
+      protectionProductId: settings?.protection_product_id || settings?.addon_product_id || null,
       price: settings?.price ?? 490,
       toggleColor: settings?.toggle_color ?? '#2196F3',
       toggleText: settings?.toggle_text ?? 'Shipping Protection',
       description: settings?.description ?? 'Protect your order from damage, loss, or theft during shipping.',
       // Design settings
       design: {
-        backgroundColor: '#FFFFFF',
-        cartAccentColor: '#f6f6f7',
-        cartTextColor: '#000000',
-        savingsTextColor: '#2ea818',
-        cornerRadius: 21,
-        buttonText: 'Proceed to Checkout',
-        buttonColor: '#1c8cd9',
-        buttonTextColor: '#FFFFFF',
-        buttonTextHoverColor: '#e9e9e9',
-        showSavings: true,
-        showContinueShopping: true,
-        showTotalOnButton: true,
-        cartTitle: 'Cart',
-        cartTitleAlignment: 'left',
-        emptyCartText: 'Your cart is empty',
-        savingsText: 'Save',
+        backgroundColor: settings?.background_color || '#FFFFFF',
+        cartAccentColor: settings?.cart_accent_color || '#f6f6f7',
+        cartTextColor: settings?.cart_text_color || '#000000',
+        savingsTextColor: settings?.savings_text_color || '#2ea818',
+        cornerRadius: settings?.corner_radius || 21,
+        buttonText: settings?.button_text || 'Proceed to Checkout',
+        buttonColor: settings?.button_color || '#1c8cd9',
+        buttonTextColor: settings?.button_text_color || '#FFFFFF',
+        buttonTextHoverColor: settings?.button_text_hover_color || '#e9e9e9',
+        showSavings: settings?.show_savings ?? true,
+        showContinueShopping: settings?.show_continue_shopping ?? true,
+        showTotalOnButton: settings?.show_total_on_button ?? true,
+        cartTitle: settings?.cart_title || 'Cart',
+        cartTitleAlignment: settings?.cart_title_alignment || 'left',
+        emptyCartText: settings?.empty_cart_text || 'Your cart is empty',
+        savingsText: settings?.savings_text || 'Save',
+        displayCompareAtPrice: settings?.display_compare_at_price ?? true,
+        closeButtonSize: settings?.close_button_size || 'medium',
+        closeButtonColor: settings?.close_button_color || '#637381',
+        closeButtonBorder: settings?.close_button_border || 'none',
+        closeButtonBorderColor: settings?.close_button_border_color || '#000000',
+      },
+      // Add-ons settings
+      addons: {
+        enabled: settings?.addons_enabled ?? true,
+        title: settings?.addon_title || 'Shipping Protection',
+        description: settings?.addon_description || 'Protect your order from damage, loss, or theft during shipping.',
+        price: settings?.addon_price || 4.90,
+        productId: settings?.addon_product_id || null,
+        acceptByDefault: settings?.addon_accept_by_default ?? false,
       }
     });
   } catch (error) {
@@ -99,6 +126,19 @@ export async function GET(request: NextRequest) {
         cartTitleAlignment: 'left',
         emptyCartText: 'Your cart is empty',
         savingsText: 'Save',
+        displayCompareAtPrice: true,
+        closeButtonSize: 'medium',
+        closeButtonColor: '#637381',
+        closeButtonBorder: 'none',
+        closeButtonBorderColor: '#000000',
+      },
+      addons: {
+        enabled: true,
+        title: 'Shipping Protection',
+        description: 'Protect your order from damage, loss, or theft during shipping.',
+        price: 4.90,
+        productId: null,
+        acceptByDefault: false,
       }
     });
   }

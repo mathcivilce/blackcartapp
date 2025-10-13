@@ -541,16 +541,18 @@
     console.log('Applying settings:', state.settings);
 
     const container = document.getElementById('sp-protection-container');
-    if (container && state.settings.enabled) {
+    const addonsEnabled = state.settings.addons?.enabled ?? state.settings.enabled ?? true;
+    if (container && addonsEnabled) {
       console.log('Showing protection container');
       container.style.display = 'block';
       
       // If no product ID is set, show a note to merchant
-      if (!state.settings.protectionProductId) {
+      const productId = state.settings.addons?.productId || state.settings.protectionProductId;
+      if (!productId) {
         console.warn('Protection enabled but no product ID set. Please configure in settings.');
       }
     } else {
-      console.log('Protection container hidden. Enabled:', state.settings.enabled);
+      console.log('Protection container hidden. Enabled:', addonsEnabled);
     }
 
     // Apply protection toggle settings
@@ -559,18 +561,21 @@
     }
 
     const titleEl = document.getElementById('sp-protection-title');
-    if (titleEl && state.settings.toggleText) {
-      titleEl.textContent = state.settings.toggleText;
+    const addonTitle = state.settings.addons?.title || state.settings.toggleText;
+    if (titleEl && addonTitle) {
+      titleEl.textContent = addonTitle;
     }
 
     const descEl = document.getElementById('sp-protection-description');
-    if (descEl && state.settings.description) {
-      descEl.textContent = state.settings.description;
+    const addonDesc = state.settings.addons?.description || state.settings.description;
+    if (descEl && addonDesc) {
+      descEl.textContent = addonDesc;
     }
 
     const priceEl = document.getElementById('sp-protection-price');
-    if (priceEl && state.settings.price) {
-      priceEl.textContent = formatMoney(state.settings.price);
+    const addonPrice = state.settings.addons?.price ? Math.round(state.settings.addons.price * 100) : state.settings.price;
+    if (priceEl && addonPrice) {
+      priceEl.textContent = formatMoney(addonPrice);
     }
 
     // Apply design settings
@@ -613,7 +618,24 @@
 
       const closeBtn = document.querySelector('.sp-cart-close');
       if (closeBtn) {
-        closeBtn.style.color = design.cartTextColor;
+        closeBtn.style.color = design.closeButtonColor || design.cartTextColor;
+        
+        // Apply size
+        const sizeMap = { small: '20px', medium: '24px', large: '32px' };
+        closeBtn.style.fontSize = sizeMap[design.closeButtonSize] || '24px';
+        
+        // Apply border
+        if (design.closeButtonBorder && design.closeButtonBorder !== 'none') {
+          const borderWidth = design.closeButtonBorder === 'thin' ? '1px' : 
+                              design.closeButtonBorder === 'normal' ? '2px' : '3px';
+          closeBtn.style.border = `${borderWidth} solid ${design.closeButtonBorderColor || '#000'}`;
+          closeBtn.style.borderRadius = '4px';
+          closeBtn.style.padding = '4px 8px';
+        } else {
+          closeBtn.style.border = 'none';
+          closeBtn.style.borderRadius = '0';
+          closeBtn.style.padding = '0';
+        }
       }
 
       // Apply to checkout button
@@ -636,9 +658,10 @@
   function checkProtectionInCart() {
     if (!state.cart || !state.settings) return;
 
+    const productId = state.settings.addons?.productId || state.settings.protectionProductId;
     const protectionItem = state.cart.items.find(item => 
-      item.variant_id === state.settings.protectionProductId ||
-      item.id === state.settings.protectionProductId
+      item.variant_id === productId ||
+      item.id === productId
     );
 
     state.protectionInCart = !!protectionItem;
@@ -648,10 +671,16 @@
     if (checkbox) {
       checkbox.checked = state.protectionInCart;
     }
+    
+    // If acceptByDefault is true and protection not in cart, add it automatically
+    if (state.settings.addons?.acceptByDefault && !state.protectionInCart && state.settings.addons?.productId) {
+      addProtectionToCart();
+    }
   }
 
   async function addProtectionToCart() {
-    if (!state.settings || !state.settings.protectionProductId) {
+    const productId = state.settings?.addons?.productId || state.settings?.protectionProductId;
+    if (!state.settings || !productId) {
       console.error('Protection product not configured');
       return;
     }
@@ -662,7 +691,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: state.settings.protectionProductId,
+          id: productId,
           quantity: 1
         })
       });
@@ -681,9 +710,10 @@
   async function removeProtectionFromCart() {
     if (!state.cart || !state.settings) return;
 
+    const productId = state.settings?.addons?.productId || state.settings?.protectionProductId;
     const protectionItem = state.cart.items.find(item => 
-      item.variant_id === state.settings.protectionProductId ||
-      item.id === state.settings.protectionProductId
+      item.variant_id === productId ||
+      item.id === productId
     );
 
     if (!protectionItem) return;
@@ -754,9 +784,9 @@
 
     // Filter out protection product from display
     const visibleItems = state.cart.items.filter(item => {
-      if (!state.settings || !state.settings.protectionProductId) return true;
-      return item.variant_id !== state.settings.protectionProductId && 
-             item.id !== state.settings.protectionProductId;
+      const productId = state.settings?.addons?.productId || state.settings?.protectionProductId;
+      if (!state.settings || !productId) return true;
+      return item.variant_id !== productId && item.id !== productId;
     });
 
     const itemsHTML = visibleItems.map((item) => {

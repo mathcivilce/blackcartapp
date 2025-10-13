@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import CartPreview from '../components/CartPreview';
 
 export default function AddOnsPage() {
   const [addons, setAddons] = useState({
@@ -13,6 +14,91 @@ export default function AddOnsPage() {
       acceptByDefault: false,
     }
   });
+
+  const [design, setDesign] = useState({
+    backgroundColor: '#FFFFFF',
+    cartAccentColor: '#f6f6f7',
+    cartTextColor: '#000000',
+    savingsTextColor: '#2ea818',
+    cornerRadius: '21',
+    buttonText: 'Proceed to Checkout',
+    buttonColor: '#1c8cd9',
+    buttonTextColor: '#FFFFFF',
+    showSavings: true,
+    showContinueShopping: true,
+    showTotalOnButton: true,
+    cartTitle: 'Cart',
+    cartTitleAlignment: 'left',
+    emptyCartText: 'Your cart is empty',
+    savingsText: 'Save',
+    displayCompareAtPrice: true,
+    closeButtonSize: 'medium',
+    closeButtonColor: '#637381',
+    closeButtonBorder: 'none',
+    closeButtonBorderColor: '#000000',
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+
+  useEffect(() => {
+    fetchSettings();
+    fetchDesign();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch('/api/addons?shop=example-store.myshopify.com');
+      if (response.ok) {
+        const data = await response.json();
+        setAddons(data);
+      }
+    } catch (error) {
+      console.error('Error fetching add-ons settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDesign = async () => {
+    try {
+      const response = await fetch('/api/design?shop=example-store.myshopify.com');
+      if (response.ok) {
+        const data = await response.json();
+        setDesign(data);
+      }
+    } catch (error) {
+      console.error('Error fetching design:', error);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveMessage('');
+    try {
+      const response = await fetch('/api/addons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shop: 'example-store.myshopify.com',
+          ...addons
+        })
+      });
+
+      if (response.ok) {
+        setSaveMessage('Settings saved successfully!');
+        setTimeout(() => setSaveMessage(''), 3000);
+      } else {
+        setSaveMessage('Failed to save settings');
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      setSaveMessage('Error saving settings');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -33,6 +119,10 @@ export default function AddOnsPage() {
       }));
     }
   };
+
+  if (loading) {
+    return <div style={styles.container}><p style={{ color: '#fff' }}>Loading...</p></div>;
+  }
 
   return (
     <div style={styles.container}>
@@ -191,79 +281,43 @@ export default function AddOnsPage() {
             </div>
           </div>
 
-          <button style={styles.saveButton}>
-            Save Changes
+          {saveMessage && (
+            <div style={{ 
+              padding: '12px', 
+              background: saveMessage.includes('success') ? '#4CAF50' : '#f44336',
+              color: '#fff',
+              borderRadius: '8px',
+              marginBottom: '16px',
+              textAlign: 'center' as const
+            }}>
+              {saveMessage}
+            </div>
+          )}
+          <button 
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              ...styles.saveButton,
+              opacity: saving ? 0.6 : 1,
+              cursor: saving ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
 
         {/* Right Column - Cart Preview */}
         <div style={styles.rightColumn}>
-          <div style={styles.previewLabel}>Preview</div>
-          <div style={styles.cartPreview}>
-            {/* Cart Header */}
-            <div style={styles.cartHeader}>
-              <h2 style={styles.cartTitle}>Cart</h2>
-              <button style={styles.closeButton}>✕</button>
-            </div>
-
-            {/* Cart Items */}
-            <div style={styles.cartItems}>
-              <div style={styles.cartItem}>
-                <img 
-                  src="https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&h=400&fit=crop" 
-                  alt="Leather Sneakers" 
-                  style={styles.itemImage}
-                />
-                <div style={styles.itemDetails}>
-                  <p style={styles.itemTitle}>Leather Sneakers</p>
-                  <p style={styles.itemVariant}>Size 10</p>
-                  <p style={styles.itemPrice}>$129.99</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Cart Footer */}
-            <div style={styles.cartFooter}>
-              {addons.featureEnabled && (
-                <div style={styles.protectionContainer}>
-                  <div style={styles.protectionIcon}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                  </div>
-                  <div style={styles.protectionInfo}>
-                    <p style={styles.protectionTitle}>{addons.shippingProtection.title}</p>
-                    <p style={styles.protectionDesc}>{addons.shippingProtection.description}</p>
-                  </div>
-                  <p style={styles.protectionPrice}>${addons.shippingProtection.price}</p>
-                  <label style={styles.protectionToggle}>
-                    <input 
-                      type="checkbox" 
-                      style={{ display: 'none' }} 
-                      checked={addons.shippingProtection.acceptByDefault}
-                      readOnly
-                    />
-                    <span className="protection-toggle-slider" style={{
-                      ...styles.protectionToggleSlider,
-                      ...(addons.shippingProtection.acceptByDefault ? styles.protectionToggleSliderActive : {})
-                    }}></span>
-                  </label>
-                </div>
-              )}
-              
-              <div style={styles.subtotalRow}>
-                <span>Subtotal</span>
-                <span>${addons.featureEnabled && addons.shippingProtection.acceptByDefault ? 
-                  (129.99 + parseFloat(addons.shippingProtection.price || '0')).toFixed(2) : 
-                  '129.99'
-                }</span>
-              </div>
-              
-              <button style={styles.checkoutButton}>
-                Proceed to Checkout
-              </button>
-            </div>
-          </div>
+          <CartPreview 
+            design={design} 
+            addons={{
+              enabled: addons.featureEnabled,
+              title: addons.shippingProtection.title,
+              description: addons.shippingProtection.description,
+              price: addons.shippingProtection.price,
+              acceptByDefault: addons.shippingProtection.acceptByDefault
+            }} 
+          />
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import CartPreview from '../components/CartPreview';
 
 export default function DesignPage() {
   const [design, setDesign] = useState({
@@ -27,6 +28,77 @@ export default function DesignPage() {
     closeButtonBorderColor: '#000000',
   });
 
+  const [addons, setAddons] = useState({
+    enabled: true,
+    title: 'Shipping Protection',
+    description: 'Protect your order from damage, loss, or theft during shipping.',
+    price: '4.90',
+    acceptByDefault: false,
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+
+  useEffect(() => {
+    fetchSettings();
+    fetchAddons();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch('/api/design?shop=example-store.myshopify.com');
+      if (response.ok) {
+        const data = await response.json();
+        setDesign(data);
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAddons = async () => {
+    try {
+      const response = await fetch('/api/addons?shop=example-store.myshopify.com');
+      if (response.ok) {
+        const data = await response.json();
+        setAddons(data.shippingProtection);
+        setAddons(prev => ({ ...prev, enabled: data.featureEnabled }));
+      }
+    } catch (error) {
+      console.error('Error fetching addons:', error);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveMessage('');
+    try {
+      const response = await fetch('/api/design', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shop: 'example-store.myshopify.com',
+          ...design
+        })
+      });
+
+      if (response.ok) {
+        setSaveMessage('Settings saved successfully!');
+        setTimeout(() => setSaveMessage(''), 3000);
+      } else {
+        setSaveMessage('Failed to save settings');
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      setSaveMessage('Error saving settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setDesign(prev => ({
@@ -34,6 +106,10 @@ export default function DesignPage() {
       [name]: type === 'checkbox' ? checked : value
     }));
   };
+
+  if (loading) {
+    return <div style={styles.container}><p style={{ color: '#fff' }}>Loading...</p></div>;
+  }
 
   return (
     <div style={styles.container}>
@@ -486,109 +562,34 @@ export default function DesignPage() {
             </div>
           </div>
 
-          <button style={styles.saveButton}>
-            Save Changes
+          {saveMessage && (
+            <div style={{ 
+              padding: '12px', 
+              background: saveMessage.includes('success') ? '#4CAF50' : '#f44336',
+              color: '#fff',
+              borderRadius: '8px',
+              marginBottom: '16px',
+              textAlign: 'center' as const
+            }}>
+              {saveMessage}
+            </div>
+          )}
+          <button 
+            onClick={handleSave} 
+            disabled={saving}
+            style={{
+              ...styles.saveButton,
+              opacity: saving ? 0.6 : 1,
+              cursor: saving ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
 
         {/* Right Column - Cart Preview */}
         <div style={styles.rightColumn}>
-          <div style={styles.previewLabel}>Preview</div>
-          <div style={{
-            ...styles.cartPreview,
-            background: design.backgroundColor
-          }}>
-            {/* Cart Header */}
-            <div style={{
-              ...styles.cartHeader,
-              justifyContent: design.cartTitleAlignment === 'center' ? 'center' : 'space-between',
-              position: 'relative' as const,
-            }}>
-              <h2 style={{ ...styles.cartTitle, color: design.cartTextColor }}>{design.cartTitle}</h2>
-              {design.cartTitleAlignment === 'left' && (
-                <button style={{ 
-                  ...styles.closeButton, 
-                  color: design.closeButtonColor,
-                  fontSize: design.closeButtonSize === 'small' ? '20px' : design.closeButtonSize === 'large' ? '32px' : '24px',
-                  border: design.closeButtonBorder === 'none' ? 'none' : 
-                          design.closeButtonBorder === 'thin' ? `1px solid ${design.closeButtonBorderColor}` :
-                          design.closeButtonBorder === 'normal' ? `2px solid ${design.closeButtonBorderColor}` :
-                          `3px solid ${design.closeButtonBorderColor}`,
-                  borderRadius: design.closeButtonBorder !== 'none' ? '4px' : '0',
-                  padding: design.closeButtonBorder !== 'none' ? '4px 8px' : '0',
-                }}>✕</button>
-              )}
-              {design.cartTitleAlignment === 'center' && (
-                <button style={{ 
-                  ...styles.closeButton, 
-                  color: design.closeButtonColor,
-                  fontSize: design.closeButtonSize === 'small' ? '20px' : design.closeButtonSize === 'large' ? '32px' : '24px',
-                  border: design.closeButtonBorder === 'none' ? 'none' : 
-                          design.closeButtonBorder === 'thin' ? `1px solid ${design.closeButtonBorderColor}` :
-                          design.closeButtonBorder === 'normal' ? `2px solid ${design.closeButtonBorderColor}` :
-                          `3px solid ${design.closeButtonBorderColor}`,
-                  borderRadius: design.closeButtonBorder !== 'none' ? '4px' : '0',
-                  padding: design.closeButtonBorder !== 'none' ? '4px 8px' : '0',
-                  position: 'absolute' as const, 
-                  right: '20px' 
-                }}>✕</button>
-              )}
-            </div>
-
-            {/* Cart Items */}
-            <div style={styles.cartItems}>
-              <div style={{ ...styles.cartItem, background: design.cartAccentColor }}>
-                <img 
-                  src="https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&h=400&fit=crop" 
-                  alt="Leather Sneakers" 
-                  style={styles.itemImage}
-                />
-                <div style={styles.itemDetails}>
-                  <p style={{ ...styles.itemTitle, color: design.cartTextColor }}>Leather Sneakers</p>
-                  <p style={{ ...styles.itemVariant, color: design.cartTextColor }}>Size 10</p>
-                  <div>
-                    {design.displayCompareAtPrice && (
-                      <span style={{ 
-                        fontSize: '13px', 
-                        color: '#999', 
-                        textDecoration: 'line-through',
-                        marginRight: '8px'
-                      }}>$139.99</span>
-                    )}
-                    <span style={{ ...styles.itemPrice, color: design.cartTextColor, display: 'inline' }}>$129.99</span>
-                  </div>
-                  {design.showSavings && (
-                    <p style={{ ...styles.itemSavings, color: design.savingsTextColor }}>{design.savingsText} $10.00</p>
-                  )}
-                </div>
-                <div style={styles.itemQuantity}>
-                  <button style={{ ...styles.qtyButton, color: design.cartTextColor }}>-</button>
-                  <span style={{ color: design.cartTextColor }}>1</span>
-                  <button style={{ ...styles.qtyButton, color: design.cartTextColor }}>+</button>
-                </div>
-              </div>
-            </div>
-
-            {/* Cart Footer */}
-            <div style={styles.cartFooter}>
-              <button 
-                style={{
-                  ...styles.checkoutButton,
-                  background: design.buttonColor,
-                  color: design.buttonTextColor,
-                  borderRadius: `${design.cornerRadius}px`
-                }}
-              >
-                {design.buttonText}
-                {design.showTotalOnButton && ' • $29.99'}
-              </button>
-              {design.showContinueShopping && (
-                <button style={{ ...styles.continueButton, color: design.cartTextColor }}>
-                  Or continue shopping
-                </button>
-              )}
-            </div>
-          </div>
+          <CartPreview design={design} addons={addons} />
         </div>
       </div>
     </div>
