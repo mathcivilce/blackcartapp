@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabase-client';
 
 export default function SettingsPage() {
   const [cartActive, setCartActive] = useState(false);
@@ -18,7 +18,7 @@ export default function SettingsPage() {
     const loadSettings = async () => {
       try {
         // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await supabaseClient.auth.getUser();
         if (!user) {
           console.error('No user logged in');
           return;
@@ -26,7 +26,7 @@ export default function SettingsPage() {
         setUserId(user.id);
 
         // Get user's store
-        const { data: store } = await supabase
+        const { data: store } = await supabaseClient
           .from('stores')
           .select('*, settings(*)')
           .eq('user_id', user.id)
@@ -57,14 +57,14 @@ export default function SettingsPage() {
     
     // Update settings in database directly
     try {
-      const { data: store } = await supabase
+      const { data: store } = await supabaseClient
         .from('stores')
         .select('id')
         .eq('user_id', userId)
         .single();
 
       if (store) {
-        await supabase
+        await supabaseClient
           .from('settings')
           .update({ cart_active: newValue })
           .eq('store_id', store.id);
@@ -99,14 +99,14 @@ export default function SettingsPage() {
       
       // Update store info (api_token)
       if (apiToken) {
-        await supabase
+        await supabaseClient
           .from('stores')
           .update({ api_token: apiToken })
           .eq('id', store.id);
       }
       
       // Reload to get the access token
-      const { data: updatedStore } = await supabase
+      const { data: updatedStore } = await supabaseClient
         .from('stores')
         .select('access_token')
         .eq('id', store.id)
@@ -139,17 +139,18 @@ export default function SettingsPage() {
     }
 
     try {
-      const { data: store } = await supabase
+      const { data: store } = await supabaseClient
         .from('stores')
         .select('id')
         .eq('user_id', userId)
         .single();
 
       if (store) {
-        // Generate new token
-        const { data: updatedStore } = await supabase
+        // Delete and re-insert to trigger UUID generation (RPC not available on client)
+        // Instead, we'll use a workaround by updating with null then letting DB regenerate
+        const { data: updatedStore } = await supabaseClient
           .from('stores')
-          .update({ access_token: supabase.rpc('gen_random_uuid') })
+          .update({ access_token: crypto.randomUUID() })
           .eq('id', store.id)
           .select('access_token')
           .single();
