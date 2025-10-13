@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getStoreSettings } from '@/lib/db';
 import { supabase } from '@/lib/supabase';
 
+// Handle CORS preflight requests
+export async function OPTIONS(request: NextRequest) {
+  const response = new NextResponse(null, { status: 200 });
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  response.headers.set('Access-Control-Max-Age', '86400');
+  return response;
+}
+
 // Get settings for a shop (using access token for authentication)
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -18,12 +28,17 @@ export async function GET(request: NextRequest) {
         .single();
 
       if (error || !store) {
-        return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        const response = NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        // Add CORS headers
+        response.headers.set('Access-Control-Allow-Origin', '*');
+        response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+        return response;
       }
 
       const settings = store.settings?.[0]; // Get first settings record
       
-      return NextResponse.json({
+      const response = NextResponse.json({
         enabled: settings?.enabled ?? true,
         cart_active: settings?.cart_active ?? true,
         store_domain: store?.shop_domain || '',
@@ -65,9 +80,20 @@ export async function GET(request: NextRequest) {
           acceptByDefault: settings?.addon_accept_by_default ?? false,
         }
       });
+      
+      // Add CORS headers to response
+      response.headers.set('Access-Control-Allow-Origin', '*');
+      response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+      
+      return response;
     } catch (error) {
       console.error('Token validation error:', error);
-      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
+      const response = NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
+      response.headers.set('Access-Control-Allow-Origin', '*');
+      response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+      return response;
     }
   }
 
