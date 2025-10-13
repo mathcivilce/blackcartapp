@@ -54,8 +54,10 @@ export default function SettingsPage() {
     loadSettings();
   }, []);
 
-  const handleToggleCart = async () => {
-    const newValue = !cartActive;
+  const handleToggleCart = async (newValue: boolean) => {
+    // If same value, do nothing
+    if (newValue === cartActive) return;
+    
     setCartActive(newValue);
     
     try {
@@ -68,6 +70,9 @@ export default function SettingsPage() {
       if (!response.ok) {
         console.error('Failed to save cart_active');
         setCartActive(!newValue); // Revert on error
+      } else {
+        setSaveMessage(`Cart ${newValue ? 'activated' : 'deactivated'} successfully!`);
+        setTimeout(() => setSaveMessage(''), 3000);
       }
     } catch (error) {
       console.error('Failed to save cart_active:', error);
@@ -156,25 +161,38 @@ export default function SettingsPage() {
       <div style={styles.card}>
         <h2 style={styles.sectionTitle}>Cart Activation</h2>
         
-        <div style={styles.toggleContainer}>
-          <div>
-            <label style={styles.label}>Activate Cart</label>
-            <p style={styles.hint}>
-              Enable or disable the cart app on your Shopify store. When disabled, customers will see the default Shopify cart.
-            </p>
+        <div style={styles.formGroup}>
+          <label style={styles.label}>Cart Status</label>
+          <p style={styles.hint}>
+            Enable or disable the cart app on your Shopify store. When disabled, customers will see the default Shopify cart.
+          </p>
+          
+          <div style={styles.buttonGroup}>
+            <button
+              onClick={() => handleToggleCart(true)}
+              style={{
+                ...styles.activateButton,
+                ...(cartActive ? styles.activateButtonActive : styles.activateButtonInactive)
+              }}
+            >
+              {cartActive ? '✓ ' : ''}Activate
+            </button>
+            <button
+              onClick={() => handleToggleCart(false)}
+              style={{
+                ...styles.deactivateButton,
+                ...(!cartActive ? styles.deactivateButtonActive : styles.deactivateButtonInactive)
+              }}
+            >
+              {!cartActive ? '✓ ' : ''}Deactivate
+            </button>
           </div>
-          <button
-            onClick={handleToggleCart}
-            style={{
-              ...styles.toggle,
-              ...(cartActive ? styles.toggleActive : {})
-            }}
-          >
-            <span style={{
-              ...styles.toggleThumb,
-              ...(cartActive ? styles.toggleThumbActive : {})
-            }} />
-          </button>
+          
+          <p style={{ ...styles.hint, marginTop: '12px', fontWeight: '600' }}>
+            Current Status: <span style={{ color: cartActive ? '#4CAF50' : '#f44336' }}>
+              {cartActive ? 'Active' : 'Inactive'}
+            </span>
+          </p>
         </div>
       </div>
 
@@ -338,42 +356,48 @@ const styles = {
     cursor: 'pointer',
     transition: 'all 0.2s',
   },
-  toggleContainer: {
+  buttonGroup: {
     display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: '24px',
+    gap: '12px',
+    marginTop: '12px',
   },
-  toggle: {
-    position: 'relative' as const,
-    width: '60px',
-    height: '32px',
-    background: '#333',
-    border: '2px solid #444',
-    borderRadius: '16px',
+  activateButton: {
+    flex: 1,
+    padding: '12px 24px',
+    fontSize: '15px',
+    fontWeight: '600',
+    borderRadius: '8px',
     cursor: 'pointer',
-    transition: 'all 0.3s',
-    padding: 0,
-    flexShrink: 0,
+    transition: 'all 0.2s',
+    border: 'none',
   },
-  toggleActive: {
-    background: '#fff',
-    border: '2px solid #fff',
+  activateButtonActive: {
+    background: '#4CAF50',
+    color: '#fff',
   },
-  toggleThumb: {
-    position: 'absolute' as const,
-    top: '2px',
-    left: '2px',
-    width: '24px',
-    height: '24px',
-    background: '#666',
-    borderRadius: '50%',
-    transition: 'all 0.3s',
-    display: 'block',
+  activateButtonInactive: {
+    background: '#1a1a1a',
+    color: '#666',
+    border: '1px solid #333',
   },
-  toggleThumbActive: {
-    transform: 'translateX(28px)',
-    background: '#000',
+  deactivateButton: {
+    flex: 1,
+    padding: '12px 24px',
+    fontSize: '15px',
+    fontWeight: '600',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    border: 'none',
+  },
+  deactivateButtonActive: {
+    background: '#f44336',
+    color: '#fff',
+  },
+  deactivateButtonInactive: {
+    background: '#1a1a1a',
+    color: '#666',
+    border: '1px solid #333',
   },
   message: {
     padding: '12px 16px',
