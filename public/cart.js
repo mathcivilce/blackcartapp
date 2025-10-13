@@ -61,7 +61,7 @@
             <div id="sp-protection-container" class="sp-protection-container" style="display: none;">
               <div class="sp-protection-toggle">
                 <div class="sp-protection-icon">
-                  <img src="/add-on.png" alt="Add-on" width="48" height="48" style="display: block;" />
+                  <img src="https://blackcartapp.netlify.app/add-on.png" alt="Add-on" width="48" height="48" style="display: block;" />
                 </div>
                 <div class="sp-protection-info">
                   <h3 class="sp-protection-title" id="sp-protection-title">Shipping Protection</h3>
@@ -567,7 +567,9 @@
       return;
     }
 
-    console.log('Applying settings:', state.settings);
+    console.log('🎨 Applying settings:', state.settings);
+    console.log('🎨 Design settings:', state.settings.design);
+    console.log('🧩 Add-ons settings:', state.settings.addons);
 
     const container = document.getElementById('sp-protection-container');
     const addonsEnabled = state.settings.addons?.enabled ?? state.settings.enabled ?? true;
@@ -669,10 +671,16 @@
 
       // Apply to checkout button
       const checkoutBtn = document.getElementById('sp-cart-checkout');
+      const checkoutText = document.getElementById('sp-checkout-text');
       if (checkoutBtn) {
         checkoutBtn.style.background = design.buttonColor;
         checkoutBtn.style.color = design.buttonTextColor;
         checkoutBtn.style.borderRadius = `${design.cornerRadius}px`;
+      }
+      
+      // Apply button text
+      if (checkoutText && design.buttonText) {
+        checkoutText.textContent = design.buttonText;
       }
 
       // Apply continue shopping note
@@ -681,6 +689,43 @@
         noteEl.style.display = design.showContinueShopping ? 'block' : 'none';
         noteEl.style.color = design.cartTextColor;
       }
+      
+      // Apply cart accent color (to footer and protection container)
+      const footer = document.querySelector('.sp-cart-footer');
+      if (footer && design.cartAccentColor) {
+        footer.style.background = design.cartAccentColor;
+      }
+      
+      const protectionContainer = document.getElementById('sp-protection-container');
+      if (protectionContainer && design.cartAccentColor) {
+        protectionContainer.style.background = design.cartAccentColor;
+      }
+      
+      // Apply text colors to all cart text elements
+      const allTextElements = document.querySelectorAll('.sp-cart-item-title, .sp-cart-item-variant, .sp-cart-item-price');
+      allTextElements.forEach(el => {
+        if (design.cartTextColor) {
+          el.style.color = design.cartTextColor;
+        }
+      });
+      
+      // Apply savings text color
+      const savingsElements = document.querySelectorAll('.sp-cart-item-savings');
+      savingsElements.forEach(el => {
+        if (design.savingsTextColor) {
+          el.style.color = design.savingsTextColor;
+        }
+      });
+      
+      // Apply border radius to images if cornerRadius is set
+      const images = document.querySelectorAll('.sp-cart-item-image');
+      images.forEach(img => {
+        if (design.cornerRadius) {
+          img.style.borderRadius = `${design.cornerRadius}px`;
+        }
+      });
+      
+      console.log('✅ All design settings applied successfully');
     }
   }
 
@@ -876,6 +921,11 @@
     
     updateSubtotal(state.cart.total_price);
     attachCartItemListeners();
+    
+    // Reapply design settings to newly rendered items
+    if (state.settings?.design) {
+      applySettings();
+    }
   }
 
   function updateSubtotal(cents) {
@@ -962,15 +1012,32 @@
 
   async function openCart() {
     const overlay = document.getElementById('sp-cart-overlay');
-    if (overlay) {
+    if (!overlay) return;
+    
+    try {
+      // Fetch latest settings first
+      const settings = await fetchSettings();
+      
+      // If settings failed or cart is disabled, don't open
+      if (!settings) {
+        console.log('Settings not available or cart disabled');
+        return;
+      }
+      
+      // Open the cart UI
       state.isOpen = true;
       overlay.classList.add('sp-open');
       document.body.style.overflow = 'hidden';
       
-      // Fetch latest cart data and settings
-      await fetchSettings();
+      // Fetch latest cart data and render
       await fetchCart();
       renderCart();
+    } catch (error) {
+      console.error('Error opening cart:', error);
+      // Make sure we don't leave the page in a broken state
+      if (overlay.classList.contains('sp-open')) {
+        closeCart();
+      }
     }
   }
 
@@ -1141,7 +1208,7 @@
       return;
     }
 
-    console.log('🛒 Shipping Protection Cart initialized');
+    console.log('🛒 Shipping Protection Cart initialized with settings');
 
     // Inject CSS
     injectCSS();
@@ -1151,6 +1218,9 @@
     cartContainer.innerHTML = createCartHTML();
     document.body.appendChild(cartContainer.firstElementChild);
 
+    // Apply initial settings to the cart UI
+    applySettings();
+
     // Attach event listeners
     attachEventListeners();
 
@@ -1159,6 +1229,8 @@
 
     // Expose global function to open cart
     window.openShippingProtectionCart = openCart;
+    
+    console.log('✅ Cart fully initialized and ready');
   }
 
   // Wait for DOM to be ready

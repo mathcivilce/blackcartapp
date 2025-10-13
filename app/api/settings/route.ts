@@ -86,6 +86,11 @@ export async function GET(request: NextRequest) {
       response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
       response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
       
+      // Prevent caching to ensure latest settings are always fetched
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+      response.headers.set('Pragma', 'no-cache');
+      response.headers.set('Expires', '0');
+      
       return response;
     } catch (error) {
       console.error('Token validation error:', error);
