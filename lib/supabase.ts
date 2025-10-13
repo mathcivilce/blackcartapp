@@ -36,6 +36,39 @@ export interface Settings {
   enabled: boolean;
   created_at: string;
   updated_at: string;
+  
+  // Design settings
+  background_color?: string;
+  cart_accent_color?: string;
+  cart_text_color?: string;
+  savings_text_color?: string;
+  corner_radius?: number;
+  button_text?: string;
+  button_color?: string;
+  button_text_color?: string;
+  button_text_hover_color?: string;
+  show_savings?: boolean;
+  show_continue_shopping?: boolean;
+  show_total_on_button?: boolean;
+  cart_title?: string;
+  cart_title_alignment?: string;
+  empty_cart_text?: string;
+  savings_text?: string;
+  display_compare_at_price?: boolean;
+  
+  // Close button customization
+  close_button_size?: string;
+  close_button_color?: string;
+  close_button_border?: string;
+  close_button_border_color?: string;
+  
+  // Add-ons settings
+  addons_enabled?: boolean;
+  addon_title?: string;
+  addon_description?: string;
+  addon_price?: number;
+  addon_product_id?: string;
+  addon_accept_by_default?: boolean;
 }
 
 export interface Sale {
