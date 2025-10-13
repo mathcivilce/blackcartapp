@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseClient } from '@/lib/supabase-client';
 
 export default function SettingsPage() {
   const [cartActive, setCartActive] = useState(false);
@@ -17,38 +16,33 @@ export default function SettingsPage() {
     // Load current user and settings
     const loadSettings = async () => {
       try {
-        // Get current session
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (!session?.user) {
+        // Get current user from API (uses httpOnly cookies)
+        const userResponse = await fetch('/api/auth/me');
+        if (!userResponse.ok) {
           console.error('No user logged in');
           return;
         }
         
-        const user = session.user;
+        const { user } = await userResponse.json();
         setUserId(user.id);
         console.log('User loaded:', user.id);
 
-        // Get user's store
-        const { data: store, error: storeError } = await supabaseClient
-          .from('stores')
-          .select('*, settings(*)')
-          .eq('user_id', user.id)
-          .single();
-
-        if (storeError) {
+        // Get user's store using server-side API
+        const storeResponse = await fetch(`/api/user/store?userId=${user.id}`);
+        if (!storeResponse.ok) {
           console.log('No store found for user, will create on save');
           return;
         }
 
+        const { store } = await storeResponse.json();
         if (store) {
           console.log('Store loaded:', store);
           setStoreDomain(store.shop_domain || '');
           setApiToken(store.api_token || '');
           setAccessToken(store.access_token || '');
           
-          const settings = store.settings?.[0];
-          if (settings) {
-            setCartActive(settings.cart_active ?? true);
+          if (store.settings) {
+            setCartActive(store.settings.cart_active ?? true);
           }
         }
       } catch (error) {
@@ -62,25 +56,20 @@ export default function SettingsPage() {
     const newValue = !cartActive;
     setCartActive(newValue);
     
-    if (!userId) return;
-    
-    // Update settings in database directly
     try {
-      const { data: store } = await supabaseClient
-        .from('stores')
-        .select('id')
-        .eq('user_id', userId)
-        .single();
+      const response = await fetch('/api/user/settings/toggle-cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cart_active: newValue })
+      });
 
-      if (store) {
-        await supabaseClient
-          .from('settings')
-          .update({ cart_active: newValue })
-          .eq('store_id', store.id);
+      if (!response.ok) {
+        console.error('Failed to save cart_active');
+        setCartActive(!newValue); // Revert on error
       }
     } catch (error) {
       console.error('Failed to save cart_active:', error);
-      setCartActive(!newValue);
+      setCartActive(!newValue); // Revert on error
     }
   };
 
@@ -88,71 +77,28 @@ export default function SettingsPage() {
     setLoading(true);
     setSaveMessage('');
     
-    if (!userId) {
-      setSaveMessage('User not authenticated. Please refresh the page.');
-      setLoading(false);
-      return;
-    }
-    
     try {
-      // Check if store exists
-      const { data: existingStore } = await supabaseClient
-        .from('stores')
-        .select('id, access_token')
-        .eq('user_id', userId)
-        .single();
+      const response = await fetch('/api/user/store/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shop_domain: storeDomain,
+          api_token: apiToken
+        })
+      });
 
-      let storeId = existingStore?.id;
-      let token = existingStore?.access_token;
-
-      if (!existingStore) {
-        // Create new store for user
-        const { data: newStore, error: createError } = await supabaseClient
-          .from('stores')
-          .insert({
-            user_id: userId,
-            shop_domain: storeDomain,
-            api_token: apiToken,
-            subscription_status: 'active'
-          })
-          .select('id, access_token')
-          .single();
-
-        if (createError) {
-          console.error('Failed to create store:', createError);
-          setSaveMessage('Failed to create store. Please try again.');
-          setLoading(false);
-          return;
-        }
-
-        storeId = newStore.id;
-        token = newStore.access_token;
-
-        // Create default settings
-        await supabaseClient
-          .from('settings')
-          .insert({
-            store_id: storeId,
-            cart_active: true,
-            enabled: true
-          });
-      } else {
-        // Update existing store
-        const updateData: any = {};
-        if (storeDomain) updateData.shop_domain = storeDomain;
-        if (apiToken) updateData.api_token = apiToken;
-
-        if (Object.keys(updateData).length > 0) {
-          await supabaseClient
-            .from('stores')
-            .update(updateData)
-            .eq('id', storeId);
-        }
+      if (!response.ok) {
+        const error = await response.json();
+        setSaveMessage(error.error || 'Failed to save settings');
+        setLoading(false);
+        return;
       }
+
+      const { store } = await response.json();
       
       // Set the access token to display installation instructions
-      if (token) {
-        setAccessToken(token);
+      if (store?.access_token) {
+        setAccessToken(store.access_token);
       }
 
       setSaveMessage('Settings saved successfully!');
@@ -173,32 +119,26 @@ export default function SettingsPage() {
   };
 
   const handleRegenerateToken = async () => {
-    if (!userId || !confirm('Are you sure you want to regenerate the token? You will need to update your Shopify theme with the new script.')) {
+    if (!confirm('Are you sure you want to regenerate the token? You will need to update your Shopify theme with the new script.')) {
       return;
     }
 
     try {
-      const { data: store } = await supabaseClient
-        .from('stores')
-        .select('id')
-        .eq('user_id', userId)
-        .single();
+      const response = await fetch('/api/user/store/regenerate-token', {
+        method: 'POST'
+      });
 
-      if (store) {
-        // Delete and re-insert to trigger UUID generation (RPC not available on client)
-        // Instead, we'll use a workaround by updating with null then letting DB regenerate
-        const { data: updatedStore } = await supabaseClient
-          .from('stores')
-          .update({ access_token: crypto.randomUUID() })
-          .eq('id', store.id)
-          .select('access_token')
-          .single();
+      if (!response.ok) {
+        setSaveMessage('Failed to regenerate token');
+        return;
+      }
 
-        if (updatedStore) {
-          setAccessToken(updatedStore.access_token);
-          setSaveMessage('Token regenerated successfully!');
-          setTimeout(() => setSaveMessage(''), 3000);
-        }
+      const { access_token } = await response.json();
+      
+      if (access_token) {
+        setAccessToken(access_token);
+        setSaveMessage('Token regenerated successfully!');
+        setTimeout(() => setSaveMessage(''), 3000);
       }
     } catch (error) {
       console.error('Failed to regenerate token:', error);
