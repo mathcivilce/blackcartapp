@@ -21,6 +21,8 @@ export interface Store {
   api_token?: string;
   stripe_customer_id?: string;
   subscription_status: 'active' | 'past_due' | 'canceled';
+  user_id?: string;
+  access_token?: string;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +36,7 @@ export interface Settings {
   toggle_text: string;
   description: string;
   enabled: boolean;
+  cart_active?: boolean;
   created_at: string;
   updated_at: string;
   
