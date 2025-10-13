@@ -32,12 +32,28 @@ export default function DesignPage() {
 
   return (
     <div style={styles.container}>
+      <style>{`
+        .design-left-column::-webkit-scrollbar {
+          width: 8px;
+        }
+        .design-left-column::-webkit-scrollbar-track {
+          background: #000;
+          border-radius: 4px;
+        }
+        .design-left-column::-webkit-scrollbar-thumb {
+          background: #333;
+          border-radius: 4px;
+        }
+        .design-left-column::-webkit-scrollbar-thumb:hover {
+          background: #444;
+        }
+      `}</style>
       <h1 style={styles.title}>Design</h1>
       <p style={styles.subtitle}>Customize the appearance of your cart sidebar</p>
 
       <div style={styles.splitLayout}>
         {/* Left Column - Customization Options */}
-        <div style={styles.leftColumn}>
+        <div className="design-left-column" style={styles.leftColumn}>
           <div style={styles.card}>
             <h2 style={styles.sectionTitle}>Colors</h2>
             
@@ -418,18 +434,21 @@ const styles = {
     display: 'grid',
     gridTemplateColumns: '1fr 400px',
     gap: '32px',
+    height: 'calc(100vh - 180px)',
+    alignItems: 'flex-start',
   },
   leftColumn: {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '20px',
+    overflowY: 'auto' as const,
+    height: '100%',
+    paddingRight: '10px',
   },
   rightColumn: {
+    height: '100%',
     position: 'sticky' as const,
-    top: '20px',
-    alignSelf: 'flex-start' as const,
-    height: 'fit-content' as const,
-    maxHeight: 'calc(100vh - 40px)',
+    top: '0',
   },
   card: {
     background: '#111',
@@ -581,7 +600,7 @@ const styles = {
     borderRadius: '12px',
     overflow: 'hidden',
     boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-    minHeight: '600px',
+    height: 'calc(100% - 50px)',
     display: 'flex',
     flexDirection: 'column' as const,
   },
