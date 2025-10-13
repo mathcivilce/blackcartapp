@@ -86,7 +86,7 @@
             <button id="sp-cart-checkout" class="sp-cart-checkout-btn">
               <span id="sp-checkout-text">Proceed to Checkout</span><span id="sp-checkout-total-separator" style="display: none;"> • </span><span id="sp-checkout-total"></span>
             </button>
-            <p class="sp-cart-note">Or <a href="#" id="sp-continue-shopping" style="color: inherit; text-decoration: underline; cursor: pointer;">continue shopping</a></p>
+            <p class="sp-cart-note" id="sp-continue-shopping" style="cursor: pointer;">Or continue shopping</p>
           </div>
         </div>
       </div>
@@ -1096,11 +1096,10 @@
       });
     }
 
-    // Continue shopping link
-    const continueShoppingLink = document.getElementById('sp-continue-shopping');
-    if (continueShoppingLink) {
-      continueShoppingLink.addEventListener('click', (e) => {
-        e.preventDefault();
+    // Continue shopping
+    const continueShopping = document.getElementById('sp-continue-shopping');
+    if (continueShopping) {
+      continueShopping.addEventListener('click', () => {
         closeCart();
       });
     }
@@ -1148,16 +1147,29 @@
       const target = e.target.closest(cartSelectors.join(','));
       if (target) {
         console.log('🖱️ Cart element clicked:', target);
-        // Check if it's a cart link (not other cart-related elements)
-        const href = target.getAttribute('href');
-        console.log('🔗 Link href:', href);
+        
+        // Check the target itself and its parents for href
+        let href = target.getAttribute('href');
+        
+        // If the clicked element (like SVG) doesn't have href, check parent
+        if (!href) {
+          const parentLink = target.closest('a[href*="/cart"], a[href="#cart"]');
+          if (parentLink) {
+            href = parentLink.getAttribute('href');
+            console.log('🔗 Parent link href:', href);
+          }
+        } else {
+          console.log('🔗 Link href:', href);
+        }
+        
+        // If we found a cart-related href, intercept it
         if (href && (href === '/cart' || href.includes('/cart') || href === '#cart')) {
           console.log('✅ Intercepting cart link click');
           e.preventDefault();
           e.stopPropagation();
           openCart();
         } else {
-          console.log('⚠️ Cart element clicked but no valid href');
+          console.log('⚠️ Cart element clicked but no valid href found');
         }
       }
     }, true); // Use capture phase to intercept early
