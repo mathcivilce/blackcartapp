@@ -20,6 +20,7 @@ export default function DashboardLayout({
     { name: 'Settings', path: '/settings', icon: '⚙️' },
     { name: 'Customization', path: '/customization', icon: '🎨' },
     { name: '  Design', path: '/customization/design', icon: '🎨', submenu: true },
+    { name: '  Add-ons', path: '/customization/add-ons', icon: '🧩', submenu: true },
   ];
 
   return (

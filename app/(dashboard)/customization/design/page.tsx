@@ -20,6 +20,11 @@ export default function DesignPage() {
     cartTitleAlignment: 'left',
     emptyCartText: 'Your cart is empty',
     savingsText: 'Save',
+    displayCompareAtPrice: true,
+    closeButtonSize: 'medium',
+    closeButtonColor: '#637381',
+    closeButtonBorder: 'none',
+    closeButtonBorderColor: '#000000',
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -340,6 +345,145 @@ export default function DesignPage() {
                 <span>Show total on button</span>
               </label>
             </div>
+
+            <div style={styles.checkboxGroup}>
+              <label style={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  name="displayCompareAtPrice"
+                  checked={design.displayCompareAtPrice}
+                  onChange={handleInputChange}
+                  style={styles.checkbox}
+                />
+                <span>Display compare-at-price</span>
+              </label>
+            </div>
+          </div>
+
+          <div style={styles.card}>
+            <h2 style={styles.sectionTitle}>Close Button</h2>
+            
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Icon size</label>
+              <div style={styles.buttonGroup}>
+                <button
+                  type="button"
+                  onClick={() => setDesign(prev => ({ ...prev, closeButtonSize: 'small' }))}
+                  style={{
+                    ...styles.alignButton,
+                    ...(design.closeButtonSize === 'small' ? styles.alignButtonActive : {})
+                  }}
+                >
+                  Small
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDesign(prev => ({ ...prev, closeButtonSize: 'medium' }))}
+                  style={{
+                    ...styles.alignButton,
+                    ...(design.closeButtonSize === 'medium' ? styles.alignButtonActive : {})
+                  }}
+                >
+                  Medium
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDesign(prev => ({ ...prev, closeButtonSize: 'large' }))}
+                  style={{
+                    ...styles.alignButton,
+                    ...(design.closeButtonSize === 'large' ? styles.alignButtonActive : {})
+                  }}
+                >
+                  Large
+                </button>
+              </div>
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Icon color</label>
+              <div style={styles.colorInputGroup}>
+                <input
+                  type="color"
+                  name="closeButtonColor"
+                  value={design.closeButtonColor}
+                  onChange={handleInputChange}
+                  style={styles.colorPicker}
+                />
+                <input
+                  type="text"
+                  name="closeButtonColor"
+                  value={design.closeButtonColor}
+                  onChange={handleInputChange}
+                  style={styles.colorInput}
+                />
+              </div>
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Border</label>
+              <div style={styles.buttonGroup}>
+                <button
+                  type="button"
+                  onClick={() => setDesign(prev => ({ ...prev, closeButtonBorder: 'none' }))}
+                  style={{
+                    ...styles.alignButton,
+                    ...(design.closeButtonBorder === 'none' ? styles.alignButtonActive : {})
+                  }}
+                >
+                  None
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDesign(prev => ({ ...prev, closeButtonBorder: 'thin' }))}
+                  style={{
+                    ...styles.alignButton,
+                    ...(design.closeButtonBorder === 'thin' ? styles.alignButtonActive : {})
+                  }}
+                >
+                  Thin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDesign(prev => ({ ...prev, closeButtonBorder: 'normal' }))}
+                  style={{
+                    ...styles.alignButton,
+                    ...(design.closeButtonBorder === 'normal' ? styles.alignButtonActive : {})
+                  }}
+                >
+                  Normal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDesign(prev => ({ ...prev, closeButtonBorder: 'thick' }))}
+                  style={{
+                    ...styles.alignButton,
+                    ...(design.closeButtonBorder === 'thick' ? styles.alignButtonActive : {})
+                  }}
+                >
+                  Thick
+                </button>
+              </div>
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Border color</label>
+              <div style={styles.colorInputGroup}>
+                <input
+                  type="color"
+                  name="closeButtonBorderColor"
+                  value={design.closeButtonBorderColor}
+                  onChange={handleInputChange}
+                  style={styles.colorPicker}
+                />
+                <input
+                  type="text"
+                  name="closeButtonBorderColor"
+                  value={design.closeButtonBorderColor}
+                  onChange={handleInputChange}
+                  style={styles.colorInput}
+                />
+              </div>
+            </div>
           </div>
 
           <button style={styles.saveButton}>
@@ -362,21 +506,57 @@ export default function DesignPage() {
             }}>
               <h2 style={{ ...styles.cartTitle, color: design.cartTextColor }}>{design.cartTitle}</h2>
               {design.cartTitleAlignment === 'left' && (
-                <button style={{ ...styles.closeButton, color: design.cartTextColor }}>✕</button>
+                <button style={{ 
+                  ...styles.closeButton, 
+                  color: design.closeButtonColor,
+                  fontSize: design.closeButtonSize === 'small' ? '20px' : design.closeButtonSize === 'large' ? '32px' : '24px',
+                  border: design.closeButtonBorder === 'none' ? 'none' : 
+                          design.closeButtonBorder === 'thin' ? `1px solid ${design.closeButtonBorderColor}` :
+                          design.closeButtonBorder === 'normal' ? `2px solid ${design.closeButtonBorderColor}` :
+                          `3px solid ${design.closeButtonBorderColor}`,
+                  borderRadius: design.closeButtonBorder !== 'none' ? '4px' : '0',
+                  padding: design.closeButtonBorder !== 'none' ? '4px 8px' : '0',
+                }}>✕</button>
               )}
               {design.cartTitleAlignment === 'center' && (
-                <button style={{ ...styles.closeButton, color: design.cartTextColor, position: 'absolute' as const, right: '20px' }}>✕</button>
+                <button style={{ 
+                  ...styles.closeButton, 
+                  color: design.closeButtonColor,
+                  fontSize: design.closeButtonSize === 'small' ? '20px' : design.closeButtonSize === 'large' ? '32px' : '24px',
+                  border: design.closeButtonBorder === 'none' ? 'none' : 
+                          design.closeButtonBorder === 'thin' ? `1px solid ${design.closeButtonBorderColor}` :
+                          design.closeButtonBorder === 'normal' ? `2px solid ${design.closeButtonBorderColor}` :
+                          `3px solid ${design.closeButtonBorderColor}`,
+                  borderRadius: design.closeButtonBorder !== 'none' ? '4px' : '0',
+                  padding: design.closeButtonBorder !== 'none' ? '4px 8px' : '0',
+                  position: 'absolute' as const, 
+                  right: '20px' 
+                }}>✕</button>
               )}
             </div>
 
             {/* Cart Items */}
             <div style={styles.cartItems}>
               <div style={{ ...styles.cartItem, background: design.cartAccentColor }}>
-                <div style={styles.itemImage}></div>
+                <img 
+                  src="https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&h=400&fit=crop" 
+                  alt="Leather Sneakers" 
+                  style={styles.itemImage}
+                />
                 <div style={styles.itemDetails}>
-                  <p style={{ ...styles.itemTitle, color: design.cartTextColor }}>Product Name</p>
-                  <p style={{ ...styles.itemVariant, color: design.cartTextColor }}>Variant</p>
-                  <p style={{ ...styles.itemPrice, color: design.cartTextColor }}>$29.99</p>
+                  <p style={{ ...styles.itemTitle, color: design.cartTextColor }}>Leather Sneakers</p>
+                  <p style={{ ...styles.itemVariant, color: design.cartTextColor }}>Size 10</p>
+                  <div>
+                    {design.displayCompareAtPrice && (
+                      <span style={{ 
+                        fontSize: '13px', 
+                        color: '#999', 
+                        textDecoration: 'line-through',
+                        marginRight: '8px'
+                      }}>$139.99</span>
+                    )}
+                    <span style={{ ...styles.itemPrice, color: design.cartTextColor, display: 'inline' }}>$129.99</span>
+                  </div>
                   {design.showSavings && (
                     <p style={{ ...styles.itemSavings, color: design.savingsTextColor }}>{design.savingsText} $10.00</p>
                   )}
@@ -640,6 +820,7 @@ const styles = {
     height: '60px',
     background: '#ccc',
     borderRadius: '6px',
+    objectFit: 'cover' as const,
   },
   itemDetails: {
     flex: 1,
