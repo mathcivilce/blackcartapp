@@ -131,8 +131,8 @@ const styles = {
     outline: 'none',
     transition: 'border-color 0.2s',
     fontFamily: 'inherit',
-    background: '#000',
-    color: '#fff'
+    background: '#fff',
+    color: '#000'
   },
   button: {
     padding: '14px',
