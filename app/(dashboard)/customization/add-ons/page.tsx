@@ -292,18 +292,19 @@ export default function AddOnsPage() {
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>Product ID</label>
+              <label style={styles.label}>Product ID (Required)</label>
               <input
                 type="text"
                 name="productId"
                 value={addons.shippingProtection.productId}
                 onChange={handleInputChange}
                 style={styles.textInput}
-                placeholder="Enter Shopify Product ID"
+                placeholder="e.g., 1234567890"
                 disabled={!addons.featureEnabled}
               />
               <p style={styles.helperText}>
-                Link this feature to a product in your Shopify store. This product will be added to the cart automatically when customers enable the protection.
+                <strong>How to find:</strong> Go to Products → Click on your product → Look at the URL, the number after <code>/products/</code> is the Product ID.<br/>
+                Example: <code>.../admin/products/<strong>1234567890</strong></code>
               </p>
             </div>
 

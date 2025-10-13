@@ -28,7 +28,8 @@
     settings: null,
     isLoading: false,
     protectionEnabled: false,
-    protectionInCart: false
+    protectionInCart: false,
+    protectionVariantId: null  // Cache variant ID for removal
   };
 
   // ============================================
@@ -742,10 +743,23 @@
     if (!state.cart || !state.settings) return;
 
     const productId = state.settings.addons?.productId || state.settings.protectionProductId;
-    const protectionItem = state.cart.items.find(item => 
-      item.variant_id === productId ||
-      item.id === productId
-    );
+    
+    // Check using cached variant ID first, then fallback to product ID
+    let protectionItem;
+    if (state.protectionVariantId) {
+      protectionItem = state.cart.items.find(item => 
+        item.variant_id === state.protectionVariantId ||
+        item.id === state.protectionVariantId
+      );
+    }
+    
+    // Fallback to product ID check
+    if (!protectionItem) {
+      protectionItem = state.cart.items.find(item => 
+        item.variant_id === productId ||
+        item.id === productId
+      );
+    }
 
     state.protectionInCart = !!protectionItem;
     
@@ -763,29 +777,84 @@
 
   async function addProtectionToCart() {
     const productId = state.settings?.addons?.productId || state.settings?.protectionProductId;
+    
     if (!state.settings || !productId) {
-      console.error('Protection product not configured');
+      console.error('❌ Protection product not configured. Please add a Product ID in settings.');
+      alert('Shipping protection is not configured. Please contact store admin.');
       return;
     }
 
+    console.log('🛡️ Adding protection to cart with Product ID:', productId);
+
     try {
       state.isLoading = true;
+      
+      // First, get the variant ID from the product ID
+      console.log('📡 Converting Product ID to Variant ID...');
+      const variantResponse = await fetch(`${CONFIG.appUrl}/api/shopify/get-variant`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: productId,
+          token: CONFIG.token
+        })
+      });
+
+      if (!variantResponse.ok) {
+        const errorData = await variantResponse.json();
+        console.error('❌ Failed to get variant:', errorData);
+        alert('Failed to load protection product. Please check your Product ID in settings.');
+        
+        const checkbox = document.getElementById('sp-protection-checkbox');
+        if (checkbox) checkbox.checked = false;
+        state.isLoading = false;
+        return;
+      }
+
+      const variantData = await variantResponse.json();
+      const variantId = variantData.variantId;
+      
+      console.log('✅ Got Variant ID:', variantId, 'for product:', variantData.title);
+
+      // Now add to cart using the variant ID
       const response = await fetch('/cart/add.js', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: productId,
+          id: variantId,
           quantity: 1
         })
       });
 
+      console.log('📡 Add to cart response:', response.status, response.statusText);
+
       if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Protection added successfully:', data);
+        
+        // Cache the variant ID for later removal
+        state.protectionVariantId = variantId;
+        
         await fetchCart();
         renderCart();
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Failed to add protection to cart:', response.status, errorText);
+        alert('Failed to add shipping protection. Please try again.');
+        
+        // Uncheck the checkbox
+        const checkbox = document.getElementById('sp-protection-checkbox');
+        if (checkbox) checkbox.checked = false;
       }
       state.isLoading = false;
     } catch (error) {
-      console.error('Error adding protection:', error);
+      console.error('❌ Error adding protection:', error);
+      alert('Network error. Please check your connection and try again.');
+      
+      // Uncheck the checkbox
+      const checkbox = document.getElementById('sp-protection-checkbox');
+      if (checkbox) checkbox.checked = false;
+      
       state.isLoading = false;
     }
   }
@@ -794,18 +863,40 @@
     if (!state.cart || !state.settings) return;
 
     const productId = state.settings?.addons?.productId || state.settings?.protectionProductId;
-    const protectionItem = state.cart.items.find(item => 
-      item.variant_id === productId ||
-      item.id === productId
-    );
+    
+    console.log('🗑️ Removing protection. Product ID:', productId);
+    
+    // If we have the cached variant ID, use it
+    let protectionItem;
+    if (state.protectionVariantId) {
+      protectionItem = state.cart.items.find(item => 
+        item.variant_id === state.protectionVariantId ||
+        item.id === state.protectionVariantId
+      );
+      console.log('Found by cached variant ID:', state.protectionVariantId);
+    }
+    
+    // Fallback: try to find by product ID (in case it was a variant ID)
+    if (!protectionItem) {
+      protectionItem = state.cart.items.find(item => 
+        item.variant_id === productId ||
+        item.id === productId
+      );
+      console.log('Found by product ID:', productId);
+    }
 
-    if (!protectionItem) return;
+    if (!protectionItem) {
+      console.log('Protection item not found in cart');
+      return;
+    }
 
     const lineNumber = state.cart.items.indexOf(protectionItem) + 1;
+    console.log('Removing line:', lineNumber);
 
     try {
       state.isLoading = true;
       await updateCartItem(lineNumber, 0);
+      state.protectionVariantId = null; // Clear cached variant ID
       renderCart();
       state.isLoading = false;
     } catch (error) {
