@@ -1,24 +1,46 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 export default function SettingsPage() {
   const [cartActive, setCartActive] = useState(false);
   const [storeDomain, setStoreDomain] = useState('');
   const [apiToken, setApiToken] = useState('');
+  const [accessToken, setAccessToken] = useState('');
+  const [userId, setUserId] = useState('');
   const [loading, setLoading] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    // Load current settings
+    // Load current user and settings
     const loadSettings = async () => {
       try {
-        const response = await fetch('/api/settings');
-        if (response.ok) {
-          const data = await response.json();
-          setCartActive(data.cart_active || false);
-          setStoreDomain(data.store_domain || '');
-          setApiToken(data.api_token || '');
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.error('No user logged in');
+          return;
+        }
+        setUserId(user.id);
+
+        // Get user's store
+        const { data: store } = await supabase
+          .from('stores')
+          .select('*, settings(*)')
+          .eq('user_id', user.id)
+          .single();
+
+        if (store) {
+          setStoreDomain(store.shop_domain || '');
+          setApiToken(store.api_token || '');
+          setAccessToken(store.access_token || '');
+          
+          const settings = store.settings?.[0];
+          if (settings) {
+            setCartActive(settings.cart_active ?? true);
+          }
         }
       } catch (error) {
         console.error('Failed to load settings:', error);
@@ -31,16 +53,24 @@ export default function SettingsPage() {
     const newValue = !cartActive;
     setCartActive(newValue);
     
-    // Save to backend
+    if (!userId) return;
+    
+    // Update settings in database directly
     try {
-      await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cart_active: newValue })
-      });
+      const { data: store } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (store) {
+        await supabase
+          .from('settings')
+          .update({ cart_active: newValue })
+          .eq('store_id', store.id);
+      }
     } catch (error) {
       console.error('Failed to save cart_active:', error);
-      // Revert on error
       setCartActive(!newValue);
     }
   };
@@ -49,27 +79,90 @@ export default function SettingsPage() {
     setLoading(true);
     setSaveMessage('');
     
+    if (!userId) {
+      setSaveMessage('User not authenticated');
+      setLoading(false);
+      return;
+    }
+    
     try {
-      const response = await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          store_domain: storeDomain,
-          api_token: apiToken
-        })
-      });
-
-      if (response.ok) {
-        setSaveMessage('Settings saved successfully!');
-        setTimeout(() => setSaveMessage(''), 3000);
-      } else {
-        setSaveMessage('Failed to save settings. Please try again.');
+      // Import the function to get or create user store
+      const { getOrCreateUserStore } = await import('@/lib/db');
+      
+      // Get or create store for user
+      const { store, error: storeError } = await getOrCreateUserStore(userId, storeDomain);
+      
+      if (storeError || !store) {
+        setSaveMessage('Failed to save store settings');
+        return;
       }
+      
+      // Update store info (api_token)
+      if (apiToken) {
+        await supabase
+          .from('stores')
+          .update({ api_token: apiToken })
+          .eq('id', store.id);
+      }
+      
+      // Reload to get the access token
+      const { data: updatedStore } = await supabase
+        .from('stores')
+        .select('access_token')
+        .eq('id', store.id)
+        .single();
+      
+      if (updatedStore) {
+        setAccessToken(updatedStore.access_token);
+      }
+
+      setSaveMessage('Settings saved successfully!');
+      setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {
       console.error('Failed to save settings:', error);
       setSaveMessage('An error occurred. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCopyScript = () => {
+    const scriptTag = `<script src="https://blackcartapp.netlify.app/cart.js?token=${accessToken}"></script>`;
+    navigator.clipboard.writeText(scriptTag);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleRegenerateToken = async () => {
+    if (!userId || !confirm('Are you sure you want to regenerate the token? You will need to update your Shopify theme with the new script.')) {
+      return;
+    }
+
+    try {
+      const { data: store } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (store) {
+        // Generate new token
+        const { data: updatedStore } = await supabase
+          .from('stores')
+          .update({ access_token: supabase.rpc('gen_random_uuid') })
+          .eq('id', store.id)
+          .select('access_token')
+          .single();
+
+        if (updatedStore) {
+          setAccessToken(updatedStore.access_token);
+          setSaveMessage('Token regenerated successfully!');
+          setTimeout(() => setSaveMessage(''), 3000);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to regenerate token:', error);
+      setSaveMessage('Failed to regenerate token');
     }
   };
 
@@ -134,6 +227,36 @@ export default function SettingsPage() {
           <p style={styles.hint}>Admin API access token for your Shopify store</p>
         </div>
       </div>
+
+      {/* Installation Instructions */}
+      {accessToken && (
+        <div style={styles.card}>
+          <h2 style={styles.sectionTitle}>Installation</h2>
+          
+          <p style={styles.hint}>
+            Copy the script below and paste it in your Shopify theme's <code>theme.liquid</code> file, just before the closing <code>&lt;/body&gt;</code> tag.
+          </p>
+          
+          <div style={styles.scriptBox}>
+            <code style={styles.scriptCode}>
+              {`<script src="https://blackcartapp.netlify.app/cart.js?token=${accessToken}"></script>`}
+            </code>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+            <button onClick={handleCopyScript} style={styles.copyButton}>
+              {copied ? '✓ Copied!' : '📋 Copy Script'}
+            </button>
+            <button onClick={handleRegenerateToken} style={styles.regenerateButton}>
+              🔄 Regenerate Token
+            </button>
+          </div>
+          
+          <p style={{ ...styles.hint, marginTop: '16px' }}>
+            ⚠️ Keep this token secure. If compromised, use the regenerate button to create a new one.
+          </p>
+        </div>
+      )}
 
       {saveMessage && (
         <div style={{
@@ -280,5 +403,41 @@ const styles = {
     background: '#f8d7da',
     color: '#721c24',
     border: '1px solid #f5c6cb',
+  },
+  scriptBox: {
+    background: '#1a1a1a',
+    border: '1px solid #333',
+    borderRadius: '8px',
+    padding: '16px',
+    marginTop: '12px',
+    overflow: 'auto',
+  },
+  scriptCode: {
+    color: '#4CAF50',
+    fontSize: '14px',
+    fontFamily: 'monospace',
+    wordBreak: 'break-all' as const,
+  },
+  copyButton: {
+    padding: '10px 20px',
+    background: '#fff',
+    color: '#000',
+    border: '1px solid #333',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    transition: 'all 0.2s',
+  },
+  regenerateButton: {
+    padding: '10px 20px',
+    background: 'transparent',
+    color: '#fff',
+    border: '1px solid #666',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    transition: 'all 0.2s',
   },
 };

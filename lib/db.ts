@@ -42,6 +42,60 @@ export async function getOrCreateStore(shopDomain: string) {
   return { store: newStore as Store, error: null };
 }
 
+// Get or create store for a user
+export async function getOrCreateUserStore(userId: string, shopDomain?: string) {
+  // Check if user already has a store
+  const { data: existingStore, error: fetchError } = await supabase
+    .from('stores')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  if (existingStore) {
+    // If shop_domain is provided and different, update it
+    if (shopDomain && existingStore.shop_domain !== shopDomain) {
+      const { data: updatedStore } = await supabase
+        .from('stores')
+        .update({ shop_domain: shopDomain })
+        .eq('id', existingStore.id)
+        .select()
+        .single();
+      return { store: updatedStore as Store, error: null };
+    }
+    return { store: existingStore as Store, error: null };
+  }
+
+  // Create new store for user
+  const { data: newStore, error: createError } = await supabase
+    .from('stores')
+    .insert({
+      user_id: userId,
+      shop_domain: shopDomain || '',
+      subscription_status: 'active'
+    })
+    .select()
+    .single();
+
+  if (createError) {
+    return { store: null, error: createError };
+  }
+
+  // Create default settings for new store
+  await supabase
+    .from('settings')
+    .insert({
+      store_id: newStore.id,
+      price: 490,
+      toggle_color: '#2196F3',
+      toggle_text: 'Shipping Protection',
+      description: 'Protect your order from damage, loss, or theft during shipping.',
+      enabled: true,
+      cart_active: true
+    });
+
+  return { store: newStore as Store, error: null };
+}
+
 // Get settings for a store
 export async function getStoreSettings(shopDomain: string) {
   // Get or create store first

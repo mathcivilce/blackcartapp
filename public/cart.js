@@ -6,7 +6,19 @@
     appUrl: (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
       ? 'http://localhost:3001' 
       : 'https://blackcartapp.netlify.app',
-    shopDomain: window.Shopify?.shop || 'example-store.myshopify.com'
+    shopDomain: window.Shopify?.shop || 'example-store.myshopify.com',
+    // Extract token from script src URL: <script src="cart.js?token=xxx"></script>
+    token: (() => {
+      const scripts = document.getElementsByTagName('script');
+      for (let i = 0; i < scripts.length; i++) {
+        const src = scripts[i].src;
+        if (src && src.includes('cart.js')) {
+          const urlParams = new URLSearchParams(src.split('?')[1]);
+          return urlParams.get('token');
+        }
+      }
+      return null;
+    })()
   };
 
   // State management
@@ -515,10 +527,24 @@
 
   async function fetchSettings() {
     try {
-      console.log('Fetching settings from:', `${CONFIG.appUrl}/api/settings?shop=${CONFIG.shopDomain}`);
-      const response = await fetch(`${CONFIG.appUrl}/api/settings?shop=${CONFIG.shopDomain}`);
+      // Use token-based authentication if available
+      const url = CONFIG.token 
+        ? `${CONFIG.appUrl}/api/settings?token=${CONFIG.token}`
+        : `${CONFIG.appUrl}/api/settings?shop=${CONFIG.shopDomain}`;
+      
+      console.log('Fetching settings from:', url.replace(CONFIG.token || '', '***')); // Hide token in logs
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        console.error('Failed to fetch settings:', response.status, response.statusText);
+        if (response.status === 401) {
+          console.error('Invalid or missing access token. Please check your cart.js installation.');
+        }
+        return null;
+      }
+      
       const settings = await response.json();
-      console.log('Settings loaded:', settings);
+      console.log('Settings loaded successfully');
       state.settings = settings;
       
       // Check if cart is active
