@@ -7,10 +7,12 @@ export function middleware(request: NextRequest) {
 
   // Public routes that don't require authentication
   const publicRoutes = [
-    '/login', 
+    '/login',
+    '/register',
     '/api/settings', 
     '/cart.js', 
     '/api/auth/login',
+    '/api/auth/register',
     '/api/setup' // Allow setup routes
   ];
   
