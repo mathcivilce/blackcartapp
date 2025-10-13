@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
 export default function DashboardLayout({
@@ -9,6 +10,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [customizationExpanded, setCustomizationExpanded] = useState(true);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -18,9 +20,11 @@ export default function DashboardLayout({
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: '▦' },
     { name: 'Settings', path: '/settings', icon: '⚙' },
-    { name: 'Customization', path: '/customization', icon: '◨' },
-    { name: '  Design', path: '/customization/design', icon: '▣', submenu: true },
-    { name: '  Add-ons', path: '/customization/add-ons', icon: '⊞', submenu: true },
+  ];
+
+  const customizationSubmenu = [
+    { name: '  Design', path: '/customization/design', icon: '▣' },
+    { name: '  Add-ons', path: '/customization/add-ons', icon: '⊞' },
   ];
 
   return (
@@ -38,11 +42,38 @@ export default function DashboardLayout({
               onClick={() => router.push(item.path)}
               style={{
                 ...styles.navItem,
-                ...(pathname === item.path ? styles.navItemActive : {}),
-                ...(item.submenu ? styles.navItemSubmenu : {})
+                ...(pathname === item.path ? styles.navItemActive : {})
               }}
             >
-              <span style={styles.navIcon}>{item.submenu ? '└' : item.icon}</span>
+              <span style={styles.navIcon}>{item.icon}</span>
+              <span style={styles.navText}>{item.name}</span>
+            </button>
+          ))}
+          
+          {/* Customization Menu with Submenu */}
+          <button
+            onClick={() => setCustomizationExpanded(!customizationExpanded)}
+            style={{
+              ...styles.navItem,
+              ...(pathname.startsWith('/customization') ? styles.navItemActive : {})
+            }}
+          >
+            <span style={styles.navIcon}>◨</span>
+            <span style={styles.navText}>Customization</span>
+            <span style={styles.expandIcon}>{customizationExpanded ? '▼' : '▶'}</span>
+          </button>
+          
+          {customizationExpanded && customizationSubmenu.map((item: any) => (
+            <button
+              key={item.path}
+              onClick={() => router.push(item.path)}
+              style={{
+                ...styles.navItem,
+                ...styles.navItemSubmenu,
+                ...(pathname === item.path ? styles.navItemActive : {})
+              }}
+            >
+              <span style={styles.navIcon}>└</span>
               <span style={styles.navText}>{item.name}</span>
             </button>
           ))}
@@ -127,6 +158,11 @@ const styles = {
   },
   navText: {
     fontSize: '15px',
+  },
+  expandIcon: {
+    fontSize: '12px',
+    marginLeft: 'auto',
+    color: '#888',
   },
   sidebarFooter: {
     padding: '24px',

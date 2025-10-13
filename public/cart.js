@@ -520,6 +520,13 @@
       const settings = await response.json();
       console.log('Settings loaded:', settings);
       state.settings = settings;
+      
+      // Check if cart is active
+      if (settings.cart_active === false) {
+        console.log('Cart app is deactivated. Using native Shopify cart.');
+        return null; // Signal to not initialize the cart
+      }
+      
       applySettings();
       return settings;
     } catch (error) {
@@ -1097,6 +1104,17 @@
   // ============================================
 
   async function init() {
+    console.log('🛒 Shipping Protection Cart initializing...');
+
+    // Fetch settings first to check if cart is active
+    const settings = await fetchSettings();
+    
+    // If cart is not active, don't initialize
+    if (settings === null) {
+      console.log('🛒 Cart app is deactivated. Exiting initialization.');
+      return;
+    }
+
     console.log('🛒 Shipping Protection Cart initialized');
 
     // Inject CSS
@@ -1110,8 +1128,7 @@
     // Attach event listeners
     attachEventListeners();
 
-    // Fetch settings and initial cart
-    await fetchSettings();
+    // Fetch initial cart
     await fetchCart();
 
     // Expose global function to open cart

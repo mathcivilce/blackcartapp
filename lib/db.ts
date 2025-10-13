@@ -48,7 +48,7 @@ export async function getStoreSettings(shopDomain: string) {
   const { store, error: storeError } = await getOrCreateStore(shopDomain);
   
   if (storeError || !store) {
-    return { settings: null, error: storeError };
+    return { settings: null, store: null, error: storeError };
   }
 
   // Get settings
@@ -59,10 +59,10 @@ export async function getStoreSettings(shopDomain: string) {
     .single();
 
   if (settingsError) {
-    return { settings: null, error: settingsError };
+    return { settings: null, store: null, error: settingsError };
   }
 
-  return { settings: settings as Settings, error: null };
+  return { settings: settings as Settings, store: store as Store, error: null };
 }
 
 // Update settings for a store
@@ -88,6 +88,31 @@ export async function updateStoreSettings(
   }
 
   return { settings: settings as Settings, error: null };
+}
+
+// Update store information (shop domain, api token, etc.)
+export async function updateStoreInfo(
+  shopDomain: string,
+  updates: Partial<Store>
+) {
+  const { store, error: storeError } = await getOrCreateStore(shopDomain);
+  
+  if (storeError || !store) {
+    return { store: null, error: storeError };
+  }
+
+  const { data: updatedStore, error: updateError } = await supabase
+    .from('stores')
+    .update(updates)
+    .eq('id', store.id)
+    .select()
+    .single();
+
+  if (updateError) {
+    return { store: null, error: updateError };
+  }
+
+  return { store: updatedStore as Store, error: null };
 }
 
 // Save a sale

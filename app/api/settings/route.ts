@@ -11,13 +11,16 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { settings, error } = await getStoreSettings(shop);
+    const { settings, store, error } = await getStoreSettings(shop);
 
     if (error) {
       console.error('Error fetching settings:', error);
       // Return default settings on error
       return NextResponse.json({
         enabled: true,
+        cart_active: true,
+        store_domain: '',
+        api_token: '',
         protectionProductId: null,
         price: 490,
         toggleColor: '#2196F3',
@@ -60,6 +63,9 @@ export async function GET(request: NextRequest) {
     // Transform database format to API format
     return NextResponse.json({
       enabled: settings?.enabled ?? true,
+      cart_active: settings?.cart_active ?? true,
+      store_domain: store?.shop_domain || '',
+      api_token: store?.api_token || '',
       protectionProductId: settings?.protection_product_id || settings?.addon_product_id || null,
       price: settings?.price ?? 490,
       toggleColor: settings?.toggle_color ?? '#2196F3',
@@ -148,7 +154,57 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { shop, protectionProductId, price, toggleColor, toggleText, description } = body;
+    const { shop, protectionProductId, price, toggleColor, toggleText, description, cart_active, store_domain, api_token } = body;
+
+    // If cart_active is being updated (from dashboard)
+    if (cart_active !== undefined) {
+      const { updateStoreSettings } = await import('@/lib/db');
+      
+      // For now, use a default shop or get from session
+      // You may need to update this based on your auth implementation
+      const shopDomain = shop || 'default-shop';
+      
+      const { settings, error } = await updateStoreSettings(shopDomain, {
+        cart_active: cart_active,
+      } as any);
+
+      if (error) {
+        console.error('Error updating cart_active:', error);
+        return NextResponse.json({ error: 'Failed to update cart activation' }, { status: 500 });
+      }
+
+      return NextResponse.json({ 
+        success: true,
+        cart_active: settings?.cart_active
+      });
+    }
+
+    // If store_domain or api_token is being updated (from dashboard)
+    if (store_domain !== undefined || api_token !== undefined) {
+      const { updateStoreInfo } = await import('@/lib/db');
+      
+      // For now, use a default shop or get from session
+      const shopDomain = shop || 'default-shop';
+      
+      const updateData: any = {};
+      if (store_domain !== undefined) updateData.shop_domain = store_domain; // Note: using shop_domain for stores table
+      if (api_token !== undefined) updateData.api_token = api_token;
+      
+      const { store: updatedStore, error } = await updateStoreInfo(shopDomain, updateData);
+
+      if (error) {
+        console.error('Error updating store info:', error);
+        return NextResponse.json({ error: 'Failed to update store information' }, { status: 500 });
+      }
+
+      return NextResponse.json({ 
+        success: true,
+        store: {
+          shop_domain: updatedStore?.shop_domain,
+          api_token: updatedStore?.api_token
+        }
+      });
+    }
 
     if (!shop) {
       return NextResponse.json({ error: 'Shop parameter required' }, { status: 400 });
