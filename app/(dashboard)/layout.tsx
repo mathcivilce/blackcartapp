@@ -16,11 +16,11 @@ export default function DashboardLayout({
   };
 
   const menuItems = [
-    { name: 'Dashboard', path: '/', icon: '📊' },
-    { name: 'Settings', path: '/settings', icon: '⚙️' },
-    { name: 'Customization', path: '/customization', icon: '🎨' },
-    { name: '  Design', path: '/customization/design', icon: '🎨', submenu: true },
-    { name: '  Add-ons', path: '/customization/add-ons', icon: '🧩', submenu: true },
+    { name: 'Dashboard', path: '/', icon: '▦' },
+    { name: 'Settings', path: '/settings', icon: '⚙' },
+    { name: 'Customization', path: '/customization', icon: '◨' },
+    { name: '  Design', path: '/customization/design', icon: '▣', submenu: true },
+    { name: '  Add-ons', path: '/customization/add-ons', icon: '⊞', submenu: true },
   ];
 
   return (
@@ -50,7 +50,7 @@ export default function DashboardLayout({
 
         <div style={styles.sidebarFooter}>
           <button onClick={handleLogout} style={styles.logoutButton}>
-            <span style={styles.navIcon}>🚪</span>
+            <span style={styles.navIcon}>⎋</span>
             <span style={styles.navText}>Logout</span>
           </button>
         </div>
