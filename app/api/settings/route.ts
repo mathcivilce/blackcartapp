@@ -38,6 +38,15 @@ export async function GET(request: NextRequest) {
 
       const settings = store.settings?.[0]; // Get first settings record
       
+      // Debug logging
+      console.log('🔍 Store found:', store.id, store.shop_domain);
+      console.log('🔍 Settings record:', settings ? 'EXISTS' : 'NULL');
+      if (settings) {
+        console.log('🔍 Button text in DB:', settings.button_text);
+        console.log('🔍 Cart title in DB:', settings.cart_title);
+        console.log('🔍 Settings ID:', settings.id);
+      }
+      
       const response = NextResponse.json({
         enabled: settings?.enabled ?? true,
         cart_active: settings?.cart_active ?? true,
