@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
         price: settings?.addon_price?.toString() || '4.90',
         productId: settings?.addon_product_id || '',
         acceptByDefault: settings?.addon_accept_by_default ?? false,
+        adjustTotalPrice: settings?.addon_adjust_total_price ?? true,
       }
     });
   } catch (error) {
@@ -48,6 +49,7 @@ export async function POST(request: NextRequest) {
       if (shippingProtection.price !== undefined) dbSettings.addon_price = parseFloat(shippingProtection.price);
       if (shippingProtection.productId !== undefined) dbSettings.addon_product_id = shippingProtection.productId;
       if (shippingProtection.acceptByDefault !== undefined) dbSettings.addon_accept_by_default = shippingProtection.acceptByDefault;
+      if (shippingProtection.adjustTotalPrice !== undefined) dbSettings.addon_adjust_total_price = shippingProtection.adjustTotalPrice;
     }
 
     const { error } = await updateStoreSettings(shop, dbSettings);

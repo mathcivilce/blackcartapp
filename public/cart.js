@@ -49,11 +49,7 @@
             <div id="sp-protection-container" class="sp-protection-container" style="display: none;">
               <div class="sp-protection-toggle">
                 <div class="sp-protection-icon">
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="24" cy="24" r="24" fill="#E3F2FD"/>
-                    <path d="M24 12L16 16V22C16 27.55 19.84 32.74 25 34C30.16 32.74 34 27.55 34 22V16L24 12Z" fill="#2196F3"/>
-                    <path d="M21 24L23 26L27 22" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
+                  <img src="/add-on.png" alt="Add-on" width="48" height="48" style="display: block;" />
                 </div>
                 <div class="sp-protection-info">
                   <h3 class="sp-protection-title" id="sp-protection-title">Shipping Protection</h3>

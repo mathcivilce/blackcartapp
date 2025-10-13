@@ -69,6 +69,7 @@ export interface Settings {
   addon_price?: number;
   addon_product_id?: string;
   addon_accept_by_default?: boolean;
+  addon_adjust_total_price?: boolean;
 }
 
 export interface Sale {

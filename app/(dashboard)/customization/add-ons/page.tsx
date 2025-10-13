@@ -12,6 +12,7 @@ export default function AddOnsPage() {
       price: '4.90',
       productId: '',
       acceptByDefault: false,
+      adjustTotalPrice: true,
     }
   });
 
@@ -143,7 +144,7 @@ export default function AddOnsPage() {
         }
         
         input[type="checkbox"]:checked + .toggle-slider {
-          background-color: #2196F3;
+          background-color: #2196F3 !important;
         }
         
         input[type="checkbox"]:checked + .toggle-slider:before {
@@ -160,6 +161,10 @@ export default function AddOnsPage() {
           background-color: white;
           transition: .4s;
           border-radius: 50%;
+        }
+        
+        input[type="checkbox"]:not(:checked) + .toggle-slider {
+          background-color: #ccc !important;
         }
         
         .protection-toggle-slider:before {
@@ -279,6 +284,23 @@ export default function AddOnsPage() {
                 When enabled, the shipping protection toggle will be ON by default when customers open their cart.
               </p>
             </div>
+
+            <div style={styles.checkboxGroup}>
+              <label style={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  name="adjustTotalPrice"
+                  checked={addons.shippingProtection.adjustTotalPrice}
+                  onChange={handleInputChange}
+                  style={styles.checkbox}
+                  disabled={!addons.featureEnabled}
+                />
+                <span>Adjust total price automatically</span>
+              </label>
+              <p style={styles.helperText}>
+                When enabled, the total price on the checkout button will include the add-on price when the protection is active.
+              </p>
+            </div>
           </div>
 
           {saveMessage && (
@@ -315,7 +337,8 @@ export default function AddOnsPage() {
               title: addons.shippingProtection.title,
               description: addons.shippingProtection.description,
               price: addons.shippingProtection.price,
-              acceptByDefault: addons.shippingProtection.acceptByDefault
+              acceptByDefault: addons.shippingProtection.acceptByDefault,
+              adjustTotalPrice: addons.shippingProtection.adjustTotalPrice
             }} 
           />
         </div>

@@ -29,13 +29,14 @@ interface CartPreviewProps {
     description: string;
     price: string;
     acceptByDefault: boolean;
+    adjustTotalPrice?: boolean;
   };
 }
 
 export default function CartPreview({ design, addons }: CartPreviewProps) {
   const calculateTotal = () => {
     let total = 129.99;
-    if (addons.enabled && addons.acceptByDefault) {
+    if (addons.enabled && addons.acceptByDefault && (addons.adjustTotalPrice !== false)) {
       total += parseFloat(addons.price || '0');
     }
     return total.toFixed(2);
@@ -126,11 +127,13 @@ export default function CartPreview({ design, addons }: CartPreviewProps) {
             <div style={styles.protectionContainer}>
               <div style={styles.protectionToggle}>
                 <div style={styles.protectionIcon}>
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="24" cy="24" r="24" fill="#E3F2FD"/>
-                    <path d="M24 12L16 16V22C16 27.55 19.84 32.74 25 34C30.16 32.74 34 27.55 34 22V16L24 12Z" fill="#2196F3"/>
-                    <path d="M21 24L23 26L27 22" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <img 
+                    src="/add-on.png" 
+                    alt="Add-on icon" 
+                    width="48" 
+                    height="48" 
+                    style={{ display: 'block' }}
+                  />
                 </div>
                 <div style={styles.protectionInfo}>
                   <h3 style={styles.protectionTitle}>{addons.title}</h3>
