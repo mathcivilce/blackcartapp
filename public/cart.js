@@ -532,19 +532,28 @@
         ? `${CONFIG.appUrl}/api/settings?token=${CONFIG.token}`
         : `${CONFIG.appUrl}/api/settings?shop=${CONFIG.shopDomain}`;
       
-      console.log('Fetching settings from:', url.replace(CONFIG.token || '', '***')); // Hide token in logs
+      console.log('🔑 Token extracted:', CONFIG.token ? 'YES (***' + CONFIG.token.substr(-4) + ')' : 'NO');
+      console.log('🌐 Fetching settings from:', url.replace(CONFIG.token || '', '***'));
+      
       const response = await fetch(url);
       
+      console.log('📡 Response status:', response.status, response.statusText);
+      
       if (!response.ok) {
-        console.error('Failed to fetch settings:', response.status, response.statusText);
+        console.error('❌ Failed to fetch settings:', response.status, response.statusText);
         if (response.status === 401) {
-          console.error('Invalid or missing access token. Please check your cart.js installation.');
+          console.error('🔒 Invalid or missing access token. Token used:', CONFIG.token ? 'YES' : 'NO');
         }
+        const errorText = await response.text();
+        console.error('Error details:', errorText);
         return null;
       }
       
       const settings = await response.json();
-      console.log('Settings loaded successfully');
+      console.log('✅ Settings loaded successfully');
+      console.log('📦 Full settings object:', JSON.stringify(settings, null, 2));
+      console.log('🎚️ Cart Active:', settings.cart_active);
+      console.log('🎨 Button Text:', settings.design?.buttonText);
       state.settings = settings;
       
       // Check if cart is active

@@ -39,15 +39,49 @@ export default function DesignPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
+  const [storeId, setStoreId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchSettings();
-    fetchAddons();
+    loadUserAndSettings();
   }, []);
 
-  const fetchSettings = async () => {
+  const loadUserAndSettings = async () => {
     try {
-      const response = await fetch('/api/design?shop=example-store.myshopify.com');
+      // Get authenticated user
+      const userResponse = await fetch('/api/auth/me');
+      if (!userResponse.ok) {
+        console.error('No user logged in');
+        setLoading(false);
+        return;
+      }
+      
+      const { user } = await userResponse.json();
+      setUserId(user.id);
+      
+      // Get user's store
+      const storeResponse = await fetch(`/api/user/store?userId=${user.id}`);
+      if (!storeResponse.ok) {
+        console.log('No store found for user');
+        setLoading(false);
+        return;
+      }
+      
+      const { store } = await storeResponse.json();
+      setStoreId(store.id);
+      
+      // Fetch settings for this store
+      await fetchSettings(store.id);
+      await fetchAddons(store.id);
+    } catch (error) {
+      console.error('Error loading user and settings:', error);
+      setLoading(false);
+    }
+  };
+
+  const fetchSettings = async (storeIdParam: string) => {
+    try {
+      const response = await fetch(`/api/design?storeId=${storeIdParam}`);
       if (response.ok) {
         const data = await response.json();
         setDesign(data);
@@ -59,9 +93,9 @@ export default function DesignPage() {
     }
   };
 
-  const fetchAddons = async () => {
+  const fetchAddons = async (storeIdParam: string) => {
     try {
-      const response = await fetch('/api/addons?shop=example-store.myshopify.com');
+      const response = await fetch(`/api/addons?storeId=${storeIdParam}`);
       if (response.ok) {
         const data = await response.json();
         setAddons(data.shippingProtection);
@@ -73,6 +107,11 @@ export default function DesignPage() {
   };
 
   const handleSave = async () => {
+    if (!storeId) {
+      setSaveMessage('No store found. Please configure settings first.');
+      return;
+    }
+    
     setSaving(true);
     setSaveMessage('');
     try {
@@ -80,7 +119,7 @@ export default function DesignPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          shop: 'example-store.myshopify.com',
+          storeId,
           ...design
         })
       });

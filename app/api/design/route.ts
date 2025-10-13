@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getStoreSettings, updateStoreSettings } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 
 // GET design settings
 export async function GET(request: NextRequest) {
   try {
-    const shop = request.nextUrl.searchParams.get('shop') || 'example-store.myshopify.com';
-    const { settings, error } = await getStoreSettings(shop);
+    const storeId = request.nextUrl.searchParams.get('storeId');
+
+    if (!storeId) {
+      return NextResponse.json({ error: 'Store ID is required' }, { status: 400 });
+    }
+
+    const { data: settings, error } = await supabase
+      .from('settings')
+      .select('*')
+      .eq('store_id', storeId)
+      .single();
 
     if (error) {
       console.error('Error fetching design settings:', error);
@@ -46,10 +55,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { shop, ...designSettings } = body;
+    const { storeId, ...designSettings } = body;
 
-    if (!shop) {
-      return NextResponse.json({ error: 'Shop parameter is required' }, { status: 400 });
+    if (!storeId) {
+      return NextResponse.json({ error: 'Store ID is required' }, { status: 400 });
     }
 
     // Transform API format to database format
@@ -76,7 +85,10 @@ export async function POST(request: NextRequest) {
     if (designSettings.closeButtonBorder !== undefined) dbSettings.close_button_border = designSettings.closeButtonBorder;
     if (designSettings.closeButtonBorderColor !== undefined) dbSettings.close_button_border_color = designSettings.closeButtonBorderColor;
 
-    const { error } = await updateStoreSettings(shop, dbSettings);
+    const { error } = await supabase
+      .from('settings')
+      .update(dbSettings)
+      .eq('store_id', storeId);
 
     if (error) {
       console.error('Error updating design settings:', error);
