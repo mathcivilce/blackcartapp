@@ -37,13 +37,15 @@ export default function SettingsPage() {
         const { store } = await storeResponse.json();
         if (store) {
           console.log('Store loaded:', store);
+          console.log('Settings loaded:', store.settings);
           setStoreDomain(store.shop_domain || '');
           setApiToken(store.api_token || '');
           setAccessToken(store.access_token || '');
           
-          if (store.settings) {
-            setCartActive(store.settings.cart_active ?? true);
-          }
+          // Set cart_active from settings, default to true if not set
+          const cartActiveValue = store.settings?.cart_active ?? true;
+          console.log('Cart active value:', cartActiveValue);
+          setCartActive(cartActiveValue);
         }
       } catch (error) {
         console.error('Failed to load settings:', error);

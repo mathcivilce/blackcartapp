@@ -86,7 +86,7 @@
             <button id="sp-cart-checkout" class="sp-cart-checkout-btn">
               <span id="sp-checkout-text">Proceed to Checkout</span><span id="sp-checkout-total-separator" style="display: none;"> • </span><span id="sp-checkout-total"></span>
             </button>
-            <p class="sp-cart-note">Or continue shopping</p>
+            <p class="sp-cart-note">Or <a href="#" id="sp-continue-shopping" style="color: inherit; text-decoration: underline; cursor: pointer;">continue shopping</a></p>
           </div>
         </div>
       </div>
@@ -1020,33 +1020,45 @@
   }
 
   async function openCart() {
+    console.log('🛒 Opening cart...');
     const overlay = document.getElementById('sp-cart-overlay');
-    if (!overlay) return;
+    if (!overlay) {
+      console.error('❌ Cart overlay not found!');
+      return;
+    }
     
     try {
       // Fetch latest settings first
+      console.log('📡 Fetching latest settings...');
       const settings = await fetchSettings();
       
       // If settings failed or cart is disabled, don't open
       if (!settings) {
-        console.log('Settings not available or cart disabled');
+        console.log('⚠️ Settings not available or cart disabled');
         return;
       }
+      
+      console.log('✅ Settings loaded, opening cart UI');
       
       // Open the cart UI
       state.isOpen = true;
       overlay.classList.add('sp-open');
       document.body.style.overflow = 'hidden';
       
+      console.log('📦 Fetching cart data...');
       // Fetch latest cart data and render
       await fetchCart();
       renderCart();
+      
+      console.log('✅ Cart opened successfully');
     } catch (error) {
-      console.error('Error opening cart:', error);
+      console.error('❌ Error opening cart:', error);
       // Make sure we don't leave the page in a broken state
       if (overlay.classList.contains('sp-open')) {
         closeCart();
       }
+      // Also restore scroll if body overflow was set
+      document.body.style.overflow = '';
     }
   }
 
@@ -1081,6 +1093,15 @@
     if (checkoutBtn) {
       checkoutBtn.addEventListener('click', () => {
         window.location.href = '/checkout';
+      });
+    }
+
+    // Continue shopping link
+    const continueShoppingLink = document.getElementById('sp-continue-shopping');
+    if (continueShoppingLink) {
+      continueShoppingLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeCart();
       });
     }
 
@@ -1126,12 +1147,17 @@
     document.addEventListener('click', (e) => {
       const target = e.target.closest(cartSelectors.join(','));
       if (target) {
+        console.log('🖱️ Cart element clicked:', target);
         // Check if it's a cart link (not other cart-related elements)
         const href = target.getAttribute('href');
+        console.log('🔗 Link href:', href);
         if (href && (href === '/cart' || href.includes('/cart') || href === '#cart')) {
+          console.log('✅ Intercepting cart link click');
           e.preventDefault();
           e.stopPropagation();
           openCart();
+        } else {
+          console.log('⚠️ Cart element clicked but no valid href');
         }
       }
     }, true); // Use capture phase to intercept early
