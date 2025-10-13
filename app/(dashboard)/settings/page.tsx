@@ -17,22 +17,31 @@ export default function SettingsPage() {
     // Load current user and settings
     const loadSettings = async () => {
       try {
-        // Get current user
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (!user) {
+        // Get current session
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session?.user) {
           console.error('No user logged in');
           return;
         }
+        
+        const user = session.user;
         setUserId(user.id);
+        console.log('User loaded:', user.id);
 
         // Get user's store
-        const { data: store } = await supabaseClient
+        const { data: store, error: storeError } = await supabaseClient
           .from('stores')
           .select('*, settings(*)')
           .eq('user_id', user.id)
           .single();
 
+        if (storeError) {
+          console.log('No store found for user, will create on save');
+          return;
+        }
+
         if (store) {
+          console.log('Store loaded:', store);
           setStoreDomain(store.shop_domain || '');
           setApiToken(store.api_token || '');
           setAccessToken(store.access_token || '');
@@ -80,40 +89,70 @@ export default function SettingsPage() {
     setSaveMessage('');
     
     if (!userId) {
-      setSaveMessage('User not authenticated');
+      setSaveMessage('User not authenticated. Please refresh the page.');
       setLoading(false);
       return;
     }
     
     try {
-      // Import the function to get or create user store
-      const { getOrCreateUserStore } = await import('@/lib/db');
-      
-      // Get or create store for user
-      const { store, error: storeError } = await getOrCreateUserStore(userId, storeDomain);
-      
-      if (storeError || !store) {
-        setSaveMessage('Failed to save store settings');
-        return;
-      }
-      
-      // Update store info (api_token)
-      if (apiToken) {
-        await supabaseClient
-          .from('stores')
-          .update({ api_token: apiToken })
-          .eq('id', store.id);
-      }
-      
-      // Reload to get the access token
-      const { data: updatedStore } = await supabaseClient
+      // Check if store exists
+      const { data: existingStore } = await supabaseClient
         .from('stores')
-        .select('access_token')
-        .eq('id', store.id)
+        .select('id, access_token')
+        .eq('user_id', userId)
         .single();
+
+      let storeId = existingStore?.id;
+      let token = existingStore?.access_token;
+
+      if (!existingStore) {
+        // Create new store for user
+        const { data: newStore, error: createError } = await supabaseClient
+          .from('stores')
+          .insert({
+            user_id: userId,
+            shop_domain: storeDomain,
+            api_token: apiToken,
+            subscription_status: 'active'
+          })
+          .select('id, access_token')
+          .single();
+
+        if (createError) {
+          console.error('Failed to create store:', createError);
+          setSaveMessage('Failed to create store. Please try again.');
+          setLoading(false);
+          return;
+        }
+
+        storeId = newStore.id;
+        token = newStore.access_token;
+
+        // Create default settings
+        await supabaseClient
+          .from('settings')
+          .insert({
+            store_id: storeId,
+            cart_active: true,
+            enabled: true
+          });
+      } else {
+        // Update existing store
+        const updateData: any = {};
+        if (storeDomain) updateData.shop_domain = storeDomain;
+        if (apiToken) updateData.api_token = apiToken;
+
+        if (Object.keys(updateData).length > 0) {
+          await supabaseClient
+            .from('stores')
+            .update(updateData)
+            .eq('id', storeId);
+        }
+      }
       
-      if (updatedStore) {
-        setAccessToken(updatedStore.access_token);
+      // Set the access token to display installation instructions
+      if (token) {
+        setAccessToken(token);
       }
 
       setSaveMessage('Settings saved successfully!');
@@ -229,8 +268,8 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Installation Instructions */}
-      {accessToken && (
+      {/* Installation Instructions - show after first save */}
+      {accessToken ? (
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>Installation</h2>
           
@@ -255,6 +294,13 @@ export default function SettingsPage() {
           
           <p style={{ ...styles.hint, marginTop: '16px' }}>
             ⚠️ Keep this token secure. If compromised, use the regenerate button to create a new one.
+          </p>
+        </div>
+      ) : (
+        <div style={styles.card}>
+          <h2 style={styles.sectionTitle}>Installation</h2>
+          <p style={styles.hint}>
+            Save your settings above to generate your installation script.
           </p>
         </div>
       )}
