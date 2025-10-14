@@ -55,9 +55,6 @@ export async function POST(request: Request) {
           quantity: 1,
         },
       ],
-      subscription_data: {
-        trial_period_days: 0, // No trial period
-      },
       success_url: `${origin}/register?token=${token}`,
       cancel_url: `${origin}/pricing`,
       metadata: {
