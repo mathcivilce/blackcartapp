@@ -95,27 +95,39 @@ export default function CartPreview({ design, addons }: CartPreviewProps) {
               style={styles.itemImage}
             />
             <div style={styles.itemDetails}>
-              <p style={{ ...styles.itemTitle, color: design.cartTextColor }}>Leather Sneakers</p>
+              <div style={styles.itemHeader}>
+                <p style={{ ...styles.itemTitle, color: design.cartTextColor }}>Leather Sneakers</p>
+                <button style={styles.removeBtn} title="Remove item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </button>
+              </div>
               <p style={{ ...styles.itemVariant, color: design.cartTextColor }}>Size 10</p>
-              <div>
-                {design.displayCompareAtPrice && (
+              {design.displayCompareAtPrice && (
+                <div style={{ marginBottom: '4px' }}>
                   <span style={{ 
                     fontSize: '13px', 
                     color: '#999', 
                     textDecoration: 'line-through',
                     marginRight: '8px'
                   }}>$139.99</span>
-                )}
-                <span style={{ ...styles.itemPrice, color: design.cartTextColor, display: 'inline' }}>$129.99</span>
-              </div>
+                </div>
+              )}
               {design.showSavings && (
                 <p style={{ ...styles.itemSavings, color: design.savingsTextColor }}>{design.savingsText} $10.00</p>
               )}
-            </div>
-            <div style={styles.itemQuantity}>
-              <button style={{ ...styles.qtyButton, color: design.cartTextColor }}>-</button>
-              <span style={{ color: design.cartTextColor }}>1</span>
-              <button style={{ ...styles.qtyButton, color: design.cartTextColor }}>+</button>
+              <div style={styles.itemControls}>
+                <div style={styles.itemQuantity}>
+                  <button style={{ ...styles.qtyButton, color: design.cartTextColor }}>-</button>
+                  <span style={{ color: design.cartTextColor, fontSize: '13px' }}>1</span>
+                  <button style={{ ...styles.qtyButton, color: design.cartTextColor }}>+</button>
+                </div>
+                <span style={{ ...styles.itemPrice, color: design.cartTextColor }}>$129.99</span>
+              </div>
             </div>
           </div>
         </div>
@@ -251,10 +263,30 @@ const styles = {
   itemDetails: {
     flex: 1,
   },
+  itemHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '12px',
+    marginBottom: '4px',
+  },
   itemTitle: {
     fontSize: '14px',
     fontWeight: '600',
-    margin: '0 0 4px 0',
+    margin: 0,
+    flex: 1,
+  },
+  removeBtn: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: '#999',
+    padding: '4px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '20px',
+    height: '20px',
   },
   itemVariant: {
     fontSize: '13px',
@@ -263,7 +295,7 @@ const styles = {
   },
   itemPrice: {
     fontSize: '14px',
-    fontWeight: '600',
+    fontWeight: '400',
     margin: 0,
   },
   itemSavings: {
@@ -271,18 +303,32 @@ const styles = {
     fontWeight: '500',
     margin: '4px 0 0 0',
   },
+  itemControls: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '12px',
+    marginTop: '8px',
+  },
   itemQuantity: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
-    fontSize: '14px',
+    gap: '6px',
+    border: '1px solid #e5e5e5',
+    borderRadius: '4px',
+    padding: '2px',
   },
   qtyButton: {
     background: 'none',
     border: 'none',
-    fontSize: '18px',
+    fontSize: '14px',
     cursor: 'pointer',
-    padding: '4px 8px',
+    padding: 0,
+    width: '22px',
+    height: '22px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cartFooter: {
     padding: '20px',
@@ -307,12 +353,12 @@ const styles = {
   },
   protectionTitle: {
     fontSize: '16px',
-    fontWeight: '700',
+    fontWeight: '400',
     color: '#000',
     margin: '0 0 4px 0',
   },
   protectionDescription: {
-    fontSize: '14px',
+    fontSize: '13px',
     color: '#666',
     margin: 0,
   },
@@ -325,7 +371,7 @@ const styles = {
   },
   protectionPrice: {
     fontSize: '16px',
-    fontWeight: '700',
+    fontWeight: '400',
     color: '#000',
     margin: 0,
   },

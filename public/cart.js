@@ -248,6 +248,15 @@
         color: #000;
         margin: 0;
         line-height: 1.4;
+        flex: 1;
+      }
+      
+      .sp-cart-item-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 4px;
       }
 
       .sp-cart-item-variant {
@@ -258,7 +267,7 @@
 
       .sp-cart-item-price {
         font-size: 16px;
-        font-weight: 600;
+        font-weight: 400;
         color: #000;
         margin: 0;
       }
@@ -280,22 +289,22 @@
       .sp-quantity-controls {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
         border: 1px solid #e5e5e5;
         border-radius: 4px;
-        padding: 4px;
+        padding: 2px;
       }
 
       .sp-quantity-btn {
         background: none;
         border: none;
         cursor: pointer;
-        width: 28px;
-        height: 28px;
+        width: 22px;
+        height: 22px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 18px;
+        font-size: 14px;
         color: #000;
         transition: opacity 0.2s;
       }
@@ -310,9 +319,9 @@
       }
 
       .sp-quantity-value {
-        min-width: 30px;
+        min-width: 24px;
         text-align: center;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 500;
       }
 
@@ -320,15 +329,23 @@
         background: none;
         border: none;
         cursor: pointer;
-        color: #666;
-        font-size: 14px;
-        text-decoration: underline;
+        color: #999;
         padding: 4px;
         transition: color 0.2s;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .sp-remove-btn:hover {
-        color: #000;
+        color: #e74c3c;
+      }
+      
+      .sp-remove-btn svg {
+        width: 16px;
+        height: 16px;
       }
 
       /* Footer */
@@ -404,7 +421,7 @@
 
       .sp-protection-title {
         font-size: 16px;
-        font-weight: 700;
+        font-weight: 400;
         color: #000;
         margin: 0 0 4px 0;
       }
@@ -426,7 +443,7 @@
 
       .sp-protection-price {
         font-size: 16px;
-        font-weight: 700;
+        font-weight: 400;
         color: #000;
         margin: 0;
       }
@@ -759,6 +776,13 @@
       console.log('🔍 Cached protection variant ID:', state.protectionVariantId);
     }
     
+    // Ensure protection product quantity is always 1 (fix if > 1)
+    if (protectionItem && protectionItem.quantity > 1) {
+      console.log('⚠️ Protection product quantity is > 1, fixing to 1');
+      const lineNumber = state.cart.items.indexOf(protectionItem) + 1;
+      updateCartItem(lineNumber, 1);
+    }
+    
     // Update checkbox state
     const checkbox = document.getElementById('sp-protection-checkbox');
     if (checkbox) {
@@ -777,6 +801,12 @@
     if (!state.settings || !productHandle) {
       console.error('❌ Protection product not configured. Please add a Product Handle in settings.');
       alert('Shipping protection is not configured. Please contact store admin.');
+      return;
+    }
+
+    // Check if protection is already in cart - prevent duplicates
+    if (state.protectionInCart) {
+      console.log('ℹ️ Protection already in cart, skipping add');
       return;
     }
 
@@ -981,9 +1011,18 @@
             class="sp-cart-item-image"
           />
           <div class="sp-cart-item-details">
-            <h3 class="sp-cart-item-title">${item.product_title}</h3>
+            <div class="sp-cart-item-header">
+              <h3 class="sp-cart-item-title">${item.product_title}</h3>
+              <button class="sp-remove-btn" data-line="${lineNumber}" title="Remove item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+            </div>
             ${item.variant_title ? `<p class="sp-cart-item-variant">${item.variant_title}</p>` : ''}
-            <p class="sp-cart-item-price">${formatMoney(item.final_line_price)}</p>
             ${savingsHTML}
             <div class="sp-cart-item-controls">
               <div class="sp-quantity-controls">
@@ -1002,9 +1041,7 @@
                   +
                 </button>
               </div>
-              <button class="sp-remove-btn" data-line="${lineNumber}">
-                Remove
-              </button>
+              <p class="sp-cart-item-price">${formatMoney(item.final_line_price)}</p>
             </div>
           </div>
         </div>
@@ -1065,6 +1102,13 @@
       btn.addEventListener('click', async (e) => {
         const lineNumber = parseInt(e.target.dataset.line);
         const item = state.cart.items[lineNumber - 1];
+        
+        // Prevent increasing protection product quantity beyond 1
+        if (state.protectionVariantId && 
+            (item.id === state.protectionVariantId || item.variant_id === state.protectionVariantId)) {
+          console.log('⚠️ Protection product quantity is limited to 1');
+          return;
+        }
         
         const itemEl = e.target.closest('.sp-cart-item');
         itemEl.classList.add('sp-updating');
