@@ -825,10 +825,14 @@
     if (checkbox) {
       checkbox.checked = state.protectionInCart;
     }
-    
-    // If acceptByDefault is true and protection not in cart, add it automatically
-    if (state.settings.addons?.acceptByDefault && !state.protectionInCart && state.settings.addons?.productHandle) {
-      addProtectionToCart(true); // silent mode = true for automatic additions
+  }
+
+  // Helper function to check if protection should be auto-added
+  async function maybeAutoAddProtection() {
+    // Only auto-add if acceptByDefault is enabled and protection is not already in cart
+    if (state.settings?.addons?.acceptByDefault && !state.protectionInCart && state.settings?.addons?.productHandle) {
+      console.log('🛡️ Auto-adding protection (acceptByDefault is enabled)');
+      await addProtectionToCart(true); // silent mode
     }
   }
 
@@ -907,6 +911,7 @@
         
         // Cache the variant ID for later removal
         state.protectionVariantId = variantId;
+        state.protectionInCart = true; // Update state
         
         await fetchCart();
         renderCart();
@@ -965,7 +970,8 @@
     try {
       state.isLoading = true;
       await updateCartItem(lineNumber, 0);
-      state.protectionVariantId = null; // Clear cached variant ID
+      state.protectionInCart = false; // Update state
+      // Keep protectionVariantId cached so we can re-add it later
       renderCart();
       state.isLoading = false;
     } catch (error) {
@@ -1374,8 +1380,10 @@
           body: formData
         })
         .then(response => response.json())
-        .then(data => {
+        .then(async (data) => {
           // Successfully added to cart
+          await fetchCart(); // Refresh cart data
+          await maybeAutoAddProtection(); // Auto-add protection if enabled
           openCart();
         })
         .catch(error => {
@@ -1402,8 +1410,10 @@
             body: formData
           })
           .then(response => response.json())
-          .then(data => {
+          .then(async (data) => {
             // Successfully added to cart
+            await fetchCart(); // Refresh cart data
+            await maybeAutoAddProtection(); // Auto-add protection if enabled
             openCart();
           })
           .catch(error => {
@@ -1414,11 +1424,15 @@
     }, true); // Use capture phase
 
     // Listen for Shopify's cart events
-    document.addEventListener('cart:updated', () => {
+    document.addEventListener('cart:updated', async () => {
+      await fetchCart(); // Refresh cart data
+      await maybeAutoAddProtection(); // Auto-add protection if enabled
       openCart();
     });
 
-    document.addEventListener('product:added-to-cart', () => {
+    document.addEventListener('product:added-to-cart', async () => {
+      await fetchCart(); // Refresh cart data
+      await maybeAutoAddProtection(); // Auto-add protection if enabled
       openCart();
     });
   }
