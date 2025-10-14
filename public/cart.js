@@ -828,16 +828,18 @@
     
     // If acceptByDefault is true and protection not in cart, add it automatically
     if (state.settings.addons?.acceptByDefault && !state.protectionInCart && state.settings.addons?.productHandle) {
-      addProtectionToCart();
+      addProtectionToCart(true); // silent mode = true for automatic additions
     }
   }
 
-  async function addProtectionToCart() {
+  async function addProtectionToCart(silentMode = false) {
     const productHandle = state.settings?.addons?.productHandle || state.settings?.protectionProductHandle;
     
     if (!state.settings || !productHandle) {
       console.error('❌ Protection product not configured. Please add a Product Handle in settings.');
-      alert('Shipping protection is not configured. Please contact store admin.');
+      if (!silentMode) {
+        alert('Shipping protection is not configured. Please contact store admin.');
+      }
       return;
     }
 
@@ -858,7 +860,9 @@
 
       if (!productResponse.ok) {
         console.error('❌ Failed to fetch product. Handle may be incorrect:', productHandle);
-        alert('Failed to load protection product. Please check the Product Handle in settings.');
+        if (!silentMode) {
+          alert('Failed to load protection product. Please check the Product Handle in settings.');
+        }
         
         const checkbox = document.getElementById('sp-protection-checkbox');
         if (checkbox) checkbox.checked = false;
@@ -871,7 +875,9 @@
       // Get the first available variant
       if (!productData.variants || productData.variants.length === 0) {
         console.error('❌ No variants found for product:', productHandle);
-        alert('Protection product has no variants. Please contact store admin.');
+        if (!silentMode) {
+          alert('Protection product has no variants. Please contact store admin.');
+        }
         
         const checkbox = document.getElementById('sp-protection-checkbox');
         if (checkbox) checkbox.checked = false;
@@ -907,7 +913,9 @@
       } else {
         const errorText = await response.text();
         console.error('❌ Failed to add protection to cart:', response.status, errorText);
-        alert('Failed to add shipping protection. Please try again.');
+        if (!silentMode) {
+          alert('Failed to add shipping protection. Please try again.');
+        }
         
         // Uncheck the checkbox
         const checkbox = document.getElementById('sp-protection-checkbox');
@@ -916,7 +924,9 @@
       state.isLoading = false;
     } catch (error) {
       console.error('❌ Error adding protection:', error);
-      alert('Network error. Please check your connection and try again.');
+      if (!silentMode) {
+        alert('Network error. Please check your connection and try again.');
+      }
       
       // Uncheck the checkbox
       const checkbox = document.getElementById('sp-protection-checkbox');
