@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -318,4 +318,19 @@ const styles = {
     margin: '4px 0 0 0'
   }
 };
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div style={styles.container}>
+        <div style={styles.registerBox}>
+          <h1 style={styles.title}>Loading...</h1>
+          <p style={styles.subtitle}>Please wait</p>
+        </div>
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
+  );
+}
 

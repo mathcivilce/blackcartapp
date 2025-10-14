@@ -3,12 +3,13 @@ import Stripe from 'stripe';
 import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
-});
-
 export async function POST(request: Request) {
   try {
+    // Initialize Stripe inside the function to avoid build-time errors
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: '2025-09-30.clover',
+    });
+
     const { email } = await request.json();
 
     if (!email) {
