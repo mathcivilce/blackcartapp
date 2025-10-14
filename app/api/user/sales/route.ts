@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { supabase } from '@/lib/supabase';
 
@@ -9,13 +9,35 @@ import { supabase } from '@/lib/supabase';
 export async function GET(request: NextRequest) {
   try {
     // Authenticate user
-    const supabaseClient = createRouteHandlerClient({ cookies });
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('sb-access-token')?.value;
+
+    if (!accessToken) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'Not authenticated. Please login first.'
+      }, { status: 401 });
+    }
+
+    // Create client with user's access token
+    const authClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      }
+    );
+
+    const { data: { user }, error: userError } = await authClient.auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ 
         success: false,
-        error: 'Not authenticated'
+        error: 'Invalid session. Please login again.'
       }, { status: 401 });
     }
 
