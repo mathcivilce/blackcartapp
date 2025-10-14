@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
           title: settings?.addon_title || 'Shipping Protection',
           description: settings?.addon_description || 'Protect your order from damage, loss, or theft during shipping.',
           price: settings?.addon_price || 4.90,
-          productId: settings?.addon_product_id || null,
+          productHandle: settings?.addon_product_id || null,
           acceptByDefault: settings?.addon_accept_by_default ?? false,
         }
       });

@@ -292,19 +292,19 @@ export default function AddOnsPage() {
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>Product ID (Required)</label>
+              <label style={styles.label}>Product Handle (Required)</label>
               <input
                 type="text"
                 name="productId"
                 value={addons.shippingProtection.productId}
                 onChange={handleInputChange}
                 style={styles.textInput}
-                placeholder="e.g., 1234567890"
+                placeholder="e.g., shipping-protection"
                 disabled={!addons.featureEnabled}
               />
               <p style={styles.helperText}>
-                <strong>How to find:</strong> Go to Products → Click on your product → Look at the URL, the number after <code>/products/</code> is the Product ID.<br/>
-                Example: <code>.../admin/products/<strong>1234567890</strong></code>
+                <strong>How to find:</strong> Go to your Shopify storefront → Navigate to the product page → Copy the text after <code>/products/</code> in the URL.<br/>
+                Example: For <code>yourstore.com/products/<strong>shipping-protection</strong></code>, use <strong>shipping-protection</strong>
               </p>
             </div>
 

@@ -770,40 +770,32 @@
     }
     
     // If acceptByDefault is true and protection not in cart, add it automatically
-    if (state.settings.addons?.acceptByDefault && !state.protectionInCart && state.settings.addons?.productId) {
+    if (state.settings.addons?.acceptByDefault && !state.protectionInCart && state.settings.addons?.productHandle) {
       addProtectionToCart();
     }
   }
 
   async function addProtectionToCart() {
-    const productId = state.settings?.addons?.productId || state.settings?.protectionProductId;
+    const productHandle = state.settings?.addons?.productHandle || state.settings?.protectionProductHandle;
     
-    if (!state.settings || !productId) {
-      console.error('❌ Protection product not configured. Please add a Product ID in settings.');
+    if (!state.settings || !productHandle) {
+      console.error('❌ Protection product not configured. Please add a Product Handle in settings.');
       alert('Shipping protection is not configured. Please contact store admin.');
       return;
     }
 
-    console.log('🛡️ Adding protection to cart with Product ID:', productId);
+    console.log('🛡️ Adding protection to cart with Product Handle:', productHandle);
 
     try {
       state.isLoading = true;
       
-      // First, get the variant ID from the product ID
-      console.log('📡 Converting Product ID to Variant ID...');
-      const variantResponse = await fetch(`${CONFIG.appUrl}/api/shopify/get-variant`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: productId,
-          token: CONFIG.token
-        })
-      });
+      // Fetch product data from Shopify's public endpoint
+      console.log('📡 Fetching product data from Shopify...');
+      const productResponse = await fetch(`/products/${productHandle}.js`);
 
-      if (!variantResponse.ok) {
-        const errorData = await variantResponse.json();
-        console.error('❌ Failed to get variant:', errorData);
-        alert('Failed to load protection product. Please check your Product ID in settings.');
+      if (!productResponse.ok) {
+        console.error('❌ Failed to fetch product. Handle may be incorrect:', productHandle);
+        alert('Failed to load protection product. Please check the Product Handle in settings.');
         
         const checkbox = document.getElementById('sp-protection-checkbox');
         if (checkbox) checkbox.checked = false;
@@ -811,10 +803,22 @@
         return;
       }
 
-      const variantData = await variantResponse.json();
-      const variantId = variantData.variantId;
+      const productData = await productResponse.json();
       
-      console.log('✅ Got Variant ID:', variantId, 'for product:', variantData.title);
+      // Get the first available variant
+      if (!productData.variants || productData.variants.length === 0) {
+        console.error('❌ No variants found for product:', productHandle);
+        alert('Protection product has no variants. Please contact store admin.');
+        
+        const checkbox = document.getElementById('sp-protection-checkbox');
+        if (checkbox) checkbox.checked = false;
+        state.isLoading = false;
+        return;
+      }
+
+      const variantId = productData.variants[0].id;
+      
+      console.log('✅ Got Variant ID:', variantId, 'for product:', productData.title);
 
       // Now add to cart using the variant ID
       const response = await fetch('/cart/add.js', {
