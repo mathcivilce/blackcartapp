@@ -106,17 +106,17 @@ export default function CartPreview({ design, addons }: CartPreviewProps) {
                   </svg>
                 </button>
               </div>
-              <p style={{ ...styles.itemVariant, color: design.cartTextColor }}>Size 10</p>
-              {design.displayCompareAtPrice && (
-                <div style={{ marginBottom: '4px' }}>
+              <p style={styles.itemVariant}>Size 10</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                {design.displayCompareAtPrice && (
                   <span style={{ 
                     fontSize: '13px', 
                     color: '#999', 
                     textDecoration: 'line-through',
-                    marginRight: '8px'
                   }}>$139.99</span>
-                </div>
-              )}
+                )}
+                <span style={{ ...styles.itemPriceInline, color: design.cartTextColor }}>$129.99</span>
+              </div>
               {design.showSavings && (
                 <p style={{ ...styles.itemSavings, color: design.savingsTextColor }}>{design.savingsText} $10.00</p>
               )}
@@ -168,7 +168,7 @@ export default function CartPreview({ design, addons }: CartPreviewProps) {
                     }}>
                       <span style={{
                         ...styles.toggleKnob,
-                        transform: addons.acceptByDefault ? 'translateX(20px)' : 'translateX(0)'
+                        transform: addons.acceptByDefault ? 'translateX(18px)' : 'translateX(0)'
                       }}></span>
                     </span>
                   </label>
@@ -268,10 +268,10 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: '12px',
-    marginBottom: '4px',
+    marginBottom: '2px',
   },
   itemTitle: {
-    fontSize: '14px',
+    fontSize: '13px',
     fontWeight: '600',
     margin: 0,
     flex: 1,
@@ -289,9 +289,13 @@ const styles = {
     height: '20px',
   },
   itemVariant: {
-    fontSize: '13px',
-    color: '#666',
-    margin: '0 0 4px 0',
+    fontSize: '12px',
+    color: '#999999',
+    margin: 0,
+  },
+  itemPriceInline: {
+    fontSize: '14px',
+    fontWeight: '400',
   },
   itemPrice: {
     fontSize: '14px',
@@ -336,7 +340,7 @@ const styles = {
   },
   protectionContainer: {
     background: '#f8f9fa',
-    padding: '16px',
+    padding: '0',
     marginBottom: '20px',
     borderRadius: '8px',
   },
@@ -378,8 +382,8 @@ const styles = {
   toggleSwitch: {
     position: 'relative' as const,
     display: 'inline-block',
-    width: '51px',
-    height: '31px',
+    width: '42px',
+    height: '24px',
   },
   toggleSlider: {
     position: 'absolute' as const,
@@ -395,10 +399,10 @@ const styles = {
   toggleKnob: {
     position: 'absolute' as const,
     content: '""',
-    height: '23px',
-    width: '23px',
-    left: '4px',
-    bottom: '4px',
+    height: '18px',
+    width: '18px',
+    left: '3px',
+    bottom: '3px',
     backgroundColor: 'white',
     transition: '0.3s',
     borderRadius: '50%',

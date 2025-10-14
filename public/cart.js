@@ -243,7 +243,7 @@
       }
 
       .sp-cart-item-title {
-        font-size: 16px;
+        font-size: 13px;
         font-weight: 500;
         color: #000;
         margin: 0;
@@ -256,12 +256,12 @@
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
       }
 
       .sp-cart-item-variant {
-        font-size: 14px;
-        color: #666;
+        font-size: 12px;
+        color: #999999;
         margin: 0;
       }
 
@@ -396,7 +396,7 @@
       /* Protection Toggle */
       .sp-protection-container {
         background: #f8f9fa;
-        padding: 16px;
+        padding: 0;
         margin-bottom: 20px;
         border-radius: 8px;
       }
@@ -452,8 +452,8 @@
       .sp-toggle-switch {
         position: relative;
         display: inline-block;
-        width: 51px;
-        height: 31px;
+        width: 42px;
+        height: 24px;
       }
 
       .sp-toggle-switch input {
@@ -477,10 +477,10 @@
       .sp-toggle-slider:before {
         position: absolute;
         content: "";
-        height: 23px;
-        width: 23px;
-        left: 4px;
-        bottom: 4px;
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
         background-color: white;
         transition: 0.3s;
         border-radius: 50%;
@@ -491,7 +491,7 @@
       }
 
       .sp-protection-checkbox:checked + .sp-toggle-slider:before {
-        transform: translateX(20px);
+        transform: translateX(18px);
       }
 
       .sp-toggle-slider:hover {
@@ -990,13 +990,19 @@
     const itemsHTML = visibleItems.map((item) => {
       const lineNumber = state.cart.items.indexOf(item) + 1;
       
-      // Calculate savings if compare_at_price exists
+      // Calculate compare-at-price and savings
       const showSavings = state.settings?.design?.showSavings !== false;
+      const displayCompareAtPrice = state.settings?.design?.displayCompareAtPrice !== false;
+      let compareAtPriceHTML = '';
       let savingsHTML = '';
-      if (showSavings && item.variant_options && item.variant_options.includes('compare_at_price')) {
-        const comparePrice = item.variant_options.compare_at_price || item.original_line_price;
-        if (comparePrice > item.final_line_price) {
-          const savings = comparePrice - item.final_line_price;
+      
+      // Check for compare_at_price
+      if (item.compare_at_price && item.compare_at_price > item.final_line_price) {
+        if (displayCompareAtPrice) {
+          compareAtPriceHTML = `<span style="font-size: 13px; color: #999; text-decoration: line-through; margin-right: 8px;">${formatMoney(item.compare_at_price)}</span>`;
+        }
+        if (showSavings) {
+          const savings = item.compare_at_price - item.final_line_price;
           const savingsColor = state.settings?.design?.savingsTextColor || '#2ea818';
           const savingsText = state.settings?.design?.savingsText || 'Save';
           savingsHTML = `<p class="sp-cart-item-savings" style="color: ${savingsColor};">${savingsText} ${formatMoney(savings)}</p>`;
@@ -1023,6 +1029,7 @@
               </button>
             </div>
             ${item.variant_title ? `<p class="sp-cart-item-variant">${item.variant_title}</p>` : ''}
+            ${compareAtPriceHTML || item.compare_at_price ? `<div style="margin-top: 4px;">${compareAtPriceHTML}<span style="font-size: 14px; font-weight: 400;">${formatMoney(item.final_line_price)}</span></div>` : ''}
             ${savingsHTML}
             <div class="sp-cart-item-controls">
               <div class="sp-quantity-controls">
