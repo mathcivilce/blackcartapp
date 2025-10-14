@@ -6,7 +6,7 @@
     appUrl: (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
       ? 'http://localhost:3001' 
       : 'https://blackcartapp.netlify.app',
-    shopDomain: window.Shopify?.shop || 'example-store.myshopify.com',
+    shopDomain: window.Shopify?.shop || '',
     // Extract token from script src URL: <script src="cart.js?token=xxx"></script>
     token: (() => {
       const scripts = document.getElementsByTagName('script');
