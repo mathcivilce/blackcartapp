@@ -2,9 +2,11 @@ import { createClient } from '@supabase/supabase-js';
 
 // Supabase configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ezzpivxxdxcdnmerrcbt.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6enBpdnh4ZHhjZG5tZXJyY2J0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMDcxNDYsImV4cCI6MjA3NTc4MzE0Nn0.yvvwDmap8NtqYONkBohgjpn_shKjP5uDP-rBETPFtG8';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6enBpdnh4ZHhjZG5tZXJyY2J0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDIwNzE0NiwiZXhwIjoyMDc1NzgzMTQ2fQ.KbKQ0SKyqXYFqylxtUPCr07DiyCdcvwat_YV9tjQoMg';
 
-// Create Supabase client with service role key (for server-side only)
+// Create Supabase client with service role key (for server-side database operations only)
+// Do NOT use this for auth - it bypasses RLS
 export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
