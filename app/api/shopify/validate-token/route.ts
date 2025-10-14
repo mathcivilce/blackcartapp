@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
 // Validate Shopify API token and auto-populate shop domain
@@ -83,16 +82,30 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Token has read_orders permission');
 
-    // Step 4: Get authenticated user
-    const supabaseClient = createRouteHandlerClient({ cookies });
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Step 4: Get authenticated user (using the proven pattern from /api/auth/me)
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('sb-access-token')?.value;
 
-    if (userError || !user) {
+    if (!accessToken) {
+      console.error('❌ No access token found in cookies');
       return NextResponse.json({ 
         success: false,
-        error: 'Not authenticated'
+        error: 'Not authenticated. Please login first.'
       }, { status: 401 });
     }
+
+    // Get user from access token
+    const { data: { user }, error: userError } = await supabase.auth.getUser(accessToken);
+
+    if (userError || !user) {
+      console.error('❌ Failed to get user:', userError);
+      return NextResponse.json({ 
+        success: false,
+        error: 'Invalid session. Please login again.'
+      }, { status: 401 });
+    }
+
+    console.log('✅ User authenticated:', user.email);
 
     // Step 5: Check if this store is already connected to a different user
     const { data: existingStore } = await supabase

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { supabase } from '@/lib/supabase';
 
@@ -8,14 +7,23 @@ import { supabase } from '@/lib/supabase';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Authenticate user
-    const supabaseClient = createRouteHandlerClient({ cookies });
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Authenticate user (using the proven pattern from /api/auth/me)
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('sb-access-token')?.value;
+
+    if (!accessToken) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'Not authenticated. Please login first.'
+      }, { status: 401 });
+    }
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser(accessToken);
 
     if (userError || !user) {
       return NextResponse.json({ 
         success: false,
-        error: 'Not authenticated'
+        error: 'Invalid session. Please login again.'
       }, { status: 401 });
     }
 
