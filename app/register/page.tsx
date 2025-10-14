@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -10,7 +10,55 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [validatingToken, setValidatingToken] = useState(true);
+  const [tokenValid, setTokenValid] = useState(false);
+  const [token, setToken] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Validate token on component mount
+  useEffect(() => {
+    const validateToken = async () => {
+      const urlToken = searchParams.get('token');
+      
+      if (!urlToken) {
+        setError('No subscription token found. Please subscribe first.');
+        setValidatingToken(false);
+        setTokenValid(false);
+        return;
+      }
+
+      setToken(urlToken);
+
+      try {
+        const response = await fetch('/api/stripe/validate-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: urlToken })
+        });
+
+        const data = await response.json();
+
+        if (data.valid) {
+          setTokenValid(true);
+          // Pre-fill email from token
+          if (data.email) {
+            setEmail(data.email);
+          }
+        } else {
+          setError(data.error || 'Invalid or expired subscription token.');
+          setTokenValid(false);
+        }
+      } catch (err) {
+        setError('Failed to validate subscription. Please try again.');
+        setTokenValid(false);
+      } finally {
+        setValidatingToken(false);
+      }
+    };
+
+    validateToken();
+  }, [searchParams]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +82,7 @@ export default function RegisterPage() {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name })
+        body: JSON.stringify({ email, password, name, token })
       });
 
       const data = await response.json();
@@ -52,11 +100,45 @@ export default function RegisterPage() {
     }
   };
 
+  // Show loading state while validating token
+  if (validatingToken) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.registerBox}>
+          <h1 style={styles.title}>Validating Subscription...</h1>
+          <p style={styles.subtitle}>Please wait while we verify your payment</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if token is invalid
+  if (!tokenValid) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.registerBox}>
+          <h1 style={styles.title}>Subscription Required</h1>
+          <p style={styles.subtitle}>You need an active subscription to register</p>
+          
+          {error && (
+            <div style={styles.error}>
+              {error}
+            </div>
+          )}
+
+          <a href="/pricing" style={styles.linkButton}>
+            Subscribe Now
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.container}>
       <div style={styles.registerBox}>
         <h1 style={styles.title}>Create Account</h1>
-        <p style={styles.subtitle}>Sign up to get started with BlackCart</p>
+        <p style={styles.subtitle}>Complete your registration for BlackCart</p>
         
         <form onSubmit={handleRegister} style={styles.form}>
           {error && (
@@ -88,7 +170,9 @@ export default function RegisterPage() {
               style={styles.input}
               placeholder="you@example.com"
               autoComplete="email"
+              disabled={true}
             />
+            <p style={styles.helperText}>Email from your subscription</p>
           </div>
 
           <div style={styles.formGroup}>
@@ -210,7 +294,28 @@ const styles = {
     borderRadius: '8px',
     fontSize: '14px',
     textAlign: 'center' as const,
-    border: '1px solid #ff6b6b'
+    border: '1px solid #ff6b6b',
+    marginBottom: '20px'
+  },
+  linkButton: {
+    display: 'block',
+    padding: '14px',
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#fff',
+    background: '#000',
+    border: '2px solid #fff',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    marginTop: '20px',
+    textAlign: 'center' as const,
+    textDecoration: 'none'
+  },
+  helperText: {
+    fontSize: '12px',
+    color: '#666',
+    margin: '4px 0 0 0'
   }
 };
 

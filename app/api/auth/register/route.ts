@@ -4,12 +4,59 @@ import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
   try {
-    const { email, password, name } = await request.json();
+    const { email, password, name, token } = await request.json();
 
     // Validate input
-    if (!email || !password || !name) {
+    if (!email || !password || !name || !token) {
       return NextResponse.json(
-        { error: 'Email, password, and name are required' },
+        { error: 'Email, password, name, and subscription token are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate subscription token
+    const { data: tokenData, error: tokenError } = await supabase
+      .from('subscription_tokens')
+      .select('*')
+      .eq('token', token)
+      .single();
+
+    if (tokenError || !tokenData) {
+      return NextResponse.json(
+        { error: 'Invalid subscription token' },
+        { status: 400 }
+      );
+    }
+
+    // Check if token is already used
+    if (tokenData.used) {
+      return NextResponse.json(
+        { error: 'Subscription token has already been used' },
+        { status: 400 }
+      );
+    }
+
+    // Check if token has expired
+    const expiresAt = new Date(tokenData.expires_at);
+    if (expiresAt < new Date()) {
+      return NextResponse.json(
+        { error: 'Subscription token has expired' },
+        { status: 400 }
+      );
+    }
+
+    // Verify email matches token email
+    if (tokenData.email !== email) {
+      return NextResponse.json(
+        { error: 'Email does not match subscription' },
+        { status: 400 }
+      );
+    }
+
+    // Verify payment was completed
+    if (!tokenData.stripe_customer_id || !tokenData.stripe_subscription_id) {
+      return NextResponse.json(
+        { error: 'Subscription payment not completed' },
         { status: 400 }
       );
     }
@@ -57,7 +104,45 @@ export async function POST(request: Request) {
     }
 
     // If registration was successful and session was created
-    if (data.session) {
+    if (data.session && data.user) {
+      // Mark token as used and associate with user
+      await supabase
+        .from('subscription_tokens')
+        .update({
+          used: true,
+          used_at: new Date().toISOString(),
+          user_id: data.user.id
+        })
+        .eq('token', token);
+
+      // Create store for user with Stripe details
+      const { data: newStore, error: storeError } = await supabase
+        .from('stores')
+        .insert({
+          user_id: data.user.id,
+          shop_domain: '', // Will be set later when they connect Shopify
+          stripe_customer_id: tokenData.stripe_customer_id,
+          subscription_status: 'active',
+          email: email
+        })
+        .select()
+        .single();
+
+      if (!storeError && newStore) {
+        // Create default settings for the new store
+        await supabase
+          .from('settings')
+          .insert({
+            store_id: newStore.id,
+            price: 490,
+            toggle_color: '#2196F3',
+            toggle_text: 'Shipping Protection',
+            description: 'Protect your order from damage, loss, or theft during shipping.',
+            enabled: true,
+            cart_active: true
+          });
+      }
+
       // Set session cookie
       const cookieStore = await cookies();
       cookieStore.set('sb-access-token', data.session.access_token, {

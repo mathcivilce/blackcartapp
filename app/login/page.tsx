@@ -85,6 +85,13 @@ export default function LoginPage() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+
+        <div style={styles.footer}>
+          <p style={styles.footerText}>
+            Don't have an account?{' '}
+            <a href="/pricing" style={styles.link}>Subscribe Now</a>
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -154,6 +161,21 @@ const styles = {
     fontSize: '14px',
     textAlign: 'center' as const,
     border: '1px solid #ff6b6b'
+  },
+  footer: {
+    textAlign: 'center' as const,
+    marginTop: '24px'
+  },
+  footerText: {
+    fontSize: '14px',
+    color: '#888',
+    margin: 0
+  },
+  link: {
+    color: '#fff',
+    textDecoration: 'none',
+    fontWeight: '600',
+    transition: 'opacity 0.2s'
   }
 };
 

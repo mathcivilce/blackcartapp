@@ -9,10 +9,12 @@ export function middleware(request: NextRequest) {
   const publicRoutes = [
     '/login',
     '/register',
+    '/pricing',
     '/api/settings', 
     '/cart.js', 
     '/api/auth/login',
     '/api/auth/register',
+    '/api/stripe', // Allow Stripe routes
     '/api/setup' // Allow setup routes
   ];
   
