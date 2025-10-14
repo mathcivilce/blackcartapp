@@ -597,4 +597,15 @@ const styles = {
     fontWeight: '600',
     transition: 'all 0.2s',
   },
+  button: {
+    padding: '12px 24px',
+    background: '#1976d2',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
 };
