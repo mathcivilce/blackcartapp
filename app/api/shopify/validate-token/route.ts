@@ -53,12 +53,14 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Shop data retrieved:', {
       domain: shopInfo.domain,
+      myshopify_domain: shopInfo.myshopify_domain,
       name: shopInfo.name,
       id: shopInfo.id
     });
 
     // Step 2: Get the CANONICAL domain from Shopify (this is the source of truth)
-    const canonicalDomain = shopInfo.domain; // e.g., "8cd001-2.myshopify.com"
+    // Use myshopify_domain which is the native .myshopify.com domain
+    const canonicalDomain = shopInfo.myshopify_domain; // e.g., "8cd001-2.myshopify.com"
     const shopName = shopInfo.name;
     const shopifyId = shopInfo.id.toString();
 
