@@ -11,13 +11,6 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [copied, setCopied] = useState(false);
-  const [validating, setValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<{
-    success: boolean;
-    message: string;
-    shopName?: string;
-    corrected?: boolean;
-  } | null>(null);
 
   useEffect(() => {
     // Load current user and settings
@@ -101,68 +94,6 @@ export default function SettingsPage() {
       setCartActive(!newValue); // Revert on error
       setSaveMessage(`Error: Failed to ${newValue ? 'activate' : 'deactivate'} cart.`);
       setTimeout(() => setSaveMessage(''), 3000);
-    }
-  };
-
-  const handleValidateToken = async () => {
-    setValidating(true);
-    setValidationResult(null);
-    setSaveMessage('');
-
-    if (!storeDomain || !apiToken) {
-      setValidationResult({
-        success: false,
-        message: 'Please enter both store domain and API token'
-      });
-      setValidating(false);
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/shopify/validate-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          shop_domain: storeDomain,
-          api_token: apiToken
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setValidationResult({
-          success: false,
-          message: data.error || 'Validation failed'
-        });
-        setValidating(false);
-        return;
-      }
-
-      // Success! Update UI with validated data
-      setValidationResult({
-        success: true,
-        message: `✓ Connected to ${data.store.shop_name}`,
-        shopName: data.store.shop_name,
-        corrected: data.store.domain_corrected
-      });
-
-      // Update store domain with canonical domain from Shopify
-      setStoreDomain(data.store.shop_domain);
-      setAccessToken(data.store.access_token);
-
-      // Show success message
-      setSaveMessage('Store connected and validated successfully!');
-      setTimeout(() => setSaveMessage(''), 5000);
-
-    } catch (error) {
-      console.error('Validation error:', error);
-      setValidationResult({
-        success: false,
-        message: 'Network error. Please try again.'
-      });
-    } finally {
-      setValidating(false);
     }
   };
 
@@ -283,90 +214,34 @@ export default function SettingsPage() {
       </div>
 
       <div style={styles.card}>
-        <h2 style={styles.sectionTitle}>Shopify Connection</h2>
+        <h2 style={styles.sectionTitle}>Store Information</h2>
         
         <div style={styles.formGroup}>
           <label style={styles.label}>Store Domain</label>
           <input
             type="text"
             value={storeDomain}
-            onChange={(e) => {
-              setStoreDomain(e.target.value);
-              setValidationResult(null);
-            }}
+            onChange={(e) => setStoreDomain(e.target.value)}
             style={styles.input}
-            placeholder="your-store.myshopify.com"
+            placeholder="example-store.myshopify.com"
           />
-          <p style={styles.hint}>Your Shopify store's .myshopify.com domain</p>
+          <p style={styles.hint}>Your Shopify store URL</p>
         </div>
+      </div>
 
+      <div style={styles.card}>
+        <h2 style={styles.sectionTitle}>API Configuration</h2>
+        
         <div style={styles.formGroup}>
-          <label style={styles.label}>Shopify Admin API Token</label>
+          <label style={styles.label}>Shopify API Token</label>
           <input
             type="password"
             value={apiToken}
-            onChange={(e) => {
-              setApiToken(e.target.value);
-              setValidationResult(null);
-            }}
+            onChange={(e) => setApiToken(e.target.value)}
             style={styles.input}
             placeholder="shpat_••••••••••••••••"
           />
-          <p style={styles.hint}>
-            Admin API access token with <strong>read_orders</strong> permission
-          </p>
-        </div>
-
-        <button
-          onClick={handleValidateToken}
-          disabled={validating || !storeDomain || !apiToken}
-          style={{
-            ...styles.button,
-            backgroundColor: validating ? '#ccc' : '#1976d2',
-            cursor: validating || !storeDomain || !apiToken ? 'not-allowed' : 'pointer',
-            marginBottom: '16px'
-          }}
-        >
-          {validating ? 'Validating...' : '🔗 Validate & Connect Store'}
-        </button>
-
-        {validationResult && (
-          <div style={{
-            padding: '12px 16px',
-            borderRadius: '8px',
-            marginBottom: '16px',
-            backgroundColor: validationResult.success ? '#e8f5e9' : '#ffebee',
-            border: `1px solid ${validationResult.success ? '#4caf50' : '#f44336'}`,
-            color: validationResult.success ? '#2e7d32' : '#c62828'
-          }}>
-            <p style={{ margin: 0, fontWeight: '600' }}>
-              {validationResult.message}
-            </p>
-            {validationResult.corrected && (
-              <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>
-                ℹ️ Domain was auto-corrected to the canonical Shopify domain
-              </p>
-            )}
-          </div>
-        )}
-
-        <div style={{
-          padding: '12px',
-          backgroundColor: '#e3f2fd',
-          borderRadius: '8px',
-          border: '1px solid #2196f3',
-          marginTop: '16px'
-        }}>
-          <p style={{ margin: 0, fontSize: '14px', color: '#1565c0' }}>
-            <strong>📚 How to get your API token:</strong>
-          </p>
-          <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px', fontSize: '13px', color: '#1976d2' }}>
-            <li>Go to your Shopify Admin → Settings → Apps and sales channels</li>
-            <li>Click "Develop apps" → "Create an app"</li>
-            <li>Name it "XCart Revenue Tracking"</li>
-            <li>Configure Admin API scopes: Enable <strong>read_orders</strong></li>
-            <li>Install the app and copy the Admin API access token</li>
-          </ol>
+          <p style={styles.hint}>Admin API access token for your Shopify store</p>
         </div>
       </div>
 
@@ -595,17 +470,6 @@ const styles = {
     cursor: 'pointer',
     fontSize: '14px',
     fontWeight: '600',
-    transition: 'all 0.2s',
-  },
-  button: {
-    padding: '12px 24px',
-    background: '#1976d2',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: 'pointer',
     transition: 'all 0.2s',
   },
 };
