@@ -741,10 +741,8 @@
 
   function checkProtectionInCart() {
     if (!state.cart || !state.settings) return;
-
-    const productId = state.settings.addons?.productId || state.settings.protectionProductId;
     
-    // Check using cached variant ID first, then fallback to product ID
+    // Check using cached variant ID only (since we fetch it dynamically now)
     let protectionItem;
     if (state.protectionVariantId) {
       protectionItem = state.cart.items.find(item => 
@@ -752,16 +750,14 @@
         item.id === state.protectionVariantId
       );
     }
-    
-    // Fallback to product ID check
-    if (!protectionItem) {
-      protectionItem = state.cart.items.find(item => 
-        item.variant_id === productId ||
-        item.id === productId
-      );
-    }
 
     state.protectionInCart = !!protectionItem;
+    
+    // Cache the variant ID if we found the protection item
+    if (protectionItem && !state.protectionVariantId) {
+      state.protectionVariantId = protectionItem.id || protectionItem.variant_id;
+      console.log('🔍 Cached protection variant ID:', state.protectionVariantId);
+    }
     
     // Update checkbox state
     const checkbox = document.getElementById('sp-protection-checkbox');
@@ -865,34 +861,26 @@
 
   async function removeProtectionFromCart() {
     if (!state.cart || !state.settings) return;
-
-    const productId = state.settings?.addons?.productId || state.settings?.protectionProductId;
     
-    console.log('🗑️ Removing protection. Product ID:', productId);
+    console.log('🗑️ Removing protection. Cached Variant ID:', state.protectionVariantId);
     
-    // If we have the cached variant ID, use it
-    let protectionItem;
-    if (state.protectionVariantId) {
-      protectionItem = state.cart.items.find(item => 
-        item.variant_id === state.protectionVariantId ||
-        item.id === state.protectionVariantId
-      );
-      console.log('Found by cached variant ID:', state.protectionVariantId);
-    }
-    
-    // Fallback: try to find by product ID (in case it was a variant ID)
-    if (!protectionItem) {
-      protectionItem = state.cart.items.find(item => 
-        item.variant_id === productId ||
-        item.id === productId
-      );
-      console.log('Found by product ID:', productId);
-    }
-
-    if (!protectionItem) {
-      console.log('Protection item not found in cart');
+    // Use the cached variant ID to find the protection item
+    if (!state.protectionVariantId) {
+      console.log('⚠️ No cached variant ID. Cannot remove protection.');
       return;
     }
+    
+    const protectionItem = state.cart.items.find(item => 
+      item.variant_id === state.protectionVariantId ||
+      item.id === state.protectionVariantId
+    );
+
+    if (!protectionItem) {
+      console.log('❌ Protection item not found in cart');
+      return;
+    }
+    
+    console.log('✅ Found protection item:', protectionItem.title);
 
     const lineNumber = state.cart.items.indexOf(protectionItem) + 1;
     console.log('Removing line:', lineNumber);
@@ -962,9 +950,11 @@
 
     // Filter out protection product from display
     const visibleItems = state.cart.items.filter(item => {
-      const productId = state.settings?.addons?.productId || state.settings?.protectionProductId;
-      if (!state.settings || !productId) return true;
-      return item.variant_id !== productId && item.id !== productId;
+      // If we have a cached protection variant ID, filter it out
+      if (state.protectionVariantId) {
+        return item.id !== state.protectionVariantId && item.variant_id !== state.protectionVariantId;
+      }
+      return true;
     });
 
     const itemsHTML = visibleItems.map((item) => {
