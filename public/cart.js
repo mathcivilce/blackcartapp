@@ -1181,9 +1181,10 @@
     // Remove item
     document.querySelectorAll('.sp-remove-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
-        const lineNumber = parseInt(e.target.dataset.line);
+        const button = e.currentTarget;
+        const lineNumber = parseInt(button.dataset.line);
         
-        const itemEl = e.target.closest('.sp-cart-item');
+        const itemEl = button.closest('.sp-cart-item');
         itemEl.classList.add('sp-updating');
         
         await removeCartItem(lineNumber);
