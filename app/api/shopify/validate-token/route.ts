@@ -132,18 +132,20 @@ export async function POST(request: NextRequest) {
 
     // Step 6: Update or create store record with validated information
     // Use CANONICAL domain from Shopify, not user input
+    // Upsert by user_id since each user can only have one store
     const { data: store, error: storeError } = await supabase
       .from('stores')
       .upsert({
         shop_domain: canonicalDomain,  // ⭐ Source of truth from Shopify
         shop_name: shopName,
         email: shopInfo.email || null,
-        api_token: api_token,  // TODO: Encrypt this in production
+        api_token: api_token,
         user_id: user.id,
         subscription_status: 'active',
         updated_at: new Date().toISOString()
       }, {
-        onConflict: 'shop_domain'
+        onConflict: 'user_id',  // Each user has only one store
+        ignoreDuplicates: false  // Always update
       })
       .select()
       .single();
@@ -152,7 +154,8 @@ export async function POST(request: NextRequest) {
       console.error('❌ Database error:', storeError);
       return NextResponse.json({ 
         success: false,
-        error: 'Failed to save store information'
+        error: 'Failed to save store information',
+        details: storeError.message
       }, { status: 500 });
     }
 
