@@ -546,11 +546,13 @@
   async function fetchSettings() {
     try {
       // Use token-based authentication if available
+      // SECURITY: Always send shop domain for domain binding validation
       const url = CONFIG.token 
-        ? `${CONFIG.appUrl}/api/settings?token=${CONFIG.token}`
+        ? `${CONFIG.appUrl}/api/settings?token=${CONFIG.token}&shop=${CONFIG.shopDomain}`
         : `${CONFIG.appUrl}/api/settings?shop=${CONFIG.shopDomain}`;
       
       console.log('🔑 Token extracted:', CONFIG.token ? 'YES (***' + CONFIG.token.substr(-4) + ')' : 'NO');
+      console.log('🏪 Shop Domain:', CONFIG.shopDomain);
       console.log('🌐 Fetching settings from:', url.replace(CONFIG.token || '', '***'));
       
       const response = await fetch(url);
@@ -561,8 +563,17 @@
         console.error('❌ Failed to fetch settings:', response.status, response.statusText);
         if (response.status === 401) {
           console.error('🔒 Invalid or missing access token. Token used:', CONFIG.token ? 'YES' : 'NO');
+        } else if (response.status === 403) {
+          const errorData = await response.json().catch(() => ({}));
+          if (errorData.error === 'Domain mismatch') {
+            console.error('🚫 Security: Token is registered to a different store domain.');
+            console.error('   Token belongs to:', errorData.registered_domain);
+            console.error('   Current domain:', errorData.requesting_domain);
+          } else {
+            console.error('🚫 Subscription not active. Cart is disabled.');
+          }
         }
-        const errorText = await response.text();
+        const errorText = await response.text().catch(() => 'Unknown error');
         console.error('Error details:', errorText);
         return null;
       }

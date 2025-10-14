@@ -16,7 +16,7 @@ export async function OPTIONS(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const token = searchParams.get('token');
-  const shop = searchParams.get('shop'); // For backward compatibility during transition
+  const shop = searchParams.get('shop'); // Shop domain from the requesting store
 
   // Token-based authentication (preferred method)
   if (token) {
@@ -30,6 +30,39 @@ export async function GET(request: NextRequest) {
 
       if (storeError || !store) {
         const response = NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        // Add CORS headers
+        response.headers.set('Access-Control-Allow-Origin', '*');
+        response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+        return response;
+      }
+
+      // SECURITY: Enforce domain binding - token can only be used on its registered domain
+      if (shop && store.shop_domain !== shop) {
+        console.log('🚫 Security: Domain mismatch detected!');
+        console.log('   Token belongs to:', store.shop_domain);
+        console.log('   Request from:', shop);
+        const response = NextResponse.json({ 
+          error: 'Domain mismatch',
+          message: 'This token is registered to a different store',
+          registered_domain: store.shop_domain,
+          requesting_domain: shop
+        }, { status: 403 });
+        // Add CORS headers
+        response.headers.set('Access-Control-Allow-Origin', '*');
+        response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+        return response;
+      }
+
+      // Enforce subscription status - must be 'active'
+      if (store.subscription_status !== 'active') {
+        console.log('🚫 Cart disabled: subscription_status is not active:', store.subscription_status);
+        const response = NextResponse.json({ 
+          error: 'Subscription not active',
+          cart_active: false,
+          subscription_status: store.subscription_status
+        }, { status: 403 });
         // Add CORS headers
         response.headers.set('Access-Control-Allow-Origin', '*');
         response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -126,6 +159,16 @@ export async function GET(request: NextRequest) {
 
   try {
     const { settings, store, error } = await getStoreSettings(shop);
+
+    // Enforce subscription status - must be 'active'
+    if (store && store.subscription_status !== 'active') {
+      console.log('🚫 Cart disabled: subscription_status is not active:', store.subscription_status);
+      return NextResponse.json({ 
+        error: 'Subscription not active',
+        cart_active: false,
+        subscription_status: store.subscription_status
+      }, { status: 403 });
+    }
 
     if (error) {
       console.error('Error fetching settings:', error);
