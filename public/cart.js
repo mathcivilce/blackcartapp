@@ -6,7 +6,6 @@
     appUrl: (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
       ? 'http://localhost:3001' 
       : 'https://blackcartapp.netlify.app',
-    shopDomain: window.Shopify?.shop || '',
     // Extract token from script src URL: <script src="cart.js?token=xxx"></script>
     token: (() => {
       const scripts = document.getElementsByTagName('script');
@@ -20,6 +19,11 @@
       return null;
     })()
   };
+
+  // Helper function to get shop domain (may need to wait for Shopify object)
+  function getShopDomain() {
+    return window.Shopify?.shop || '';
+  }
 
   // State management
   const state = {
@@ -545,14 +549,24 @@
 
   async function fetchSettings() {
     try {
+      // Get shop domain at fetch time (not at script load time)
+      const shopDomain = getShopDomain();
+      
+      // Validate shop domain is available
+      if (!shopDomain) {
+        console.error('❌ Shop domain not available. Make sure this script runs on a Shopify store.');
+        console.error('   window.Shopify.shop:', window.Shopify?.shop);
+        return null;
+      }
+      
       // Use token-based authentication if available
       // SECURITY: Always send shop domain for domain binding validation
       const url = CONFIG.token 
-        ? `${CONFIG.appUrl}/api/settings?token=${CONFIG.token}&shop=${CONFIG.shopDomain}`
-        : `${CONFIG.appUrl}/api/settings?shop=${CONFIG.shopDomain}`;
+        ? `${CONFIG.appUrl}/api/settings?token=${CONFIG.token}&shop=${shopDomain}`
+        : `${CONFIG.appUrl}/api/settings?shop=${shopDomain}`;
       
       console.log('🔑 Token extracted:', CONFIG.token ? 'YES (***' + CONFIG.token.substr(-4) + ')' : 'NO');
-      console.log('🏪 Shop Domain:', CONFIG.shopDomain);
+      console.log('🏪 Shop Domain:', shopDomain);
       console.log('🌐 Fetching settings from:', url.replace(CONFIG.token || '', '***'));
       
       const response = await fetch(url);
@@ -561,20 +575,32 @@
       
       if (!response.ok) {
         console.error('❌ Failed to fetch settings:', response.status, response.statusText);
-        if (response.status === 401) {
-          console.error('🔒 Invalid or missing access token. Token used:', CONFIG.token ? 'YES' : 'NO');
-        } else if (response.status === 403) {
-          const errorData = await response.json().catch(() => ({}));
-          if (errorData.error === 'Domain mismatch') {
-            console.error('🚫 Security: Token is registered to a different store domain.');
-            console.error('   Token belongs to:', errorData.registered_domain);
-            console.error('   Current domain:', errorData.requesting_domain);
-          } else {
-            console.error('🚫 Subscription not active. Cart is disabled.');
+        
+        try {
+          const errorData = await response.json();
+          
+          if (response.status === 400 && errorData.error === 'Shop domain required') {
+            console.error('🚫 Security: Shop domain is required but was not detected.');
+            console.error('   This is a security feature to prevent token sharing.');
+            console.error('   window.Shopify.shop:', window.Shopify?.shop);
+          } else if (response.status === 401) {
+            console.error('🔒 Invalid or missing access token. Token used:', CONFIG.token ? 'YES' : 'NO');
+          } else if (response.status === 403) {
+            if (errorData.error === 'Domain mismatch') {
+              console.error('🚫 Security: Token is registered to a different store domain.');
+              console.error('   Token belongs to:', errorData.registered_domain);
+              console.error('   Current domain:', errorData.requesting_domain);
+            } else {
+              console.error('🚫 Subscription not active. Cart is disabled.');
+            }
           }
+          
+          console.error('Error details:', errorData);
+        } catch (parseError) {
+          const errorText = await response.text().catch(() => 'Unknown error');
+          console.error('Error details:', errorText);
         }
-        const errorText = await response.text().catch(() => 'Unknown error');
-        console.error('Error details:', errorText);
+        
         return null;
       }
       
@@ -1390,8 +1416,29 @@
   // INITIALIZATION
   // ============================================
 
+  // Wait for Shopify object to be available
+  async function waitForShopify(maxAttempts = 10) {
+    for (let i = 0; i < maxAttempts; i++) {
+      if (window.Shopify?.shop) {
+        console.log('✅ Shopify object detected:', window.Shopify.shop);
+        return true;
+      }
+      console.log(`⏳ Waiting for Shopify object... (attempt ${i + 1}/${maxAttempts})`);
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    console.error('❌ Shopify object not found after', maxAttempts, 'attempts');
+    return false;
+  }
+
   async function init() {
     console.log('🛒 Shipping Protection Cart initializing...');
+
+    // Wait for Shopify object to be available
+    const shopifyAvailable = await waitForShopify();
+    if (!shopifyAvailable) {
+      console.error('❌ Cannot initialize cart without Shopify object');
+      return;
+    }
 
     // Fetch settings first to check if cart is active
     const settings = await fetchSettings();
