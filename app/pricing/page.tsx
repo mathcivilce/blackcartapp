@@ -41,7 +41,7 @@ export default function PricingPage() {
       <div style={styles.content}>
         {/* Header */}
         <div style={styles.header}>
-          <h1 style={styles.logo}>BlackCart</h1>
+          <h1 style={styles.logo}>Cartbase</h1>
           <p style={styles.tagline}>Transform Your Shopify Cart Experience</p>
         </div>
 
