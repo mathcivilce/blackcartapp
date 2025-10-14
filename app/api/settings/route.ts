@@ -37,8 +37,22 @@ export async function GET(request: NextRequest) {
         return response;
       }
 
+      // SECURITY: Enforce domain binding - shop domain is REQUIRED for token authentication
+      if (!shop || shop.trim() === '') {
+        console.log('🚫 Security: Shop domain parameter is required');
+        const response = NextResponse.json({ 
+          error: 'Shop domain required',
+          message: 'Shop domain parameter is required for security validation'
+        }, { status: 400 });
+        // Add CORS headers
+        response.headers.set('Access-Control-Allow-Origin', '*');
+        response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+        return response;
+      }
+
       // SECURITY: Enforce domain binding - token can only be used on its registered domain
-      if (shop && store.shop_domain !== shop) {
+      if (store.shop_domain !== shop) {
         console.log('🚫 Security: Domain mismatch detected!');
         console.log('   Token belongs to:', store.shop_domain);
         console.log('   Request from:', shop);

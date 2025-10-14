@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,24 +11,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Create a client with the user's access token (not service role)
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      }
-    );
-
     // Get user from access token
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
 
     if (error || !user) {
-      console.error('Auth error:', error);
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
