@@ -33,7 +33,7 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <aside style={styles.sidebar}>
         <div style={styles.sidebarHeader}>
-          <h1 style={styles.logo}>BlackCart</h1>
+          <h1 style={styles.logo}>Cartbase</h1>
         </div>
 
         <nav style={styles.nav}>
