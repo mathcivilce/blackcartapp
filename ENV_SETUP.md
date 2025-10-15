@@ -13,7 +13,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 
 # App
-NEXT_PUBLIC_APP_URL=https://blackcartapp.netlify.app
+NEXT_PUBLIC_APP_URL=https://www.cartbase.app
 ```
 
 ## Steps to Set Up:
@@ -29,9 +29,9 @@ NEXT_PUBLIC_APP_URL=https://blackcartapp.netlify.app
    - Run the SQL in `supabase/schema.sql`
 
 3. **Add to Netlify**:
-   - Go to: https://app.netlify.com/sites/blackcartapp/settings/deploys#environment
+   - Go to: https://app.netlify.com/sites/YOUR_SITE_NAME/settings/deploys#environment
    - Add all three Supabase variables
-   - Add `NEXT_PUBLIC_APP_URL=https://blackcartapp.netlify.app`
+   - Add `NEXT_PUBLIC_APP_URL=https://www.cartbase.app`
 
 4. **Test Locally**:
    ```bash

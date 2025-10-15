@@ -25,7 +25,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6enBpdnh4ZHhjZG5tZXJyY2J0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDIwNzE0NiwiZXhwIjoyMDc1NzgzMTQ2fQ.KbKQ0SKyqXYFqylxtUPCr07DiyCdcvwat_YV9tjQoMg
 
 # App URL (your Netlify URL)
-NEXT_PUBLIC_APP_URL=https://blackcartapp.netlify.app
+NEXT_PUBLIC_APP_URL=https://www.cartbase.app
 ```
 
 ### 3. Get Your Anon Key

@@ -2,7 +2,7 @@
 
 ## 1. Add Environment Variables to Netlify
 
-Go to: https://app.netlify.com/sites/blackcartapp/settings/environment
+Go to: https://app.netlify.com/sites/YOUR_SITE_NAME/settings/environment
 
 Add these variables:
 
@@ -13,7 +13,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 
 SUPABASE_SERVICE_ROLE_KEY=[Get from https://app.supabase.com/project/ezzpivxxdxcdnmerrcbt/settings/api]
 
-NEXT_PUBLIC_APP_URL=https://blackcartapp.netlify.app
+NEXT_PUBLIC_APP_URL=https://www.cartbase.app
 ```
 
 ## 2. Deploy to Netlify
@@ -25,7 +25,7 @@ After adding environment variables, deploy the latest code.
 After deployment, visit this URL **once**:
 
 ```
-https://blackcartapp.netlify.app/api/setup/create-user?secret=setup123
+https://www.cartbase.app/api/setup/create-user?secret=setup123
 ```
 
 This will create your admin account:
@@ -34,7 +34,7 @@ This will create your admin account:
 
 ## 4. Login
 
-Go to: https://blackcartapp.netlify.app/login
+Go to: https://www.cartbase.app/login
 
 Enter your credentials and you're in!
 

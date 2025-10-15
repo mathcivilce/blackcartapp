@@ -38,7 +38,7 @@ export default function DashboardPage() {
         <h2 style={styles.infoTitle}>📦 Installation</h2>
         <p style={styles.infoText}>Add this script to your Shopify theme:</p>
         <code style={styles.codeBlock}>
-          {'<script src="https://blackcartapp.netlify.app/cart.js"></script>'}
+          {'<script src="https://www.cartbase.app/cart.js"></script>'}
         </code>
       </div>
 

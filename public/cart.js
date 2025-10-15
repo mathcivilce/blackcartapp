@@ -5,7 +5,7 @@
   const CONFIG = {
     appUrl: (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
       ? 'http://localhost:3001' 
-      : 'https://blackcartapp.netlify.app',
+      : 'https://www.cartbase.app',
     // Extract token from script src URL: <script src="cart.js?token=xxx"></script>
     token: (() => {
       const scripts = document.getElementsByTagName('script');
@@ -66,7 +66,7 @@
             <div id="sp-protection-container" class="sp-protection-container" style="display: none;">
               <div class="sp-protection-toggle">
                 <div class="sp-protection-icon">
-                  <img src="https://blackcartapp.netlify.app/add-on.png" alt="Add-on" width="48" height="48" style="display: block;" />
+                  <img src="https://www.cartbase.app/add-on.png" alt="Add-on" width="48" height="48" style="display: block;" />
                 </div>
                 <div class="sp-protection-info">
                   <h3 class="sp-protection-title" id="sp-protection-title">Shipping Protection</h3>

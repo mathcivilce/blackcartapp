@@ -205,7 +205,7 @@ export default function SettingsPage() {
   };
 
   const handleCopyScript = () => {
-    const scriptTag = `<script src="https://blackcartapp.netlify.app/cart.js?token=${accessToken}"></script>`;
+    const scriptTag = `<script src="https://www.cartbase.app/cart.js?token=${accessToken}"></script>`;
     navigator.clipboard.writeText(scriptTag);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -381,7 +381,7 @@ export default function SettingsPage() {
           
           <div style={styles.scriptBox}>
             <code style={styles.scriptCode}>
-              {`<script src="https://blackcartapp.netlify.app/cart.js?token=${accessToken}"></script>`}
+              {`<script src="https://www.cartbase.app/cart.js?token=${accessToken}"></script>`}
             </code>
           </div>
           
