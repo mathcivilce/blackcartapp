@@ -165,7 +165,8 @@ export default function SalesPage() {
             disabled={syncing}
             style={{
               ...styles.button,
-              backgroundColor: syncing ? '#ccc' : '#1976d2',
+              backgroundColor: syncing ? '#333' : '#fff',
+              color: syncing ? '#666' : '#000',
               cursor: syncing ? 'not-allowed' : 'pointer'
             }}
           >
@@ -176,9 +177,9 @@ export default function SalesPage() {
         {syncMessage && (
           <div style={{
             ...styles.message,
-            backgroundColor: syncMessage.startsWith('✅') ? '#e8f5e9' : '#ffebee',
-            color: syncMessage.startsWith('✅') ? '#2e7d32' : '#c62828',
-            border: syncMessage.startsWith('✅') ? '1px solid #4caf50' : '1px solid #f44336'
+            backgroundColor: syncMessage.startsWith('✅') ? '#1a3a1a' : '#3a1a1a',
+            color: syncMessage.startsWith('✅') ? '#4caf50' : '#f44336',
+            border: syncMessage.startsWith('✅') ? '1px solid #2e7d32' : '1px solid #c62828'
           }}>
             {syncMessage}
           </div>
@@ -235,8 +236,6 @@ export default function SalesPage() {
 const styles: Record<string, React.CSSProperties> = {
   container: {
     maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '40px 20px',
   },
   header: {
     marginBottom: '32px',
@@ -248,11 +247,11 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '32px',
     fontWeight: '700',
     margin: '0 0 8px 0',
-    color: '#1a1a1a',
+    color: '#fff',
   },
   subtitle: {
     fontSize: '16px',
-    color: '#666',
+    color: '#888',
     margin: 0,
   },
   statsGrid: {
@@ -262,16 +261,15 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '32px',
   },
   statCard: {
-    background: '#fff',
-    padding: '24px',
+    background: '#111',
+    border: '1px solid #222',
     borderRadius: '12px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    border: '1px solid #e5e5e5',
+    padding: '24px',
   },
   statLabel: {
     fontSize: '14px',
     fontWeight: '500',
-    color: '#666',
+    color: '#888',
     margin: '0 0 8px 0',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
@@ -279,22 +277,21 @@ const styles: Record<string, React.CSSProperties> = {
   statValue: {
     fontSize: '28px',
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#fff',
     margin: 0,
   },
   card: {
-    background: '#fff',
-    padding: '32px',
+    background: '#111',
+    border: '1px solid #222',
     borderRadius: '12px',
-    marginBottom: '24px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    border: '1px solid #e5e5e5',
+    padding: '24px',
+    marginBottom: '20px',
   },
   sectionTitle: {
-    fontSize: '20px',
+    fontSize: '18px',
     fontWeight: '600',
     margin: '0 0 16px 0',
-    color: '#1a1a1a',
+    color: '#fff',
   },
   syncControls: {
     display: 'flex',
@@ -310,15 +307,16 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '8px',
     fontSize: '14px',
     fontWeight: '500',
-    color: '#333',
+    color: '#888',
   },
   select: {
     width: '100%',
     padding: '10px 12px',
     fontSize: '14px',
-    border: '1px solid #ddd',
+    border: '1px solid #222',
     borderRadius: '8px',
-    backgroundColor: '#fff',
+    backgroundColor: '#000',
+    color: '#fff',
   },
   button: {
     padding: '12px 24px',
@@ -338,13 +336,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   hint: {
     fontSize: '14px',
-    color: '#666',
+    color: '#888',
     margin: '8px 0 0 0',
   },
   loading: {
     textAlign: 'center',
     padding: '40px',
-    color: '#666',
+    color: '#888',
   },
   emptyState: {
     textAlign: 'center',
@@ -353,7 +351,7 @@ const styles: Record<string, React.CSSProperties> = {
   emptyText: {
     fontSize: '18px',
     fontWeight: '600',
-    color: '#666',
+    color: '#888',
     margin: '0 0 8px 0',
   },
   tableContainer: {
@@ -364,24 +362,24 @@ const styles: Record<string, React.CSSProperties> = {
     borderCollapse: 'collapse',
   },
   tableHeaderRow: {
-    borderBottom: '2px solid #e5e5e5',
+    borderBottom: '2px solid #222',
   },
   tableHeader: {
     padding: '12px 16px',
     textAlign: 'left',
     fontSize: '13px',
     fontWeight: '600',
-    color: '#666',
+    color: '#888',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
   },
   tableRow: {
-    borderBottom: '1px solid #f0f0f0',
+    borderBottom: '1px solid #222',
   },
   tableCell: {
     padding: '16px',
     fontSize: '14px',
-    color: '#333',
+    color: '#fff',
   },
 };
 

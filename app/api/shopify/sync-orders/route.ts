@@ -8,6 +8,7 @@ import {
   getDateRange,
   getMonthIdentifier 
 } from '@/lib/shopify';
+import { getWeekIdentifier } from '@/lib/billing';
 
 /**
  * Sync orders from Shopify and track protection product sales
@@ -124,7 +125,9 @@ export async function POST(request: NextRequest) {
             
             const protectionPrice = priceStringToCents(protectionItem.price);
             const commission = calculateCommission(protectionPrice);
-            const monthId = getMonthIdentifier(new Date(order.created_at));
+            const orderDate = new Date(order.created_at);
+            const monthId = getMonthIdentifier(orderDate);
+            const weekId = getWeekIdentifier(orderDate);
 
             // Record the sale
             const { error: insertError } = await supabase
@@ -136,6 +139,7 @@ export async function POST(request: NextRequest) {
                 protection_price: protectionPrice,
                 commission: commission,
                 month: monthId,
+                week: weekId,
                 created_at: order.created_at
               });
 
