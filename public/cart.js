@@ -126,10 +126,11 @@
         width: 100%;
         height: 100%;
         background: rgba(0, 0, 0, 0.5);
-        z-index: 9999;
+        z-index: 2147483647; /* Maximum z-index value */
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.3s ease, visibility 0.3s ease;
+        isolation: isolate; /* Create new stacking context */
       }
 
       .sp-cart-overlay.sp-open {
@@ -151,6 +152,7 @@
         flex-direction: column;
         transform: translateX(100%);
         transition: transform 0.3s ease;
+        z-index: 2147483647; /* Maximum z-index value */
       }
 
       .sp-cart-overlay.sp-open .sp-cart-sidebar {
