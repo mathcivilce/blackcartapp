@@ -544,7 +544,6 @@
       checkProtectionInCart();
       return cart;
     } catch (error) {
-      console.error('Error fetching cart:', error);
       return null;
     }
   }
@@ -556,8 +555,6 @@
       
       // Validate shop domain is available
       if (!shopDomain) {
-        console.error('❌ Shop domain not available. Make sure this script runs on a Shopify store.');
-        console.error('   window.Shopify.shop:', window.Shopify?.shop);
         return null;
       }
       
@@ -567,89 +564,36 @@
         ? `${CONFIG.appUrl}/api/settings?token=${CONFIG.token}&shop=${shopDomain}`
         : `${CONFIG.appUrl}/api/settings?shop=${shopDomain}`;
       
-      console.log('🔑 Token extracted:', CONFIG.token ? 'YES (***' + CONFIG.token.substr(-4) + ')' : 'NO');
-      console.log('🏪 Shop Domain:', shopDomain);
-      console.log('🌐 Fetching settings from:', url.replace(CONFIG.token || '', '***'));
-      
       const response = await fetch(url);
       
-      console.log('📡 Response status:', response.status, response.statusText);
-      
       if (!response.ok) {
-        console.error('❌ Failed to fetch settings:', response.status, response.statusText);
-        
-        try {
-          const errorData = await response.json();
-          
-          if (response.status === 400 && errorData.error === 'Shop domain required') {
-            console.error('🚫 Security: Shop domain is required but was not detected.');
-            console.error('   This is a security feature to prevent token sharing.');
-            console.error('   window.Shopify.shop:', window.Shopify?.shop);
-          } else if (response.status === 401) {
-            console.error('🔒 Invalid or missing access token. Token used:', CONFIG.token ? 'YES' : 'NO');
-          } else if (response.status === 403) {
-            if (errorData.error === 'Domain mismatch') {
-              console.error('🚫 Security: Token is registered to a different store domain.');
-              console.error('   Token belongs to:', errorData.registered_domain);
-              console.error('   Current domain:', errorData.requesting_domain);
-            } else {
-              console.error('🚫 Subscription not active. Cart is disabled.');
-            }
-          }
-          
-          console.error('Error details:', errorData);
-        } catch (parseError) {
-          const errorText = await response.text().catch(() => 'Unknown error');
-          console.error('Error details:', errorText);
-        }
-        
         return null;
       }
       
       const settings = await response.json();
-      console.log('✅ Settings loaded successfully');
-      console.log('📦 Full settings object:', JSON.stringify(settings, null, 2));
-      console.log('🎚️ Cart Active:', settings.cart_active);
-      console.log('🎨 Button Text:', settings.design?.buttonText);
       state.settings = settings;
       
       // Check if cart is active
       if (settings.cart_active === false) {
-        console.log('Cart app is deactivated. Using native Shopify cart.');
         return null; // Signal to not initialize the cart
       }
       
       applySettings();
       return settings;
     } catch (error) {
-      console.error('Error fetching settings:', error);
       return null;
     }
   }
 
   function applySettings() {
     if (!state.settings) {
-      console.log('No settings available');
       return;
     }
-
-    console.log('🎨 Applying settings:', state.settings);
-    console.log('🎨 Design settings:', state.settings.design);
-    console.log('🧩 Add-ons settings:', state.settings.addons);
 
     const container = document.getElementById('sp-protection-container');
     const addonsEnabled = state.settings.addons?.enabled ?? state.settings.enabled ?? true;
     if (container && addonsEnabled) {
-      console.log('Showing protection container');
       container.style.display = 'block';
-      
-      // If no product ID is set, show a note to merchant
-      const productId = state.settings.addons?.productId || state.settings.protectionProductId;
-      if (!productId) {
-        console.warn('Protection enabled but no product ID set. Please configure in settings.');
-      }
-    } else {
-      console.log('Protection container hidden. Enabled:', addonsEnabled);
     }
 
     // Apply protection toggle settings
@@ -790,8 +734,6 @@
           img.style.borderRadius = `${design.cornerRadius}px`;
         }
       });
-      
-      console.log('✅ All design settings applied successfully');
     }
   }
 
@@ -812,12 +754,10 @@
     // Cache the variant ID if we found the protection item
     if (protectionItem && !state.protectionVariantId) {
       state.protectionVariantId = protectionItem.id || protectionItem.variant_id;
-      console.log('🔍 Cached protection variant ID:', state.protectionVariantId);
     }
     
     // Ensure protection product quantity is always 1 (fix if > 1)
     if (protectionItem && protectionItem.quantity > 1) {
-      console.log('⚠️ Protection product quantity is > 1, fixing to 1');
       const lineNumber = state.cart.items.indexOf(protectionItem) + 1;
       updateCartItem(lineNumber, 1);
     }
@@ -833,7 +773,6 @@
   async function maybeAutoAddProtection() {
     // Only auto-add if acceptByDefault is enabled and protection is not already in cart
     if (state.settings?.addons?.acceptByDefault && !state.protectionInCart && state.settings?.addons?.productHandle) {
-      console.log('🛡️ Auto-adding protection (acceptByDefault is enabled)');
       await addProtectionToCart(true); // silent mode
     }
   }
@@ -842,7 +781,6 @@
     const productHandle = state.settings?.addons?.productHandle || state.settings?.protectionProductHandle;
     
     if (!state.settings || !productHandle) {
-      console.error('❌ Protection product not configured. Please add a Product Handle in settings.');
       if (!silentMode) {
         alert('Shipping protection is not configured. Please contact store admin.');
       }
@@ -851,21 +789,16 @@
 
     // Check if protection is already in cart - prevent duplicates
     if (state.protectionInCart) {
-      console.log('ℹ️ Protection already in cart, skipping add');
       return;
     }
-
-    console.log('🛡️ Adding protection to cart with Product Handle:', productHandle);
 
     try {
       state.isLoading = true;
       
       // Fetch product data from Shopify's public endpoint
-      console.log('📡 Fetching product data from Shopify...');
       const productResponse = await fetch(`/products/${productHandle}.js`);
 
       if (!productResponse.ok) {
-        console.error('❌ Failed to fetch product. Handle may be incorrect:', productHandle);
         if (!silentMode) {
           alert('Failed to load protection product. Please check the Product Handle in settings.');
         }
@@ -880,7 +813,6 @@
       
       // Get the first available variant
       if (!productData.variants || productData.variants.length === 0) {
-        console.error('❌ No variants found for product:', productHandle);
         if (!silentMode) {
           alert('Protection product has no variants. Please contact store admin.');
         }
@@ -892,8 +824,6 @@
       }
 
       const variantId = productData.variants[0].id;
-      
-      console.log('✅ Got Variant ID:', variantId, 'for product:', productData.title);
 
       // Now add to cart using the variant ID
       const response = await fetch('/cart/add.js', {
@@ -905,11 +835,8 @@
         })
       });
 
-      console.log('📡 Add to cart response:', response.status, response.statusText);
-
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Protection added successfully:', data);
         
         // Cache the variant ID for later removal
         state.protectionVariantId = variantId;
@@ -918,8 +845,6 @@
         await fetchCart();
         renderCart();
       } else {
-        const errorText = await response.text();
-        console.error('❌ Failed to add protection to cart:', response.status, errorText);
         if (!silentMode) {
           alert('Failed to add shipping protection. Please try again.');
         }
@@ -930,7 +855,6 @@
       }
       state.isLoading = false;
     } catch (error) {
-      console.error('❌ Error adding protection:', error);
       if (!silentMode) {
         alert('Network error. Please check your connection and try again.');
       }
@@ -946,11 +870,8 @@
   async function removeProtectionFromCart() {
     if (!state.cart || !state.settings) return;
     
-    console.log('🗑️ Removing protection. Cached Variant ID:', state.protectionVariantId);
-    
     // Use the cached variant ID to find the protection item
     if (!state.protectionVariantId) {
-      console.log('⚠️ No cached variant ID. Cannot remove protection.');
       return;
     }
     
@@ -960,14 +881,10 @@
     );
 
     if (!protectionItem) {
-      console.log('❌ Protection item not found in cart');
       return;
     }
-    
-    console.log('✅ Found protection item:', protectionItem.title);
 
     const lineNumber = state.cart.items.indexOf(protectionItem) + 1;
-    console.log('Removing line:', lineNumber);
 
     try {
       state.isLoading = true;
@@ -977,7 +894,6 @@
       renderCart();
       state.isLoading = false;
     } catch (error) {
-      console.error('Error removing protection:', error);
       state.isLoading = false;
     }
   }
@@ -998,7 +914,6 @@
       state.isLoading = false;
       return cart;
     } catch (error) {
-      console.error('Error updating cart:', error);
       state.isLoading = false;
       return null;
     }
@@ -1168,7 +1083,6 @@
         // Prevent increasing protection product quantity beyond 1
         if (state.protectionVariantId && 
             (item.id === state.protectionVariantId || item.variant_id === state.protectionVariantId)) {
-          console.log('⚠️ Protection product quantity is limited to 1');
           return;
         }
         
@@ -1212,10 +1126,8 @@
   }
 
   async function openCart() {
-    console.log('🛒 Opening cart...');
     const overlay = document.getElementById('sp-cart-overlay');
     if (!overlay) {
-      console.error('❌ Cart overlay not found!');
       return;
     }
     
@@ -1225,8 +1137,6 @@
       const needsCartFetch = !state.cart;
       const needsSettingsFetch = !state.settings;
       
-      console.log('📡 Fetching data...', { needsCartFetch, needsSettingsFetch });
-      
       // Fetch in parallel if both are needed (Optimization #3)
       if (needsCartFetch && needsSettingsFetch) {
         const [settings, cart] = await Promise.all([
@@ -1235,13 +1145,11 @@
         ]);
         
         if (!settings) {
-          console.log('⚠️ Settings not available or cart disabled');
           return;
         }
       } else if (needsSettingsFetch) {
         const settings = await fetchSettings();
         if (!settings) {
-          console.log('⚠️ Settings not available or cart disabled');
           return;
         }
       } else if (needsCartFetch) {
@@ -1250,11 +1158,8 @@
       
       // Check if cart is active (in case settings were just fetched)
       if (state.settings?.cart_active === false) {
-        console.log('⚠️ Cart is disabled');
         return;
       }
-      
-      console.log('✅ Data loaded, opening cart UI');
       
       // Open the cart UI
       state.isOpen = true;
@@ -1263,10 +1168,7 @@
       
       // Render cart (Optimization #1: cart data already available, no refetch needed)
       renderCart();
-      
-      console.log('✅ Cart opened successfully');
     } catch (error) {
-      console.error('❌ Error opening cart:', error);
       // Make sure we don't leave the page in a broken state
       if (overlay.classList.contains('sp-open')) {
         closeCart();
@@ -1360,8 +1262,6 @@
     document.addEventListener('click', (e) => {
       const target = e.target.closest(cartSelectors.join(','));
       if (target) {
-        console.log('🖱️ Cart element clicked:', target);
-        
         // Check the target itself and its parents for href
         let href = target.getAttribute('href');
         
@@ -1370,20 +1270,14 @@
           const parentLink = target.closest('a[href*="/cart"], a[href="#cart"]');
           if (parentLink) {
             href = parentLink.getAttribute('href');
-            console.log('🔗 Parent link href:', href);
           }
-        } else {
-          console.log('🔗 Link href:', href);
         }
         
         // If we found a cart-related href, intercept it
         if (href && (href === '/cart' || href.includes('/cart') || href === '#cart')) {
-          console.log('✅ Intercepting cart link click');
           e.preventDefault();
           e.stopPropagation();
           openCart();
-        } else {
-          console.log('⚠️ Cart element clicked but no valid href found');
         }
       }
     }, true); // Use capture phase to intercept early
@@ -1412,7 +1306,7 @@
           openCart();
         })
         .catch(error => {
-          console.error('Error adding to cart:', error);
+          // Error adding to cart
         });
       }
     });
@@ -1443,7 +1337,7 @@
             openCart();
           })
           .catch(error => {
-            console.error('Error adding to cart:', error);
+            // Error adding to cart
           });
         }
       }
@@ -1473,23 +1367,17 @@
   async function waitForShopify(maxAttempts = 10) {
     for (let i = 0; i < maxAttempts; i++) {
       if (window.Shopify?.shop) {
-        console.log('✅ Shopify object detected:', window.Shopify.shop);
         return true;
       }
-      console.log(`⏳ Waiting for Shopify object... (attempt ${i + 1}/${maxAttempts})`);
       await new Promise(resolve => setTimeout(resolve, 100));
     }
-    console.error('❌ Shopify object not found after', maxAttempts, 'attempts');
     return false;
   }
 
   async function init() {
-    console.log('🛒 Shipping Protection Cart initializing...');
-
     // Wait for Shopify object to be available
     const shopifyAvailable = await waitForShopify();
     if (!shopifyAvailable) {
-      console.error('❌ Cannot initialize cart without Shopify object');
       return;
     }
 
@@ -1498,11 +1386,8 @@
     
     // If cart is not active, don't initialize
     if (settings === null) {
-      console.log('🛒 Cart app is deactivated. Exiting initialization.');
       return;
     }
-
-    console.log('🛒 Shipping Protection Cart initialized with settings');
 
     // Inject CSS
     injectCSS();
@@ -1523,8 +1408,6 @@
 
     // Expose global function to open cart
     window.openShippingProtectionCart = openCart;
-    
-    console.log('✅ Cart fully initialized and ready');
   }
 
   // Wait for DOM to be ready
