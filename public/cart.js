@@ -1220,26 +1220,48 @@
     }
     
     try {
-      // Fetch latest settings first
-      console.log('📡 Fetching latest settings...');
-      const settings = await fetchSettings();
+      // Optimization #3: Fetch settings and cart in parallel (only fetch cart if not already loaded)
+      // Optimization #1: Skip cart fetch if cart was already fetched before calling openCart
+      const needsCartFetch = !state.cart;
+      const needsSettingsFetch = !state.settings;
       
-      // If settings failed or cart is disabled, don't open
-      if (!settings) {
-        console.log('⚠️ Settings not available or cart disabled');
+      console.log('📡 Fetching data...', { needsCartFetch, needsSettingsFetch });
+      
+      // Fetch in parallel if both are needed (Optimization #3)
+      if (needsCartFetch && needsSettingsFetch) {
+        const [settings, cart] = await Promise.all([
+          fetchSettings(),
+          fetchCart()
+        ]);
+        
+        if (!settings) {
+          console.log('⚠️ Settings not available or cart disabled');
+          return;
+        }
+      } else if (needsSettingsFetch) {
+        const settings = await fetchSettings();
+        if (!settings) {
+          console.log('⚠️ Settings not available or cart disabled');
+          return;
+        }
+      } else if (needsCartFetch) {
+        await fetchCart();
+      }
+      
+      // Check if cart is active (in case settings were just fetched)
+      if (state.settings?.cart_active === false) {
+        console.log('⚠️ Cart is disabled');
         return;
       }
       
-      console.log('✅ Settings loaded, opening cart UI');
+      console.log('✅ Data loaded, opening cart UI');
       
       // Open the cart UI
       state.isOpen = true;
       overlay.classList.add('sp-open');
       document.body.style.overflow = 'hidden';
       
-      console.log('📦 Fetching cart data...');
-      // Fetch latest cart data and render
-      await fetchCart();
+      // Render cart (Optimization #1: cart data already available, no refetch needed)
       renderCart();
       
       console.log('✅ Cart opened successfully');
@@ -1384,7 +1406,8 @@
         .then(response => response.json())
         .then(async (data) => {
           // Successfully added to cart
-          await fetchCart(); // Refresh cart data
+          // Fetch cart once here (Optimization #2 - will skip duplicate fetch in openCart)
+          await fetchCart();
           await maybeAutoAddProtection(); // Auto-add protection if enabled
           openCart();
         })
@@ -1414,7 +1437,8 @@
           .then(response => response.json())
           .then(async (data) => {
             // Successfully added to cart
-            await fetchCart(); // Refresh cart data
+            // Fetch cart once here (Optimization #2 - will skip duplicate fetch in openCart)
+            await fetchCart();
             await maybeAutoAddProtection(); // Auto-add protection if enabled
             openCart();
           })
@@ -1427,13 +1451,15 @@
 
     // Listen for Shopify's cart events
     document.addEventListener('cart:updated', async () => {
-      await fetchCart(); // Refresh cart data
+      // Fetch cart once here (Optimization #2 - will skip duplicate fetch in openCart)
+      await fetchCart();
       await maybeAutoAddProtection(); // Auto-add protection if enabled
       openCart();
     });
 
     document.addEventListener('product:added-to-cart', async () => {
-      await fetchCart(); // Refresh cart data
+      // Fetch cart once here (Optimization #2 - will skip duplicate fetch in openCart)
+      await fetchCart();
       await maybeAutoAddProtection(); // Auto-add protection if enabled
       openCart();
     });
