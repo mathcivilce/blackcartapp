@@ -73,34 +73,21 @@ export default function CartPreview({ design, addons }: CartPreviewProps) {
           ) : (
             <h2 style={{ ...styles.cartTitle, color: design.cartTextColor }}>{design.cartTitle}</h2>
           )}
-          {(design.cartTitleAlignment === 'left' || (design.useCartImage && design.cartImagePosition === 'left')) && (
-            <button style={{ 
-              ...styles.closeButton, 
-              color: design.closeButtonColor,
-              fontSize: design.closeButtonSize === 'small' ? '20px' : design.closeButtonSize === 'large' ? '32px' : '24px',
-              border: design.closeButtonBorder === 'none' ? 'none' : 
-                      design.closeButtonBorder === 'thin' ? `1px solid ${design.closeButtonBorderColor}` :
-                      design.closeButtonBorder === 'normal' ? `2px solid ${design.closeButtonBorderColor}` :
-                      `3px solid ${design.closeButtonBorderColor}`,
-              borderRadius: design.closeButtonBorder !== 'none' ? '4px' : '0',
-              padding: design.closeButtonBorder !== 'none' ? '4px 8px' : '0',
-            }}>✕</button>
-          )}
-          {(design.cartTitleAlignment === 'center' || (design.useCartImage && design.cartImagePosition === 'center')) && (
-            <button style={{ 
-              ...styles.closeButton, 
-              color: design.closeButtonColor,
-              fontSize: design.closeButtonSize === 'small' ? '20px' : design.closeButtonSize === 'large' ? '32px' : '24px',
-              border: design.closeButtonBorder === 'none' ? 'none' : 
-                      design.closeButtonBorder === 'thin' ? `1px solid ${design.closeButtonBorderColor}` :
-                      design.closeButtonBorder === 'normal' ? `2px solid ${design.closeButtonBorderColor}` :
-                      `3px solid ${design.closeButtonBorderColor}`,
-              borderRadius: design.closeButtonBorder !== 'none' ? '4px' : '0',
-              padding: design.closeButtonBorder !== 'none' ? '4px 8px' : '0',
-              position: 'absolute' as const, 
-              right: '20px' 
-            }}>✕</button>
-          )}
+          <button style={{ 
+            ...styles.closeButton, 
+            color: design.closeButtonColor,
+            fontSize: design.closeButtonSize === 'small' ? '20px' : design.closeButtonSize === 'large' ? '32px' : '24px',
+            border: design.closeButtonBorder === 'none' ? 'none' : 
+                    design.closeButtonBorder === 'thin' ? `1px solid ${design.closeButtonBorderColor}` :
+                    design.closeButtonBorder === 'normal' ? `2px solid ${design.closeButtonBorderColor}` :
+                    `3px solid ${design.closeButtonBorderColor}`,
+            borderRadius: design.closeButtonBorder !== 'none' ? '4px' : '0',
+            padding: design.closeButtonBorder !== 'none' ? '4px 8px' : '0',
+            ...(design.useCartImage 
+              ? (design.cartImagePosition === 'center' ? { position: 'absolute' as const, right: '20px' } : {})
+              : (design.cartTitleAlignment === 'center' ? { position: 'absolute' as const, right: '20px' } : {})
+            )
+          }}>✕</button>
         </div>
 
         {/* Cart Items */}

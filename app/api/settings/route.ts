@@ -134,6 +134,11 @@ export async function GET(request: NextRequest) {
           closeButtonColor: settings?.close_button_color || '#637381',
           closeButtonBorder: settings?.close_button_border || 'none',
           closeButtonBorderColor: settings?.close_button_border_color || '#000000',
+          useCartImage: settings?.use_cart_image ?? false,
+          cartImageUrl: settings?.cart_image_url || '',
+          cartImageMobileSize: settings?.cart_image_mobile_size || 100,
+          cartImageDesktopSize: settings?.cart_image_desktop_size || 120,
+          cartImagePosition: settings?.cart_image_position || 'left',
         },
         addons: {
           enabled: settings?.addons_enabled ?? true,
@@ -219,6 +224,11 @@ export async function GET(request: NextRequest) {
           closeButtonColor: '#637381',
           closeButtonBorder: 'none',
           closeButtonBorderColor: '#000000',
+          useCartImage: false,
+          cartImageUrl: '',
+          cartImageMobileSize: 100,
+          cartImageDesktopSize: 120,
+          cartImagePosition: 'left',
         },
         addons: {
           enabled: true,
@@ -265,6 +275,11 @@ export async function GET(request: NextRequest) {
         closeButtonColor: settings?.close_button_color || '#637381',
         closeButtonBorder: settings?.close_button_border || 'none',
         closeButtonBorderColor: settings?.close_button_border_color || '#000000',
+        useCartImage: settings?.use_cart_image ?? false,
+        cartImageUrl: settings?.cart_image_url || '',
+        cartImageMobileSize: settings?.cart_image_mobile_size || 100,
+        cartImageDesktopSize: settings?.cart_image_desktop_size || 120,
+        cartImagePosition: settings?.cart_image_position || 'left',
       },
       // Add-ons settings
       addons: {
@@ -308,6 +323,11 @@ export async function GET(request: NextRequest) {
         closeButtonColor: '#637381',
         closeButtonBorder: 'none',
         closeButtonBorderColor: '#000000',
+        useCartImage: false,
+        cartImageUrl: '',
+        cartImageMobileSize: 100,
+        cartImageDesktopSize: 120,
+        cartImagePosition: 'left',
       },
       addons: {
         enabled: true,
