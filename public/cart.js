@@ -23,7 +23,7 @@
     cacheTTL: 1000 * 60 * 60 * 6  // 6 hours
   };
 
-  // Helper function to get shop domain (may need to wait for Shopify object)
+  // Helper function get shop domain (may need to wait for Shopify object)
   function getShopDomain() {
     return window.Shopify?.shop || '';
   }
