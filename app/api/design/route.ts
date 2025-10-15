@@ -44,6 +44,11 @@ export async function GET(request: NextRequest) {
       closeButtonColor: settings?.close_button_color || '#637381',
       closeButtonBorder: settings?.close_button_border || 'none',
       closeButtonBorderColor: settings?.close_button_border_color || '#000000',
+      useCartImage: settings?.use_cart_image ?? false,
+      cartImageUrl: settings?.cart_image_url || '',
+      cartImageMobileSize: settings?.cart_image_mobile_size?.toString() || '100',
+      cartImageDesktopSize: settings?.cart_image_desktop_size?.toString() || '120',
+      cartImagePosition: settings?.cart_image_position || 'left',
     });
   } catch (error) {
     console.error('Design settings API error:', error);
@@ -84,6 +89,11 @@ export async function POST(request: NextRequest) {
     if (designSettings.closeButtonColor !== undefined) dbSettings.close_button_color = designSettings.closeButtonColor;
     if (designSettings.closeButtonBorder !== undefined) dbSettings.close_button_border = designSettings.closeButtonBorder;
     if (designSettings.closeButtonBorderColor !== undefined) dbSettings.close_button_border_color = designSettings.closeButtonBorderColor;
+    if (designSettings.useCartImage !== undefined) dbSettings.use_cart_image = designSettings.useCartImage;
+    if (designSettings.cartImageUrl !== undefined) dbSettings.cart_image_url = designSettings.cartImageUrl;
+    if (designSettings.cartImageMobileSize !== undefined) dbSettings.cart_image_mobile_size = parseInt(designSettings.cartImageMobileSize);
+    if (designSettings.cartImageDesktopSize !== undefined) dbSettings.cart_image_desktop_size = parseInt(designSettings.cartImageDesktopSize);
+    if (designSettings.cartImagePosition !== undefined) dbSettings.cart_image_position = designSettings.cartImagePosition;
 
     const { error } = await supabase
       .from('settings')

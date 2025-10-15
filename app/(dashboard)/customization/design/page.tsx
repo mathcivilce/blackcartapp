@@ -26,6 +26,11 @@ export default function DesignPage() {
     closeButtonColor: '#637381',
     closeButtonBorder: 'none',
     closeButtonBorderColor: '#000000',
+    useCartImage: false,
+    cartImageUrl: '',
+    cartImageMobileSize: '100',
+    cartImageDesktopSize: '120',
+    cartImagePosition: 'left',
   });
 
   const [addons, setAddons] = useState({
@@ -357,44 +362,152 @@ export default function DesignPage() {
           </div>
 
           <div style={styles.card}>
-            <h2 style={styles.sectionTitle}>Text & Labels</h2>
+            <h2 style={styles.sectionTitle}>Cart Header</h2>
             
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Cart Title</label>
-              <input
-                type="text"
-                name="cartTitle"
-                value={design.cartTitle}
-                onChange={handleInputChange}
-                style={styles.textInput}
-              />
+            <div style={styles.checkboxGroup}>
+              <label style={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  name="useCartImage"
+                  checked={design.useCartImage}
+                  onChange={handleInputChange}
+                  style={styles.checkbox}
+                />
+                <span>Use custom image instead of text</span>
+              </label>
             </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Cart Title Alignment</label>
-              <div style={styles.buttonGroup}>
-                <button
-                  type="button"
-                  onClick={() => setDesign(prev => ({ ...prev, cartTitleAlignment: 'left' }))}
-                  style={{
-                    ...styles.alignButton,
-                    ...(design.cartTitleAlignment === 'left' ? styles.alignButtonActive : {})
-                  }}
-                >
-                  Left
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDesign(prev => ({ ...prev, cartTitleAlignment: 'center' }))}
-                  style={{
-                    ...styles.alignButton,
-                    ...(design.cartTitleAlignment === 'center' ? styles.alignButtonActive : {})
-                  }}
-                >
-                  Center
-                </button>
-              </div>
-            </div>
+            {design.useCartImage ? (
+              <>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Image URL</label>
+                  <input
+                    type="text"
+                    name="cartImageUrl"
+                    value={design.cartImageUrl}
+                    onChange={handleInputChange}
+                    placeholder="https://example.com/your-logo.png"
+                    style={styles.textInput}
+                  />
+                  <p style={styles.helpText}>Enter the URL of your cart header image</p>
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Image position</label>
+                  <div style={styles.buttonGroup}>
+                    <button
+                      type="button"
+                      onClick={() => setDesign(prev => ({ ...prev, cartImagePosition: 'left' }))}
+                      style={{
+                        ...styles.alignButton,
+                        ...(design.cartImagePosition === 'left' ? styles.alignButtonActive : {})
+                      }}
+                    >
+                      Left
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDesign(prev => ({ ...prev, cartImagePosition: 'center' }))}
+                      style={{
+                        ...styles.alignButton,
+                        ...(design.cartImagePosition === 'center' ? styles.alignButtonActive : {})
+                      }}
+                    >
+                      Center
+                    </button>
+                  </div>
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Mobile image height</label>
+                  <div style={styles.sliderGroup}>
+                    <input
+                      type="range"
+                      name="cartImageMobileSize"
+                      value={design.cartImageMobileSize}
+                      onChange={handleInputChange}
+                      min="30"
+                      max="150"
+                      style={styles.slider}
+                    />
+                    <input
+                      type="number"
+                      name="cartImageMobileSize"
+                      value={design.cartImageMobileSize}
+                      onChange={handleInputChange}
+                      style={styles.numberInput}
+                    />
+                    <span style={styles.unit}>px</span>
+                  </div>
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Desktop image height</label>
+                  <div style={styles.sliderGroup}>
+                    <input
+                      type="range"
+                      name="cartImageDesktopSize"
+                      value={design.cartImageDesktopSize}
+                      onChange={handleInputChange}
+                      min="30"
+                      max="200"
+                      style={styles.slider}
+                    />
+                    <input
+                      type="number"
+                      name="cartImageDesktopSize"
+                      value={design.cartImageDesktopSize}
+                      onChange={handleInputChange}
+                      style={styles.numberInput}
+                    />
+                    <span style={styles.unit}>px</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Cart Title</label>
+                  <input
+                    type="text"
+                    name="cartTitle"
+                    value={design.cartTitle}
+                    onChange={handleInputChange}
+                    style={styles.textInput}
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Cart Title Alignment</label>
+                  <div style={styles.buttonGroup}>
+                    <button
+                      type="button"
+                      onClick={() => setDesign(prev => ({ ...prev, cartTitleAlignment: 'left' }))}
+                      style={{
+                        ...styles.alignButton,
+                        ...(design.cartTitleAlignment === 'left' ? styles.alignButtonActive : {})
+                      }}
+                    >
+                      Left
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDesign(prev => ({ ...prev, cartTitleAlignment: 'center' }))}
+                      style={{
+                        ...styles.alignButton,
+                        ...(design.cartTitleAlignment === 'center' ? styles.alignButtonActive : {})
+                      }}
+                    >
+                      Center
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div style={styles.card}>
+            <h2 style={styles.sectionTitle}>Text & Labels</h2>
 
             <div style={styles.formGroup}>
               <label style={styles.label}>Empty cart message</label>
@@ -794,6 +907,12 @@ const styles = {
     width: '18px',
     height: '18px',
     cursor: 'pointer',
+  },
+  helpText: {
+    fontSize: '12px',
+    color: '#888',
+    marginTop: '6px',
+    marginBottom: '0',
   },
   saveButton: {
     width: '100%',

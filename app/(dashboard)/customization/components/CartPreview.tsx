@@ -22,6 +22,11 @@ interface CartPreviewProps {
     closeButtonColor: string;
     closeButtonBorder: string;
     closeButtonBorderColor: string;
+    useCartImage: boolean;
+    cartImageUrl: string;
+    cartImageMobileSize: string;
+    cartImageDesktopSize: string;
+    cartImagePosition: string;
   };
   addons: {
     enabled: boolean;
@@ -52,11 +57,23 @@ export default function CartPreview({ design, addons }: CartPreviewProps) {
         {/* Cart Header */}
         <div style={{
           ...styles.cartHeader,
-          justifyContent: design.cartTitleAlignment === 'center' ? 'center' : 'space-between',
+          justifyContent: design.cartImagePosition === 'center' || design.cartTitleAlignment === 'center' ? 'center' : 'space-between',
           position: 'relative' as const,
         }}>
-          <h2 style={{ ...styles.cartTitle, color: design.cartTextColor }}>{design.cartTitle}</h2>
-          {design.cartTitleAlignment === 'left' && (
+          {design.useCartImage && design.cartImageUrl ? (
+            <img 
+              src={design.cartImageUrl} 
+              alt="Cart"
+              style={{
+                height: `${design.cartImageDesktopSize}px`,
+                maxWidth: '100%',
+                objectFit: 'contain',
+              }}
+            />
+          ) : (
+            <h2 style={{ ...styles.cartTitle, color: design.cartTextColor }}>{design.cartTitle}</h2>
+          )}
+          {(design.cartTitleAlignment === 'left' || (design.useCartImage && design.cartImagePosition === 'left')) && (
             <button style={{ 
               ...styles.closeButton, 
               color: design.closeButtonColor,
@@ -69,7 +86,7 @@ export default function CartPreview({ design, addons }: CartPreviewProps) {
               padding: design.closeButtonBorder !== 'none' ? '4px 8px' : '0',
             }}>✕</button>
           )}
-          {design.cartTitleAlignment === 'center' && (
+          {(design.cartTitleAlignment === 'center' || (design.useCartImage && design.cartImagePosition === 'center')) && (
             <button style={{ 
               ...styles.closeButton, 
               color: design.closeButtonColor,

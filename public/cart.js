@@ -48,6 +48,7 @@
           <!-- Header -->
           <div class="sp-cart-header">
             <h2 id="sp-cart-title">Your Cart</h2>
+            <img id="sp-cart-image" src="" alt="Cart" style="display: none;" />
             <button id="sp-cart-close" class="sp-cart-close" aria-label="Close cart">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -174,6 +175,11 @@
         font-size: 24px;
         font-weight: 600;
         color: #000;
+      }
+
+      .sp-cart-header img {
+        max-width: 100%;
+        object-fit: contain;
       }
 
       .sp-cart-close {
@@ -519,6 +525,16 @@
         .sp-cart-header h2 {
           font-size: 20px;
         }
+
+        .sp-cart-header img.sp-mobile-size {
+          height: var(--sp-cart-image-mobile-size, 100px);
+        }
+      }
+
+      @media (min-width: 769px) {
+        .sp-cart-header img.sp-desktop-size {
+          height: var(--sp-cart-image-desktop-size, 120px);
+        }
       }
 
       /* Smooth transitions for updates */
@@ -632,29 +648,77 @@
         sidebar.style.color = design.cartTextColor;
       }
 
-      // Apply cart title and alignment
+      // Apply cart header (title or image)
       const titleEl = document.getElementById('sp-cart-title');
+      const imageEl = document.getElementById('sp-cart-image');
       const headerEl = document.querySelector('.sp-cart-header');
-      if (titleEl && design.cartTitle) {
-        titleEl.textContent = design.cartTitle;
-        titleEl.style.color = design.cartTextColor;
-      }
-      if (headerEl && design.cartTitleAlignment) {
-        if (design.cartTitleAlignment === 'center') {
-          headerEl.style.justifyContent = 'center';
-          headerEl.style.position = 'relative';
-          const closeBtn = document.querySelector('.sp-cart-close');
-          if (closeBtn) {
-            closeBtn.style.position = 'absolute';
-            closeBtn.style.right = '20px';
+      
+      if (design.useCartImage && design.cartImageUrl) {
+        // Use image instead of title
+        if (titleEl) titleEl.style.display = 'none';
+        if (imageEl) {
+          imageEl.src = design.cartImageUrl;
+          imageEl.style.display = 'block';
+          imageEl.className = 'sp-mobile-size sp-desktop-size';
+          
+          // Set CSS variables for responsive sizing
+          if (design.cartImageMobileSize) {
+            document.documentElement.style.setProperty('--sp-cart-image-mobile-size', `${design.cartImageMobileSize}px`);
           }
-        } else {
-          headerEl.style.justifyContent = 'space-between';
-          headerEl.style.position = 'static';
-          const closeBtn = document.querySelector('.sp-cart-close');
-          if (closeBtn) {
-            closeBtn.style.position = 'static';
-            closeBtn.style.right = 'auto';
+          if (design.cartImageDesktopSize) {
+            document.documentElement.style.setProperty('--sp-cart-image-desktop-size', `${design.cartImageDesktopSize}px`);
+          }
+        }
+        
+        // Apply image position
+        if (headerEl && design.cartImagePosition) {
+          if (design.cartImagePosition === 'center') {
+            headerEl.style.justifyContent = 'center';
+            headerEl.style.position = 'relative';
+            const closeBtn = document.querySelector('.sp-cart-close');
+            if (closeBtn) {
+              closeBtn.style.position = 'absolute';
+              closeBtn.style.right = '20px';
+            }
+          } else {
+            headerEl.style.justifyContent = 'space-between';
+            headerEl.style.position = 'static';
+            const closeBtn = document.querySelector('.sp-cart-close');
+            if (closeBtn) {
+              closeBtn.style.position = 'static';
+              closeBtn.style.right = 'auto';
+            }
+          }
+        }
+      } else {
+        // Use text title
+        if (imageEl) imageEl.style.display = 'none';
+        if (titleEl) {
+          titleEl.style.display = 'block';
+          if (design.cartTitle) {
+            titleEl.textContent = design.cartTitle;
+          }
+          titleEl.style.color = design.cartTextColor;
+        }
+        
+        // Apply title alignment
+        if (headerEl && design.cartTitleAlignment) {
+          if (design.cartTitleAlignment === 'center') {
+            headerEl.style.justifyContent = 'center';
+            headerEl.style.position = 'relative';
+            const closeBtn = document.querySelector('.sp-cart-close');
+            if (closeBtn) {
+              closeBtn.style.position = 'absolute';
+              closeBtn.style.right = '20px';
+            }
+          } else {
+            headerEl.style.justifyContent = 'space-between';
+            headerEl.style.position = 'static';
+            const closeBtn = document.querySelector('.sp-cart-close');
+            if (closeBtn) {
+              closeBtn.style.position = 'static';
+              closeBtn.style.right = 'auto';
+            }
           }
         }
       }
