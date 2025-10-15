@@ -4,7 +4,7 @@
 
 All revenue tracking, order synchronization, and sales analytics features are now fully implemented and ready to use!
 
----
+----
 
 ## 📋 What Was Built
 
