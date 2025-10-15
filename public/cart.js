@@ -17,7 +17,10 @@
         }
       }
       return null;
-    })()
+    })(),
+    // Cache settings
+    cacheKey: 'sp_cart_settings',
+    cacheTTL: 1000 * 60 * 60 * 6  // 6 hours
   };
 
   // Helper function to get shop domain (may need to wait for Shopify object)
@@ -573,6 +576,41 @@
   }
 
   // ============================================
+  // LOCALSTORAGE CACHE FUNCTIONS
+  // ============================================
+
+  function getCachedSettings() {
+    try {
+      const cached = localStorage.getItem(CONFIG.cacheKey);
+      if (!cached) return null;
+      
+      const { data, timestamp } = JSON.parse(cached);
+      
+      // Check if expired
+      if (Date.now() - timestamp > CONFIG.cacheTTL) {
+        localStorage.removeItem(CONFIG.cacheKey);
+        return null;
+      }
+      
+      return data;
+    } catch (error) {
+      // If localStorage fails (private browsing, etc.), silently fail
+      return null;
+    }
+  }
+
+  function setCachedSettings(settings) {
+    try {
+      localStorage.setItem(CONFIG.cacheKey, JSON.stringify({
+        data: settings,
+        timestamp: Date.now()
+      }));
+    } catch (error) {
+      // If localStorage fails (quota exceeded, etc.), silently fail
+    }
+  }
+
+  // ============================================
   // SHOPIFY CART API FUNCTIONS
   // ============================================
 
@@ -588,7 +626,7 @@
     }
   }
 
-  async function fetchSettings() {
+  async function fetchSettings(useCache = true) {
     try {
       // Get shop domain at fetch time (not at script load time)
       const shopDomain = getShopDomain();
@@ -598,6 +636,61 @@
         return null;
       }
       
+      // Try to load from cache first (instant!)
+      if (useCache) {
+        const cached = getCachedSettings();
+        if (cached) {
+          state.settings = cached;
+          
+          // Check if cart is active
+          if (cached.cart_active === false) {
+            return null;
+          }
+          
+          // Apply cached settings immediately (instant UI)
+          applySettings();
+          
+          // Fetch fresh settings in background (non-blocking)
+          fetchSettingsFromAPI(shopDomain).then(fresh => {
+            if (fresh && JSON.stringify(fresh) !== JSON.stringify(cached)) {
+              // Settings changed, update
+              state.settings = fresh;
+              setCachedSettings(fresh);
+              // Reset static settings flag so they get re-applied
+              state.staticSettingsApplied = false;
+              applySettings();
+            }
+          });
+          
+          return cached;
+        }
+      }
+      
+      // No cache, fetch fresh
+      const fresh = await fetchSettingsFromAPI(shopDomain);
+      if (!fresh) {
+        return null;
+      }
+      
+      state.settings = fresh;
+      
+      // Check if cart is active
+      if (fresh.cart_active === false) {
+        return null;
+      }
+      
+      // Save to cache
+      setCachedSettings(fresh);
+      
+      applySettings();
+      return fresh;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async function fetchSettingsFromAPI(shopDomain) {
+    try {
       // Use token-based authentication if available
       // SECURITY: Always send shop domain for domain binding validation
       const url = CONFIG.token 
@@ -611,14 +704,6 @@
       }
       
       const settings = await response.json();
-      state.settings = settings;
-      
-      // Check if cart is active
-      if (settings.cart_active === false) {
-        return null; // Signal to not initialize the cart
-      }
-      
-      applySettings();
       return settings;
     } catch (error) {
       return null;
@@ -1521,7 +1606,8 @@
       return;
     }
 
-    // Fetch settings first to check if cart is active
+    // PRE-LOAD OPTIMIZATION: Fetch settings immediately on page load
+    // This makes cart opening nearly instant (uses cache on return visits)
     const settings = await fetchSettings();
     
     // If cart is not active, don't initialize
@@ -1543,7 +1629,7 @@
     // Attach event listeners
     attachEventListeners();
 
-    // Fetch initial cart
+    // Fetch initial cart data (so it's ready too)
     await fetchCart();
 
     // Expose global function to open cart
