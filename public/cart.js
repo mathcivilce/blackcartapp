@@ -1691,10 +1691,12 @@
     // Expose global function to open cart immediately
     window.openShippingProtectionCart = openCart;
 
-    // PRE-LOAD OPTIMIZATION: Fetch settings in background (non-blocking!)
+    // PRE-LOAD OPTIMIZATION: Fetch settings and cart in background (non-blocking!)
     // This makes cart opening nearly instant (uses cache on return visits)
-    // Don't await - let it load in background
-    fetchSettings().then(settings => {
+    Promise.all([
+      fetchSettings(),
+      fetchCart()
+    ]).then(([settings, cart]) => {
       if (settings === null) {
         // Cart is not active, hide cart functionality
         const overlay = document.getElementById('sp-cart-overlay');
@@ -1708,20 +1710,24 @@
       applySettings();
       
       // OPTIMIZATION: Pre-fetch protection variant ID if auto-add is enabled
-      // This saves 150ms when user clicks "Add to Cart"
       if (settings.addons?.acceptByDefault && settings.addons?.productHandle) {
-        prefetchProtectionVariant(settings.addons.productHandle).catch(() => {
+        prefetchProtectionVariant(settings.addons.productHandle).then(() => {
+          // OPTIMIZATION: Pre-add protection to empty cart
+          // This eliminates the 300ms delay when user adds their first product
+          if (!state.protectionInCart && state.cart?.item_count === 0) {
+            // Cart is empty and protection auto-add is enabled
+            // Add protection now so it's ready when user adds products
+            addProtectionToCart(true, true).catch(() => {
+              // Silently fail, will try again when product is added
+            });
+          }
+        }).catch(() => {
           // Silently fail, will fetch on-demand if needed
         });
       }
     }).catch(() => {
-      // Silently fail if settings can't load
+      // Silently fail if settings/cart can't load
       // Cart will still work with default behavior
-    });
-
-    // Fetch initial cart data in background (non-blocking)
-    fetchCart().catch(() => {
-      // Silently fail, cart will fetch when opened
     });
   }
 
