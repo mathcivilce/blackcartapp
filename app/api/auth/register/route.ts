@@ -1,6 +1,18 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+
+// Use service role key for admin operations (token validation, store creation)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+// Use anon key for auth operations
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export async function POST(request: Request) {
   try {
@@ -14,8 +26,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate subscription token
-    const { data: tokenData, error: tokenError } = await supabase
+    // Validate subscription token (use admin client to bypass RLS)
+    const { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('subscription_tokens')
       .select('*')
       .eq('token', token)
@@ -105,8 +117,8 @@ export async function POST(request: Request) {
 
     // If registration was successful and session was created
     if (data.session && data.user) {
-      // Mark token as used and associate with user
-      await supabase
+      // Mark token as used and associate with user (use admin client)
+      await supabaseAdmin
         .from('subscription_tokens')
         .update({
           used: true,
@@ -115,8 +127,8 @@ export async function POST(request: Request) {
         })
         .eq('token', token);
 
-      // Create store for user with Stripe details
-      const { data: newStore, error: storeError } = await supabase
+      // Create store for user with Stripe details (use admin client)
+      const { data: newStore, error: storeError } = await supabaseAdmin
         .from('stores')
         .insert({
           user_id: data.user.id,
@@ -129,8 +141,8 @@ export async function POST(request: Request) {
         .single();
 
       if (!storeError && newStore) {
-        // Create default settings for the new store
-        await supabase
+        // Create default settings for the new store (use admin client)
+        await supabaseAdmin
           .from('settings')
           .insert({
             store_id: newStore.id,
