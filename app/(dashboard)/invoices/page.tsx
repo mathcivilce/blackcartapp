@@ -90,6 +90,36 @@ export default function InvoicesPage() {
     }
   };
 
+  const triggerTestGeneration = async () => {
+    if (!confirm('🧪 TEST MODE: Generate invoice for CURRENT WEEK?\n\nThis will create a REAL Stripe invoice and charge the customer.\n\nNormal operation: Invoices are generated for PREVIOUS week on Mondays.\n\nContinue with test?')) {
+      return;
+    }
+
+    try {
+      setGenerating(true);
+      const response = await fetch('/api/invoices/test-generate', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate test invoice');
+      }
+
+      const results = data.results?.results || {};
+      alert(`🧪 Test Invoice Generated!\n\n✅ Created: ${results.invoices_created || 0}\n❌ Failed: ${results.invoices_failed || 0}\n💰 Total Commission: $${((results.total_commission || 0) / 100).toFixed(2)}\n\n⚠️ This created a REAL Stripe invoice and will charge the customer.`);
+      
+      // Refresh invoices
+      await fetchInvoices();
+    } catch (err) {
+      console.error('Error triggering test invoice:', err);
+      alert(`Error: ${err instanceof Error ? err.message : 'Failed to generate test invoice'}`);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   useEffect(() => {
     fetchInvoices();
   }, []);
@@ -159,16 +189,29 @@ export default function InvoicesPage() {
           <h1 style={styles.title}>Invoices</h1>
           <p style={styles.subtitle}>Weekly commission charges</p>
         </div>
-        <button
-          onClick={triggerGeneration}
-          disabled={generating}
-          style={{
-            ...styles.button,
-            ...(generating ? styles.buttonDisabled : {}),
-          }}
-        >
-          {generating ? 'Generating...' : 'Manual Generation'}
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            onClick={triggerGeneration}
+            disabled={generating}
+            style={{
+              ...styles.button,
+              ...(generating ? styles.buttonDisabled : {}),
+            }}
+          >
+            {generating ? 'Generating...' : 'Manual Generation'}
+          </button>
+          <button
+            onClick={triggerTestGeneration}
+            disabled={generating}
+            style={{
+              ...styles.button,
+              backgroundColor: '#FF9800',
+              ...(generating ? styles.buttonDisabled : {}),
+            }}
+          >
+            {generating ? 'Testing...' : '🧪 Test (Current Week)'}
+          </button>
+        </div>
       </div>
 
       {summary && (
