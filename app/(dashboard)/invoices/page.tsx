@@ -271,7 +271,6 @@ export default function InvoicesPage() {
                 <th style={styles.tableHeaderCell}>Commission</th>
                 <th style={styles.tableHeaderCell}>Status</th>
                 <th style={styles.tableHeaderCell}>Created</th>
-                <th style={styles.tableHeaderCell}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -299,18 +298,6 @@ export default function InvoicesPage() {
                   </td>
                   <td style={styles.tableCell}>
                     {formatDate(invoice.created_at)}
-                  </td>
-                  <td style={styles.tableCell}>
-                    {invoice.stripe_invoice_id && (
-                      <a
-                        href={`https://dashboard.stripe.com/invoices/${invoice.stripe_invoice_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={styles.link}
-                      >
-                        View in Stripe →
-                      </a>
-                    )}
                   </td>
                 </tr>
               ))}
