@@ -140,6 +140,13 @@ export async function GET(request: NextRequest) {
           cartImageDesktopSize: settings?.cart_image_desktop_size || 120,
           cartImagePosition: settings?.cart_image_position || 'left',
         },
+        announcement: {
+          enabled: settings?.announcement_enabled ?? false,
+          text: settings?.announcement_text || 'BUY 1 GET 2 FREE',
+          textColor: settings?.announcement_text_color || '#FFFFFF',
+          backgroundColor: settings?.announcement_background_color || '#000000',
+          position: settings?.announcement_position || 'top',
+        },
         addons: {
           enabled: settings?.addons_enabled ?? true,
           title: settings?.addon_title || 'Shipping Protection',
@@ -230,6 +237,13 @@ export async function GET(request: NextRequest) {
           cartImageDesktopSize: 120,
           cartImagePosition: 'left',
         },
+        announcement: {
+          enabled: false,
+          text: 'BUY 1 GET 2 FREE',
+          textColor: '#FFFFFF',
+          backgroundColor: '#000000',
+          position: 'top',
+        },
         addons: {
           enabled: true,
           title: 'Shipping Protection',
@@ -281,6 +295,14 @@ export async function GET(request: NextRequest) {
         cartImageDesktopSize: settings?.cart_image_desktop_size || 120,
         cartImagePosition: settings?.cart_image_position || 'left',
       },
+      // Announcement settings
+      announcement: {
+        enabled: settings?.announcement_enabled ?? false,
+        text: settings?.announcement_text || 'BUY 1 GET 2 FREE',
+        textColor: settings?.announcement_text_color || '#FFFFFF',
+        backgroundColor: settings?.announcement_background_color || '#000000',
+        position: settings?.announcement_position || 'top',
+      },
       // Add-ons settings
       addons: {
         enabled: settings?.addons_enabled ?? true,
@@ -328,6 +350,13 @@ export async function GET(request: NextRequest) {
         cartImageMobileSize: 100,
         cartImageDesktopSize: 120,
         cartImagePosition: 'left',
+      },
+      announcement: {
+        enabled: false,
+        text: 'BUY 1 GET 2 FREE',
+        textColor: '#FFFFFF',
+        backgroundColor: '#000000',
+        position: 'top',
       },
       addons: {
         enabled: true,

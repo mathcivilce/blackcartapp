@@ -44,6 +44,14 @@ export default function AddOnsPage() {
     cartImagePosition: 'left',
   });
 
+  const [announcement, setAnnouncement] = useState({
+    enabled: false,
+    text: 'BUY 1 GET 2 FREE',
+    textColor: '#FFFFFF',
+    backgroundColor: '#000000',
+    position: 'top',
+  });
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -81,9 +89,22 @@ export default function AddOnsPage() {
       // Fetch settings for this store
       await fetchSettings(store.id);
       await fetchDesign(store.id);
+      await fetchAnnouncement(store.id);
     } catch (error) {
       console.error('Error loading user and settings:', error);
       setLoading(false);
+    }
+  };
+
+  const fetchAnnouncement = async (storeIdParam: string) => {
+    try {
+      const response = await fetch(`/api/announcement?storeId=${storeIdParam}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAnnouncement(data);
+      }
+    } catch (error) {
+      console.error('Error fetching announcement:', error);
     }
   };
 
@@ -384,7 +405,8 @@ export default function AddOnsPage() {
               price: addons.shippingProtection.price,
               acceptByDefault: addons.shippingProtection.acceptByDefault,
               adjustTotalPrice: addons.shippingProtection.adjustTotalPrice
-            }} 
+            }}
+            announcement={announcement}
           />
         </div>
       </div>

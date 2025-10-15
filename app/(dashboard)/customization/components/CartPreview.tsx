@@ -36,9 +36,16 @@ interface CartPreviewProps {
     acceptByDefault: boolean;
     adjustTotalPrice?: boolean;
   };
+  announcement?: {
+    enabled: boolean;
+    text: string;
+    textColor: string;
+    backgroundColor: string;
+    position: string;
+  };
 }
 
-export default function CartPreview({ design, addons }: CartPreviewProps) {
+export default function CartPreview({ design, addons, announcement }: CartPreviewProps) {
   const calculateTotal = () => {
     let total = 129.99;
     if (addons.enabled && addons.acceptByDefault && (addons.adjustTotalPrice !== false)) {
@@ -57,7 +64,9 @@ export default function CartPreview({ design, addons }: CartPreviewProps) {
         {/* Cart Header */}
         <div style={{
           ...styles.cartHeader,
-          justifyContent: design.cartImagePosition === 'center' || design.cartTitleAlignment === 'center' ? 'center' : 'space-between',
+          justifyContent: design.useCartImage 
+            ? (design.cartImagePosition === 'center' ? 'center' : 'space-between')
+            : (design.cartTitleAlignment === 'center' ? 'center' : 'space-between'),
           position: 'relative' as const,
         }}>
           {design.useCartImage && design.cartImageUrl ? (
@@ -89,6 +98,21 @@ export default function CartPreview({ design, addons }: CartPreviewProps) {
             )
           }}>✕</button>
         </div>
+
+        {/* Announcement Banner - Top Position */}
+        {announcement?.enabled && announcement.position === 'top' && (
+          <div style={{
+            padding: '12px 20px',
+            background: announcement.backgroundColor,
+            color: announcement.textColor,
+            textAlign: 'center' as const,
+            fontSize: '14px',
+            fontWeight: '600',
+            borderBottom: '1px solid rgba(0,0,0,0.1)',
+          }}>
+            {announcement.text}
+          </div>
+        )}
 
         {/* Cart Items */}
         <div style={styles.cartItems}>
@@ -138,6 +162,22 @@ export default function CartPreview({ design, addons }: CartPreviewProps) {
 
         {/* Cart Footer */}
         <div style={styles.cartFooter}>
+          {/* Announcement Banner - Bottom Position */}
+          {announcement?.enabled && announcement.position === 'bottom' && (
+            <div style={{
+              padding: '12px',
+              background: announcement.backgroundColor,
+              color: announcement.textColor,
+              textAlign: 'center' as const,
+              fontSize: '14px',
+              fontWeight: '600',
+              borderRadius: '8px',
+              marginBottom: '20px',
+            }}>
+              {announcement.text}
+            </div>
+          )}
+
           {/* Shipping Protection */}
           {addons.enabled && (
             <div style={styles.protectionContainer}>

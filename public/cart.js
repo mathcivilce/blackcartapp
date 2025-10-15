@@ -57,6 +57,9 @@
             </button>
           </div>
 
+          <!-- Announcement Banner (Top) -->
+          <div id="sp-announcement-top" class="sp-announcement-banner sp-announcement-top" style="display: none;"></div>
+
           <!-- Cart Content -->
           <div id="sp-cart-content" class="sp-cart-content">
             <div class="sp-cart-loading">Loading...</div>
@@ -64,6 +67,9 @@
 
           <!-- Footer -->
           <div class="sp-cart-footer">
+            <!-- Announcement Banner (Bottom) -->
+            <div id="sp-announcement-bottom" class="sp-announcement-banner sp-announcement-bottom" style="display: none;"></div>
+
             <!-- Protection Toggle -->
             <div id="sp-protection-container" class="sp-protection-container" style="display: none;">
               <div class="sp-protection-toggle">
@@ -180,6 +186,24 @@
       .sp-cart-header img {
         max-width: 100%;
         object-fit: contain;
+      }
+
+      /* Announcement Banner */
+      .sp-announcement-banner {
+        padding: 12px 20px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.4;
+      }
+
+      .sp-announcement-top {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      }
+
+      .sp-announcement-bottom {
+        border-radius: 8px;
+        margin-bottom: 20px;
       }
 
       .sp-cart-close {
@@ -775,6 +799,33 @@
       const protectionContainer = document.getElementById('sp-protection-container');
       if (protectionContainer && design.cartAccentColor) {
         protectionContainer.style.background = design.cartAccentColor;
+      }
+    }
+
+    // Apply announcement settings
+    if (state.settings.announcement) {
+      const announcement = state.settings.announcement;
+      const topBanner = document.getElementById('sp-announcement-top');
+      const bottomBanner = document.getElementById('sp-announcement-bottom');
+      
+      if (announcement.enabled) {
+        const activeBanner = announcement.position === 'top' ? topBanner : bottomBanner;
+        const inactiveBanner = announcement.position === 'top' ? bottomBanner : topBanner;
+        
+        if (activeBanner) {
+          activeBanner.textContent = announcement.text || '';
+          activeBanner.style.backgroundColor = announcement.backgroundColor || '#000000';
+          activeBanner.style.color = announcement.textColor || '#FFFFFF';
+          activeBanner.style.display = 'block';
+        }
+        
+        if (inactiveBanner) {
+          inactiveBanner.style.display = 'none';
+        }
+      } else {
+        // Hide both banners if announcement is disabled
+        if (topBanner) topBanner.style.display = 'none';
+        if (bottomBanner) bottomBanner.style.display = 'none';
       }
     }
     

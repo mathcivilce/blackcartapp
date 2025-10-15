@@ -72,6 +72,13 @@ export interface Settings {
   cart_image_desktop_size?: number;
   cart_image_position?: string;
   
+  // Announcement settings
+  announcement_enabled?: boolean;
+  announcement_text?: string;
+  announcement_text_color?: string;
+  announcement_background_color?: string;
+  announcement_position?: string;
+  
   // Add-ons settings
   addons_enabled?: boolean;
   addon_title?: string;
