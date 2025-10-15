@@ -65,11 +65,11 @@
             <div class="sp-cart-loading">Loading...</div>
           </div>
 
+          <!-- Announcement Banner (Bottom) -->
+          <div id="sp-announcement-bottom" class="sp-announcement-banner sp-announcement-bottom" style="display: none;"></div>
+
           <!-- Footer -->
           <div class="sp-cart-footer">
-            <!-- Announcement Banner (Bottom) -->
-            <div id="sp-announcement-bottom" class="sp-announcement-banner sp-announcement-bottom" style="display: none;"></div>
-
             <!-- Protection Toggle -->
             <div id="sp-protection-container" class="sp-protection-container" style="display: none;">
               <div class="sp-protection-toggle">
@@ -202,8 +202,7 @@
       }
 
       .sp-announcement-bottom {
-        border-radius: 8px;
-        margin-bottom: 20px;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
       }
 
       .sp-cart-close {

@@ -26,6 +26,7 @@ export default function DashboardLayout({
   const customizationSubmenu = [
     { name: '  Design', path: '/customization/design', icon: '▣' },
     { name: '  Add-ons', path: '/customization/add-ons', icon: '⊞' },
+    { name: '  Announcement', path: '/customization/announcement', icon: '📢' },
   ];
 
   return (

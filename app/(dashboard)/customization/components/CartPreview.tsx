@@ -160,24 +160,22 @@ export default function CartPreview({ design, addons, announcement }: CartPrevie
           </div>
         </div>
 
+        {/* Announcement Banner - Bottom Position */}
+        {announcement?.enabled && announcement.position === 'bottom' && (
+          <div style={{
+            padding: '12px 20px',
+            background: announcement.backgroundColor,
+            color: announcement.textColor,
+            textAlign: 'center' as const,
+            fontSize: '14px',
+            fontWeight: '600',
+          }}>
+            {announcement.text}
+          </div>
+        )}
+
         {/* Cart Footer */}
         <div style={styles.cartFooter}>
-          {/* Announcement Banner - Bottom Position */}
-          {announcement?.enabled && announcement.position === 'bottom' && (
-            <div style={{
-              padding: '12px',
-              background: announcement.backgroundColor,
-              color: announcement.textColor,
-              textAlign: 'center' as const,
-              fontSize: '14px',
-              fontWeight: '600',
-              borderRadius: '8px',
-              marginBottom: '20px',
-            }}>
-              {announcement.text}
-            </div>
-          )}
-
           {/* Shipping Protection */}
           {addons.enabled && (
             <div style={styles.protectionContainer}>
