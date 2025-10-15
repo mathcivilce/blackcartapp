@@ -37,6 +37,11 @@ export default function AddOnsPage() {
     closeButtonColor: '#637381',
     closeButtonBorder: 'none',
     closeButtonBorderColor: '#000000',
+    useCartImage: false,
+    cartImageUrl: '',
+    cartImageMobileSize: '100',
+    cartImageDesktopSize: '120',
+    cartImagePosition: 'left',
   });
 
   const [loading, setLoading] = useState(true);
