@@ -112,10 +112,27 @@ Updated the cart sidebar to:
 ## Files Modified
 
 1. ✅ `supabase/migrations/add_cart_image_settings.sql` - New migration file
-2. ✅ `app/api/design/route.ts` - API endpoint updates
-3. ✅ `app/(dashboard)/customization/design/page.tsx` - Design page UI
-4. ✅ `app/(dashboard)/customization/components/CartPreview.tsx` - Preview component
-5. ✅ `public/cart.js` - Customer-facing cart sidebar
+2. ✅ `app/api/design/route.ts` - API endpoint updates for design settings
+3. ✅ `app/api/settings/route.ts` - API endpoint updates for cart.js integration
+4. ✅ `app/(dashboard)/customization/design/page.tsx` - Design page UI
+5. ✅ `app/(dashboard)/customization/add-ons/page.tsx` - Add-ons page (added missing properties)
+6. ✅ `app/(dashboard)/customization/components/CartPreview.tsx` - Preview component (fixed duplicate close button)
+7. ✅ `public/cart.js` - Customer-facing cart sidebar
+
+## Bug Fixes
+
+### Issue 1: Duplicate Close Button in Preview
+**Problem:** The preview was showing two close buttons when cart image was enabled.
+
+**Solution:** Simplified the close button logic to render only one button with conditional positioning based on whether image or text mode is active.
+
+### Issue 2: Settings Not Reflecting in Customer Cart
+**Problem:** When users saved cart image settings in the dashboard, the changes weren't showing up in the actual customer-facing cart.
+
+**Solution:** Updated the `/api/settings` endpoint (used by cart.js) to include the new cart image fields in all response scenarios:
+- Token-based authentication response
+- Fallback shop-based response  
+- Error fallback response
 
 ## Testing Checklist
 

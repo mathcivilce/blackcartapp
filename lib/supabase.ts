@@ -65,6 +65,13 @@ export interface Settings {
   close_button_border?: string;
   close_button_border_color?: string;
   
+  // Cart image settings
+  use_cart_image?: boolean;
+  cart_image_url?: string;
+  cart_image_mobile_size?: number;
+  cart_image_desktop_size?: number;
+  cart_image_position?: string;
+  
   // Add-ons settings
   addons_enabled?: boolean;
   addon_title?: string;
