@@ -10,6 +10,10 @@ export default function AnnouncementPage() {
     textColor: '#FFFFFF',
     backgroundColor: '#000000',
     position: 'top',
+    countdownEnabled: false,
+    countdownEnd: '',
+    fontSize: 14,
+    showBorder: true,
   });
 
   const [design, setDesign] = useState({
@@ -98,6 +102,19 @@ export default function AnnouncementPage() {
       const response = await fetch(`/api/announcement?storeId=${storeIdParam}`);
       if (response.ok) {
         const data = await response.json();
+        
+        // Convert ISO datetime to datetime-local format if countdownEnd exists
+        if (data.countdownEnd) {
+          const date = new Date(data.countdownEnd);
+          // Format as YYYY-MM-DDTHH:MM (datetime-local format)
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          data.countdownEnd = `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+        
         setAnnouncement(data);
       }
     } catch (error) {
@@ -239,19 +256,54 @@ export default function AnnouncementPage() {
             
             <div style={styles.formGroup}>
               <label style={styles.label}>Announcement Text</label>
-              <input
-                type="text"
+              <textarea
                 name="text"
                 value={announcement.text}
                 onChange={handleInputChange}
-                style={styles.textInput}
-                placeholder="e.g., BUY 1 GET 2 FREE"
+                style={{ ...styles.textInput, minHeight: '80px', resize: 'vertical' as const }}
+                placeholder="e.g., BUY 1 GET 2 FREE or Flash Sale ends in {{ countdown }}!"
                 disabled={!announcement.enabled}
               />
               <p style={styles.helpText}>
-                Enter your promotional message or announcement
+                {announcement.countdownEnabled 
+                  ? 'Use {{ countdown }} to show the countdown timer in your text'
+                  : 'Enter your promotional message or announcement'}
               </p>
             </div>
+
+            <div style={styles.checkboxGroup}>
+              <label style={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  name="countdownEnabled"
+                  checked={announcement.countdownEnabled}
+                  onChange={handleInputChange}
+                  style={styles.checkbox}
+                  disabled={!announcement.enabled}
+                />
+                <span>Enable countdown timer</span>
+              </label>
+              <p style={styles.helpText}>
+                Shows a live countdown to a specific date/time
+              </p>
+            </div>
+
+            {announcement.countdownEnabled && (
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Countdown End Time</label>
+                <input
+                  type="datetime-local"
+                  name="countdownEnd"
+                  value={announcement.countdownEnd}
+                  onChange={handleInputChange}
+                  style={styles.textInput}
+                  disabled={!announcement.enabled}
+                />
+                <p style={styles.helpText}>
+                  Select when the countdown should end
+                </p>
+              </div>
+            )}
           </div>
 
           <div style={styles.card}>
@@ -299,6 +351,45 @@ export default function AnnouncementPage() {
                   disabled={!announcement.enabled}
                 />
               </div>
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Font Size</label>
+              <div style={styles.sliderGroup}>
+                <input
+                  type="range"
+                  name="fontSize"
+                  value={announcement.fontSize}
+                  onChange={handleInputChange}
+                  min="10"
+                  max="24"
+                  style={styles.slider}
+                  disabled={!announcement.enabled}
+                />
+                <input
+                  type="number"
+                  name="fontSize"
+                  value={announcement.fontSize}
+                  onChange={handleInputChange}
+                  style={styles.numberInput}
+                  disabled={!announcement.enabled}
+                />
+                <span style={styles.unit}>px</span>
+              </div>
+            </div>
+
+            <div style={styles.checkboxGroup}>
+              <label style={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  name="showBorder"
+                  checked={announcement.showBorder}
+                  onChange={handleInputChange}
+                  style={styles.checkbox}
+                  disabled={!announcement.enabled}
+                />
+                <span>Show border line</span>
+              </label>
             </div>
           </div>
 
@@ -458,6 +549,33 @@ const styles = {
     color: '#666',
     marginTop: '6px',
     marginBottom: '0',
+  },
+  sliderGroup: {
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'center',
+  },
+  slider: {
+    flex: 1,
+    height: '6px',
+    background: '#333',
+    borderRadius: '3px',
+    outline: 'none',
+    cursor: 'pointer',
+  },
+  numberInput: {
+    width: '60px',
+    padding: '8px',
+    fontSize: '14px',
+    border: '1px solid #333',
+    borderRadius: '6px',
+    background: '#000',
+    color: '#fff',
+    textAlign: 'center' as const,
+  },
+  unit: {
+    fontSize: '14px',
+    color: '#888',
   },
   colorInputGroup: {
     display: 'flex',

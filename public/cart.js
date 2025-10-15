@@ -736,6 +736,77 @@
     }
   }
 
+  // ============================================
+  // COUNTDOWN HELPERS
+  // ============================================
+
+  let countdownInterval = null;
+
+  function formatCountdown(endTime) {
+    if (!endTime) return '00:00:00';
+    
+    const end = new Date(endTime).getTime();
+    const now = new Date().getTime();
+    const distance = end - now;
+
+    if (distance < 0) return 'EXPIRED';
+
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+    if (days > 0) {
+      return days + 'd ' + hours + 'h ' + minutes + 'm';
+    } else if (hours > 0) {
+      return hours + 'h ' + minutes + 'm ' + seconds + 's';
+    } else {
+      return minutes + 'm ' + seconds + 's';
+    }
+  }
+
+  function formatAnnouncementText(announcement) {
+    if (!announcement || !announcement.text) return '';
+    
+    if (announcement.countdownEnabled && announcement.text.includes('{{ countdown }}')) {
+      const countdown = formatCountdown(announcement.countdownEnd);
+      return announcement.text.replace('{{ countdown }}', countdown);
+    }
+    
+    return announcement.text;
+  }
+
+  function updateCountdown() {
+    if (!state.settings?.announcement?.enabled || !state.settings.announcement.countdownEnabled) {
+      return;
+    }
+
+    const announcement = state.settings.announcement;
+    const topBanner = document.getElementById('sp-announcement-top');
+    const bottomBanner = document.getElementById('sp-announcement-bottom');
+    const activeBanner = announcement.position === 'top' ? topBanner : bottomBanner;
+
+    if (activeBanner && activeBanner.style.display !== 'none') {
+      const text = formatAnnouncementText(announcement);
+      activeBanner.textContent = text;
+    }
+  }
+
+  function startCountdownInterval() {
+    // Clear any existing interval
+    stopCountdownInterval();
+    
+    // Update every second
+    countdownInterval = setInterval(updateCountdown, 1000);
+  }
+
+  function stopCountdownInterval() {
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+  }
+
   // Apply static settings that don't change between renders (only once)
   function applyStaticSettings() {
     if (!state.settings) {
@@ -923,10 +994,34 @@
         const inactiveBanner = announcement.position === 'top' ? bottomBanner : topBanner;
         
         if (activeBanner) {
-          activeBanner.textContent = announcement.text || '';
+          // Apply text (with countdown replacement if enabled)
+          const text = formatAnnouncementText(announcement);
+          activeBanner.textContent = text;
+          
+          // Apply styling
           activeBanner.style.backgroundColor = announcement.backgroundColor || '#000000';
           activeBanner.style.color = announcement.textColor || '#FFFFFF';
+          activeBanner.style.fontSize = (announcement.fontSize || 14) + 'px';
+          
+          // Apply border
+          if (announcement.showBorder === false) {
+            activeBanner.style.borderTop = 'none';
+            activeBanner.style.borderBottom = 'none';
+          } else {
+            // Restore default borders
+            if (announcement.position === 'top') {
+              activeBanner.style.borderBottom = '1px solid rgba(0, 0, 0, 0.1)';
+            } else {
+              activeBanner.style.borderTop = '1px solid rgba(0, 0, 0, 0.1)';
+            }
+          }
+          
           activeBanner.style.display = 'block';
+          
+          // Start countdown interval if countdown is enabled
+          if (announcement.countdownEnabled && announcement.countdownEnd) {
+            startCountdownInterval();
+          }
         }
         
         if (inactiveBanner) {
@@ -936,6 +1031,9 @@
         // Hide both banners if announcement is disabled
         if (topBanner) topBanner.style.display = 'none';
         if (bottomBanner) bottomBanner.style.display = 'none';
+        
+        // Stop countdown if running
+        stopCountdownInterval();
       }
     }
     
@@ -1468,6 +1566,9 @@
       state.isOpen = false;
       overlay.classList.remove('sp-open');
       document.body.style.overflow = '';
+      
+      // Stop countdown interval when cart is closed (prevent memory leak)
+      stopCountdownInterval();
     }
   }
 

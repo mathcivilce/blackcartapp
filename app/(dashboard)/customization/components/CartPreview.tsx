@@ -42,16 +42,70 @@ interface CartPreviewProps {
     textColor: string;
     backgroundColor: string;
     position: string;
+    countdownEnabled?: boolean;
+    countdownEnd?: string;
+    fontSize?: number;
+    showBorder?: boolean;
   };
 }
 
+// Countdown formatter
+function formatCountdown(endTime: string): string {
+  if (!endTime) return '00:00:00';
+  
+  const end = new Date(endTime).getTime();
+  const now = new Date().getTime();
+  const distance = end - now;
+
+  if (distance < 0) return 'EXPIRED';
+
+  const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m`;
+  } else if (hours > 0) {
+    return `${hours}h ${minutes}m ${seconds}s`;
+  } else {
+    return `${minutes}m ${seconds}s`;
+  }
+}
+
 export default function CartPreview({ design, addons, announcement }: CartPreviewProps) {
+  const [countdown, setCountdown] = React.useState('');
+
   const calculateTotal = () => {
     let total = 129.99;
     if (addons.enabled && addons.acceptByDefault && (addons.adjustTotalPrice !== false)) {
       total += parseFloat(addons.price || '0');
     }
     return total.toFixed(2);
+  };
+
+  // Update countdown every second if countdown is enabled
+  React.useEffect(() => {
+    if (announcement?.countdownEnabled && announcement?.countdownEnd) {
+      const updateCountdown = () => {
+        setCountdown(formatCountdown(announcement.countdownEnd!));
+      };
+      
+      updateCountdown(); // Initial update
+      const interval = setInterval(updateCountdown, 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [announcement?.countdownEnabled, announcement?.countdownEnd]);
+
+  const renderAnnouncementText = () => {
+    if (!announcement?.text) return '';
+    
+    if (announcement.countdownEnabled && announcement.text.includes('{{ countdown }}')) {
+      return announcement.text.replace('{{ countdown }}', countdown || '00:00:00');
+    }
+    
+    return announcement.text;
   };
 
   return (
@@ -106,11 +160,12 @@ export default function CartPreview({ design, addons, announcement }: CartPrevie
             background: announcement.backgroundColor,
             color: announcement.textColor,
             textAlign: 'center' as const,
-            fontSize: '14px',
+            fontSize: `${announcement.fontSize || 14}px`,
             fontWeight: '600',
-            borderBottom: '1px solid rgba(0,0,0,0.1)',
+            borderBottom: announcement.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
+            whiteSpace: 'pre-wrap' as const,
           }}>
-            {announcement.text}
+            {renderAnnouncementText()}
           </div>
         )}
 
@@ -167,10 +222,12 @@ export default function CartPreview({ design, addons, announcement }: CartPrevie
             background: announcement.backgroundColor,
             color: announcement.textColor,
             textAlign: 'center' as const,
-            fontSize: '14px',
+            fontSize: `${announcement.fontSize || 14}px`,
             fontWeight: '600',
+            borderTop: announcement.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
+            whiteSpace: 'pre-wrap' as const,
           }}>
-            {announcement.text}
+            {renderAnnouncementText()}
           </div>
         )}
 

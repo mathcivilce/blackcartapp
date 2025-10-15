@@ -28,6 +28,10 @@ export async function GET(request: NextRequest) {
       textColor: settings?.announcement_text_color || '#FFFFFF',
       backgroundColor: settings?.announcement_background_color || '#000000',
       position: settings?.announcement_position || 'top',
+      countdownEnabled: settings?.announcement_countdown_enabled ?? false,
+      countdownEnd: settings?.announcement_countdown_end || null,
+      fontSize: settings?.announcement_font_size || 14,
+      showBorder: settings?.announcement_show_border ?? true,
     });
   } catch (error) {
     console.error('Announcement settings API error:', error);
@@ -52,6 +56,10 @@ export async function POST(request: NextRequest) {
     if (announcementSettings.textColor !== undefined) dbSettings.announcement_text_color = announcementSettings.textColor;
     if (announcementSettings.backgroundColor !== undefined) dbSettings.announcement_background_color = announcementSettings.backgroundColor;
     if (announcementSettings.position !== undefined) dbSettings.announcement_position = announcementSettings.position;
+    if (announcementSettings.countdownEnabled !== undefined) dbSettings.announcement_countdown_enabled = announcementSettings.countdownEnabled;
+    if (announcementSettings.countdownEnd !== undefined) dbSettings.announcement_countdown_end = announcementSettings.countdownEnd;
+    if (announcementSettings.fontSize !== undefined) dbSettings.announcement_font_size = announcementSettings.fontSize;
+    if (announcementSettings.showBorder !== undefined) dbSettings.announcement_show_border = announcementSettings.showBorder;
 
     const { error } = await supabase
       .from('settings')

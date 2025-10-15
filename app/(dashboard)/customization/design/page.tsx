@@ -47,6 +47,10 @@ export default function DesignPage() {
     textColor: '#FFFFFF',
     backgroundColor: '#000000',
     position: 'top',
+    countdownEnabled: false,
+    countdownEnd: '',
+    fontSize: 14,
+    showBorder: true,
   });
 
   const [loading, setLoading] = useState(true);

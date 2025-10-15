@@ -146,6 +146,10 @@ export async function GET(request: NextRequest) {
           textColor: settings?.announcement_text_color || '#FFFFFF',
           backgroundColor: settings?.announcement_background_color || '#000000',
           position: settings?.announcement_position || 'top',
+          countdownEnabled: settings?.announcement_countdown_enabled ?? false,
+          countdownEnd: settings?.announcement_countdown_end || null,
+          fontSize: settings?.announcement_font_size || 14,
+          showBorder: settings?.announcement_show_border ?? true,
         },
         addons: {
           enabled: settings?.addons_enabled ?? true,
@@ -243,6 +247,10 @@ export async function GET(request: NextRequest) {
           textColor: '#FFFFFF',
           backgroundColor: '#000000',
           position: 'top',
+          countdownEnabled: false,
+          countdownEnd: null,
+          fontSize: 14,
+          showBorder: true,
         },
         addons: {
           enabled: true,
@@ -302,6 +310,10 @@ export async function GET(request: NextRequest) {
         textColor: settings?.announcement_text_color || '#FFFFFF',
         backgroundColor: settings?.announcement_background_color || '#000000',
         position: settings?.announcement_position || 'top',
+        countdownEnabled: settings?.announcement_countdown_enabled ?? false,
+        countdownEnd: settings?.announcement_countdown_end || null,
+        fontSize: settings?.announcement_font_size || 14,
+        showBorder: settings?.announcement_show_border ?? true,
       },
       // Add-ons settings
       addons: {
@@ -357,6 +369,10 @@ export async function GET(request: NextRequest) {
         textColor: '#FFFFFF',
         backgroundColor: '#000000',
         position: 'top',
+        countdownEnabled: false,
+        countdownEnd: null,
+        fontSize: 14,
+        showBorder: true,
       },
       addons: {
         enabled: true,

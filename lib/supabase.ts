@@ -78,6 +78,10 @@ export interface Settings {
   announcement_text_color?: string;
   announcement_background_color?: string;
   announcement_position?: string;
+  announcement_countdown_enabled?: boolean;
+  announcement_countdown_end?: string;
+  announcement_font_size?: number;
+  announcement_show_border?: boolean;
   
   // Add-ons settings
   addons_enabled?: boolean;
