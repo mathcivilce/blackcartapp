@@ -4,7 +4,7 @@
 
 Your automated order synchronization system is now **FULLY OPERATIONAL**!
 
----
+-----
 
 ## 📊 What's Running
 
