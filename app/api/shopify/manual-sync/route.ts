@@ -68,12 +68,15 @@ export async function POST(request: NextRequest) {
 
     console.log(`🔄 Manual sync requested by user ${user.id} for store ${store.shop_domain}`);
 
-    // Call the sync-orders endpoint
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const syncResponse = await fetch(`${baseUrl}/api/shopify/sync-orders`, {
+    // Call the Supabase edge function directly
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    const syncResponse = await fetch(`${supabaseUrl}/functions/v1/sync-orders`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseServiceKey}`,
       },
       body: JSON.stringify({
         store_id: store.id,

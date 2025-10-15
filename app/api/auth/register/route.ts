@@ -114,8 +114,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // If registration was successful and session was created
-    if (data.session && data.user) {
+    // If registration was successful and user was created
+    // Note: data.session may be null if email confirmation is required
+    if (data.user) {
       // Mark token as used and associate with user (use admin client)
       await supabaseAdmin
         .from('subscription_tokens')
@@ -154,23 +155,25 @@ export async function POST(request: Request) {
           });
       }
 
-      // Set session cookie
-      const cookieStore = await cookies();
-      cookieStore.set('sb-access-token', data.session.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: '/',
-      });
+      // Set session cookie (only if session exists)
+      if (data.session) {
+        const cookieStore = await cookies();
+        cookieStore.set('sb-access-token', data.session.access_token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7, // 7 days
+          path: '/',
+        });
 
-      cookieStore.set('sb-refresh-token', data.session.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: '/',
-      });
+        cookieStore.set('sb-refresh-token', data.session.refresh_token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7, // 7 days
+          path: '/',
+        });
+      }
     }
 
     return NextResponse.json({
