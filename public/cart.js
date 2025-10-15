@@ -584,7 +584,15 @@
       const cached = localStorage.getItem(CONFIG.cacheKey);
       if (!cached) return null;
       
-      const { data, timestamp } = JSON.parse(cached);
+      const parsed = JSON.parse(cached);
+      
+      // Validate structure
+      if (!parsed || !parsed.data || !parsed.timestamp) {
+        localStorage.removeItem(CONFIG.cacheKey);
+        return null;
+      }
+      
+      const { data, timestamp } = parsed;
       
       // Check if expired
       if (Date.now() - timestamp > CONFIG.cacheTTL) {
@@ -594,7 +602,12 @@
       
       return data;
     } catch (error) {
-      // If localStorage fails (private browsing, etc.), silently fail
+      // If localStorage fails or cache is corrupted, remove and fail gracefully
+      try {
+        localStorage.removeItem(CONFIG.cacheKey);
+      } catch (e) {
+        // Ignore if we can't remove
+      }
       return null;
     }
   }
@@ -647,8 +660,11 @@
             return null;
           }
           
-          // Apply cached settings immediately (instant UI)
-          applySettings();
+          // Apply cached settings only if cart HTML exists (during init, HTML is created after)
+          const cartSidebar = document.getElementById('sp-cart-sidebar');
+          if (cartSidebar) {
+            applySettings();
+          }
           
           // Fetch fresh settings in background (non-blocking)
           fetchSettingsFromAPI(shopDomain).then(fresh => {
@@ -658,8 +674,13 @@
               setCachedSettings(fresh);
               // Reset static settings flag so they get re-applied
               state.staticSettingsApplied = false;
-              applySettings();
+              // Only apply if cart exists
+              if (document.getElementById('sp-cart-sidebar')) {
+                applySettings();
+              }
             }
+          }).catch(() => {
+            // Silently fail background refresh, cached settings still work
           });
           
           return cached;
@@ -682,7 +703,12 @@
       // Save to cache
       setCachedSettings(fresh);
       
-      applySettings();
+      // Apply settings only if cart HTML exists (during init, HTML is created after)
+      const cartSidebar = document.getElementById('sp-cart-sidebar');
+      if (cartSidebar) {
+        applySettings();
+      }
+      
       return fresh;
     } catch (error) {
       return null;
