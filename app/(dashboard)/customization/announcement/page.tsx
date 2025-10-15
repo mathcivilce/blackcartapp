@@ -527,6 +527,22 @@ const styles = {
   formGroup: {
     marginBottom: '20px',
   },
+  checkboxGroup: {
+    marginBottom: '20px',
+  },
+  checkboxLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    color: '#fff',
+    cursor: 'pointer',
+  },
+  checkbox: {
+    width: '18px',
+    height: '18px',
+    cursor: 'pointer',
+  },
   label: {
     display: 'block',
     fontSize: '13px',
