@@ -1,4 +1,4 @@
-# Shipping Protection App - Cart Sidebar
+# Cartbase - Cart Sidebar
 
 A custom cart sidebar for Shopify stores with shipping protection toggle functionality.
 

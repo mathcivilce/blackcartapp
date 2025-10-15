@@ -1,4 +1,4 @@
--- Shipping Protection App Database Schema
+-- Cartbase Database Schema
 -- Multi-tenant setup for Shopify stores
 
 -- 1. Stores Table

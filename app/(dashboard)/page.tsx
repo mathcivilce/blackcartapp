@@ -2,7 +2,7 @@ export default function DashboardPage() {
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>Dashboard</h1>
-      <p style={styles.subtitle}>Welcome to BlackCart</p>
+      <p style={styles.subtitle}>Welcome to Cartbase</p>
 
       <div style={styles.grid}>
         <div style={styles.card}>

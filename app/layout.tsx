@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Shipping Protection App',
+  title: 'Cartbase',
   description: 'Custom cart with shipping protection for Shopify stores',
 }
 

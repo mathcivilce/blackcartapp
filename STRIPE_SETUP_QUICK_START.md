@@ -1,6 +1,6 @@
 # Stripe Integration - Quick Start
 
-This is a quick reference for setting up the Stripe integration in BlackCart.
+This is a quick reference for setting up the Stripe integration in Cartbase.
 
 ## 🚀 Quick Setup (5 minutes)
 

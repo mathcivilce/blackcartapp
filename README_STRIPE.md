@@ -2,7 +2,7 @@
 
 ## Overview
 
-Your BlackCart app now has a **fully functional Stripe subscription paywall**. Users must pay **$1/month** before they can create an account.
+Your Cartbase app now has a **fully functional Stripe subscription paywall**. Users must pay **$1/month** before they can create an account.
 
 ## ✅ What's Been Done
 

@@ -1,10 +1,10 @@
 # Stripe Integration Guide
 
-This guide explains how the Stripe subscription integration works in BlackCart.
+This guide explains how the Stripe subscription integration works in Cartbase.
 
 ## Overview
 
-BlackCart now includes a subscription paywall where users must pay $1/month before they can create an account. The integration ensures that:
+Cartbase now includes a subscription paywall where users must pay $1/month before they can create an account. The integration ensures that:
 
 1. Users must subscribe via Stripe Checkout
 2. Only paying subscribers can access the registration page

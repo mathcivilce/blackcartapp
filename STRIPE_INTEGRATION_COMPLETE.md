@@ -1,6 +1,6 @@
 # ✅ Stripe Integration Complete
 
-The Stripe subscription integration has been successfully implemented in BlackCart. Users must now pay $1/month before they can create an account.
+The Stripe subscription integration has been successfully implemented in Cartbase. Users must now pay $1/month before they can create an account.
 
 ## What Was Implemented
 
@@ -165,7 +165,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## User Flow
 
 ```
-1. User visits blackcart.com (redirects to /pricing)
+1. User visits cartbase.app (redirects to /pricing)
 2. User enters email on pricing page
 3. Clicks "Start Your Subscription"
 4. Redirected to Stripe Checkout

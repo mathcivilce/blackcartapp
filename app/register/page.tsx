@@ -138,7 +138,7 @@ function RegisterForm() {
     <div style={styles.container}>
       <div style={styles.registerBox}>
         <h1 style={styles.title}>Create Account</h1>
-        <p style={styles.subtitle}>Complete your registration for BlackCart</p>
+        <p style={styles.subtitle}>Complete your registration for Cartbase</p>
         
         <form onSubmit={handleRegister} style={styles.form}>
           {error && (

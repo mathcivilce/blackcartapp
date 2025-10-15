@@ -49,8 +49,8 @@ export async function POST(request: Request) {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: 'BlackCart Monthly Subscription',
-              description: 'Access to BlackCart - Shopify Cart Customization',
+              name: 'Cartbase Monthly Subscription',
+              description: 'Access to Cartbase - Shopify Cart Customization',
             },
             unit_amount: 100, // $1.00 in cents
             recurring: {
