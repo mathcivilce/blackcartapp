@@ -37,8 +37,8 @@ export async function POST(request: Request) {
     // Generate unique token for this subscription
     const token = crypto.randomBytes(32).toString('hex');
 
-    // Get the base URL from the request
-    const { origin } = new URL(request.url);
+    // Use production URL or fallback to request origin
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.cartbase.app';
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
@@ -61,8 +61,8 @@ export async function POST(request: Request) {
           quantity: 1,
         },
       ],
-      success_url: `${origin}/register?token=${token}`,
-      cancel_url: `${origin}/pricing`,
+      success_url: `${baseUrl}/register?token=${token}`,
+      cancel_url: `${baseUrl}/pricing`,
       metadata: {
         token: token,
         email: email,
