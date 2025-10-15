@@ -1632,34 +1632,44 @@
       return;
     }
 
-    // PRE-LOAD OPTIMIZATION: Fetch settings immediately on page load
-    // This makes cart opening nearly instant (uses cache on return visits)
-    const settings = await fetchSettings();
-    
-    // If cart is not active, don't initialize
-    if (settings === null) {
-      return;
-    }
-
-    // Inject CSS
+    // Inject CSS immediately (non-blocking)
     injectCSS();
 
-    // Create cart HTML
+    // Create cart HTML immediately (non-blocking)
     const cartContainer = document.createElement('div');
     cartContainer.innerHTML = createCartHTML();
     document.body.appendChild(cartContainer.firstElementChild);
 
-    // Apply initial settings to the cart UI
-    applySettings();
-
-    // Attach event listeners
+    // Attach event listeners immediately (non-blocking)
     attachEventListeners();
 
-    // Fetch initial cart data (so it's ready too)
-    await fetchCart();
-
-    // Expose global function to open cart
+    // Expose global function to open cart immediately
     window.openShippingProtectionCart = openCart;
+
+    // PRE-LOAD OPTIMIZATION: Fetch settings in background (non-blocking!)
+    // This makes cart opening nearly instant (uses cache on return visits)
+    // Don't await - let it load in background
+    fetchSettings().then(settings => {
+      if (settings === null) {
+        // Cart is not active, hide cart functionality
+        const overlay = document.getElementById('sp-cart-overlay');
+        if (overlay) {
+          overlay.remove();
+        }
+        return;
+      }
+      
+      // Settings loaded, apply them
+      applySettings();
+    }).catch(() => {
+      // Silently fail if settings can't load
+      // Cart will still work with default behavior
+    });
+
+    // Fetch initial cart data in background (non-blocking)
+    fetchCart().catch(() => {
+      // Silently fail, cart will fetch when opened
+    });
   }
 
   // Wait for DOM to be ready
