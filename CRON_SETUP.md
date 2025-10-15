@@ -1,6 +1,6 @@
 # Cron Job Setup Guide - Daily Order Synchronization
 
-## 🎯 Purposee
+## 🎯 Purpose
 
 Automatically sync Shopify orders daily to track protection product sales and calculate revenue commissions.
 
