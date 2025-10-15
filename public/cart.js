@@ -33,7 +33,8 @@
     isLoading: false,
     protectionEnabled: false,
     protectionInCart: false,
-    protectionVariantId: null  // Cache variant ID for removal
+    protectionVariantId: null,  // Cache variant ID for removal
+    staticSettingsApplied: false  // Track if static settings have been applied
   };
 
   // ============================================
@@ -585,7 +586,8 @@
     }
   }
 
-  function applySettings() {
+  // Apply static settings that don't change between renders (only once)
+  function applyStaticSettings() {
     if (!state.settings) {
       return;
     }
@@ -710,31 +712,47 @@
       if (protectionContainer && design.cartAccentColor) {
         protectionContainer.style.background = design.cartAccentColor;
       }
-      
-      // Apply text colors to all cart text elements
-      const allTextElements = document.querySelectorAll('.sp-cart-item-title, .sp-cart-item-variant, .sp-cart-item-price');
-      allTextElements.forEach(el => {
-        if (design.cartTextColor) {
-          el.style.color = design.cartTextColor;
-        }
-      });
-      
-      // Apply savings text color
-      const savingsElements = document.querySelectorAll('.sp-cart-item-savings');
-      savingsElements.forEach(el => {
-        if (design.savingsTextColor) {
-          el.style.color = design.savingsTextColor;
-        }
-      });
-      
-      // Apply border radius to images if cornerRadius is set
-      const images = document.querySelectorAll('.sp-cart-item-image');
-      images.forEach(img => {
-        if (design.cornerRadius) {
-          img.style.borderRadius = `${design.cornerRadius}px`;
-        }
-      });
     }
+    
+    state.staticSettingsApplied = true;
+  }
+
+  // Apply dynamic settings that change with cart items (on every render)
+  function applyDynamicSettings() {
+    if (!state.settings?.design) {
+      return;
+    }
+
+    const design = state.settings.design;
+    
+    // Apply text colors to cart items (changes when items added/removed)
+    const allTextElements = document.querySelectorAll('.sp-cart-item-title, .sp-cart-item-variant, .sp-cart-item-price');
+    allTextElements.forEach(el => {
+      if (design.cartTextColor) {
+        el.style.color = design.cartTextColor;
+      }
+    });
+    
+    // Apply savings text color
+    const savingsElements = document.querySelectorAll('.sp-cart-item-savings');
+    savingsElements.forEach(el => {
+      if (design.savingsTextColor) {
+        el.style.color = design.savingsTextColor;
+      }
+    });
+    
+    // Apply border radius to images if cornerRadius is set
+    const images = document.querySelectorAll('.sp-cart-item-image');
+    images.forEach(img => {
+      if (design.cornerRadius) {
+        img.style.borderRadius = `${design.cornerRadius}px`;
+      }
+    });
+  }
+
+  // Backwards compatibility - for initial settings load
+  function applySettings() {
+    applyStaticSettings();
   }
 
   function checkProtectionInCart() {
@@ -773,11 +791,12 @@
   async function maybeAutoAddProtection() {
     // Only auto-add if acceptByDefault is enabled and protection is not already in cart
     if (state.settings?.addons?.acceptByDefault && !state.protectionInCart && state.settings?.addons?.productHandle) {
-      await addProtectionToCart(true); // silent mode
+      // Optimization: Skip render since openCart() will render immediately after
+      await addProtectionToCart(true, true); // silent mode + skip render
     }
   }
 
-  async function addProtectionToCart(silentMode = false) {
+  async function addProtectionToCart(silentMode = false, skipRender = false) {
     const productHandle = state.settings?.addons?.productHandle || state.settings?.protectionProductHandle;
     
     if (!state.settings || !productHandle) {
@@ -843,7 +862,11 @@
         state.protectionInCart = true; // Update state
         
         await fetchCart();
-        renderCart();
+        
+        // Optimization: Skip render if caller will render (avoids duplicate render)
+        if (!skipRender) {
+          renderCart();
+        }
       } else {
         if (!silentMode) {
           alert('Failed to add shipping protection. Please try again.');
@@ -1030,10 +1053,13 @@
     updateSubtotal(state.cart.total_price);
     attachCartItemListeners();
     
-    // Reapply design settings to newly rendered items
-    if (state.settings?.design) {
-      applySettings();
+    // Optimization: Apply static settings only once, dynamic settings every render
+    if (!state.staticSettingsApplied && state.settings) {
+      applyStaticSettings();
     }
+    
+    // Always apply dynamic settings (item-specific styles)
+    applyDynamicSettings();
   }
 
   function updateSubtotal(cents) {
