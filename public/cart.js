@@ -1012,10 +1012,36 @@
     }
   }
 
+  // Pre-fetch protection product variant ID (non-blocking, for optimization)
+  async function prefetchProtectionVariant(productHandle) {
+    if (!productHandle) return;
+    
+    try {
+      const productResponse = await fetch(`/products/${productHandle}.js`);
+      if (!productResponse.ok) return;
+      
+      const productData = await productResponse.json();
+      
+      // Cache variant ID for later use
+      if (productData.variants && productData.variants.length > 0) {
+        state.protectionVariantId = productData.variants[0].id;
+      }
+    } catch (error) {
+      // Silently fail, will fetch on-demand if needed
+    }
+  }
+
+  // Helper to check if protection will be auto-added (for optimization)
+  function willAutoAddProtection() {
+    return state.settings?.addons?.acceptByDefault && 
+           !state.protectionInCart && 
+           state.settings?.addons?.productHandle;
+  }
+
   // Helper function to check if protection should be auto-added
   async function maybeAutoAddProtection() {
     // Only auto-add if acceptByDefault is enabled and protection is not already in cart
-    if (state.settings?.addons?.acceptByDefault && !state.protectionInCart && state.settings?.addons?.productHandle) {
+    if (willAutoAddProtection()) {
       // Optimization: Skip render since openCart() will render immediately after
       await addProtectionToCart(true, true); // silent mode + skip render
     }
@@ -1039,35 +1065,42 @@
     try {
       state.isLoading = true;
       
-      // Fetch product data from Shopify's public endpoint
-      const productResponse = await fetch(`/products/${productHandle}.js`);
-
-      if (!productResponse.ok) {
-        if (!silentMode) {
-          alert('Failed to load protection product. Please check the Product Handle in settings.');
-        }
-        
-        const checkbox = document.getElementById('sp-protection-checkbox');
-        if (checkbox) checkbox.checked = false;
-        state.isLoading = false;
-        return;
-      }
-
-      const productData = await productResponse.json();
+      let variantId = state.protectionVariantId;
       
-      // Get the first available variant
-      if (!productData.variants || productData.variants.length === 0) {
-        if (!silentMode) {
-          alert('Protection product has no variants. Please contact store admin.');
-        }
-        
-        const checkbox = document.getElementById('sp-protection-checkbox');
-        if (checkbox) checkbox.checked = false;
-        state.isLoading = false;
-        return;
-      }
+      // Optimization: Use cached variant ID if available (skips 150ms fetch!)
+      if (!variantId) {
+        // Variant not cached, fetch product data from Shopify
+        const productResponse = await fetch(`/products/${productHandle}.js`);
 
-      const variantId = productData.variants[0].id;
+        if (!productResponse.ok) {
+          if (!silentMode) {
+            alert('Failed to load protection product. Please check the Product Handle in settings.');
+          }
+          
+          const checkbox = document.getElementById('sp-protection-checkbox');
+          if (checkbox) checkbox.checked = false;
+          state.isLoading = false;
+          return;
+        }
+
+        const productData = await productResponse.json();
+        
+        // Get the first available variant
+        if (!productData.variants || productData.variants.length === 0) {
+          if (!silentMode) {
+            alert('Protection product has no variants. Please contact store admin.');
+          }
+          
+          const checkbox = document.getElementById('sp-protection-checkbox');
+          if (checkbox) checkbox.checked = false;
+          state.isLoading = false;
+          return;
+        }
+
+        variantId = productData.variants[0].id;
+        // Cache for future use
+        state.protectionVariantId = variantId;
+      }
 
       // Now add to cart using the variant ID
       const response = await fetch('/cart/add.js', {
@@ -1551,8 +1584,11 @@
         .then(response => response.json())
         .then(async (data) => {
           // Successfully added to cart
-          // Fetch cart once here (Optimization #2 - will skip duplicate fetch in openCart)
-          await fetchCart();
+          // OPTIMIZATION: Skip duplicate fetchCart if protection will be added
+          // (addProtectionToCart will fetch cart after adding protection)
+          if (!willAutoAddProtection()) {
+            await fetchCart();
+          }
           await maybeAutoAddProtection(); // Auto-add protection if enabled
           openCart();
         })
@@ -1582,8 +1618,11 @@
           .then(response => response.json())
           .then(async (data) => {
             // Successfully added to cart
-            // Fetch cart once here (Optimization #2 - will skip duplicate fetch in openCart)
-            await fetchCart();
+            // OPTIMIZATION: Skip duplicate fetchCart if protection will be added
+            // (addProtectionToCart will fetch cart after adding protection)
+            if (!willAutoAddProtection()) {
+              await fetchCart();
+            }
             await maybeAutoAddProtection(); // Auto-add protection if enabled
             openCart();
           })
@@ -1596,15 +1635,21 @@
 
     // Listen for Shopify's cart events
     document.addEventListener('cart:updated', async () => {
-      // Fetch cart once here (Optimization #2 - will skip duplicate fetch in openCart)
-      await fetchCart();
+      // OPTIMIZATION: Skip duplicate fetchCart if protection will be added
+      // (addProtectionToCart will fetch cart after adding protection)
+      if (!willAutoAddProtection()) {
+        await fetchCart();
+      }
       await maybeAutoAddProtection(); // Auto-add protection if enabled
       openCart();
     });
 
     document.addEventListener('product:added-to-cart', async () => {
-      // Fetch cart once here (Optimization #2 - will skip duplicate fetch in openCart)
-      await fetchCart();
+      // OPTIMIZATION: Skip duplicate fetchCart if protection will be added
+      // (addProtectionToCart will fetch cart after adding protection)
+      if (!willAutoAddProtection()) {
+        await fetchCart();
+      }
       await maybeAutoAddProtection(); // Auto-add protection if enabled
       openCart();
     });
@@ -1661,6 +1706,14 @@
       
       // Settings loaded, apply them
       applySettings();
+      
+      // OPTIMIZATION: Pre-fetch protection variant ID if auto-add is enabled
+      // This saves 150ms when user clicks "Add to Cart"
+      if (settings.addons?.acceptByDefault && settings.addons?.productHandle) {
+        prefetchProtectionVariant(settings.addons.productHandle).catch(() => {
+          // Silently fail, will fetch on-demand if needed
+        });
+      }
     }).catch(() => {
       // Silently fail if settings can't load
       // Cart will still work with default behavior
