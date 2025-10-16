@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       conditionType: settings.free_gifts_condition_type || 'quantity',
       headline: settings.free_gifts_headline || 'Unlock Your Free Gifts!',
       progressColor: settings.free_gifts_progress_color || '#4CAF50',
+      position: settings.free_gifts_position || 'bottom',
       
       tier1: {
         enabled: settings.free_gifts_tier1_enabled || false,
@@ -32,6 +33,8 @@ export async function GET(request: NextRequest) {
         productHandle: settings.free_gifts_tier1_product_handle || '',
         variantId: settings.free_gifts_tier1_variant_id || '',
         rewardText: settings.free_gifts_tier1_reward_text || 'Free Gift',
+        unlockedMessage: settings.free_gifts_tier1_unlocked_message || '🎉 Free Gift Unlocked!',
+        showUnlockedMessage: settings.free_gifts_tier1_show_unlocked_message ?? true,
       },
       
       tier2: {
@@ -40,6 +43,8 @@ export async function GET(request: NextRequest) {
         productHandle: settings.free_gifts_tier2_product_handle || '',
         variantId: settings.free_gifts_tier2_variant_id || '',
         rewardText: settings.free_gifts_tier2_reward_text || 'Free Gift',
+        unlockedMessage: settings.free_gifts_tier2_unlocked_message || '🎉 Free Gift Unlocked!',
+        showUnlockedMessage: settings.free_gifts_tier2_show_unlocked_message ?? true,
       },
       
       tier3: {
@@ -48,6 +53,8 @@ export async function GET(request: NextRequest) {
         productHandle: settings.free_gifts_tier3_product_handle || '',
         variantId: settings.free_gifts_tier3_variant_id || '',
         rewardText: settings.free_gifts_tier3_reward_text || 'Free Gift',
+        unlockedMessage: settings.free_gifts_tier3_unlocked_message || '🎉 Free Gift Unlocked!',
+        showUnlockedMessage: settings.free_gifts_tier3_show_unlocked_message ?? true,
       },
     });
   } catch (error) {
@@ -73,6 +80,7 @@ export async function POST(request: NextRequest) {
         free_gifts_condition_type: freeGiftsSettings.conditionType,
         free_gifts_headline: freeGiftsSettings.headline,
         free_gifts_progress_color: freeGiftsSettings.progressColor,
+        free_gifts_position: freeGiftsSettings.position,
         
         // Tier 1
         free_gifts_tier1_enabled: freeGiftsSettings.tier1.enabled,
@@ -80,6 +88,8 @@ export async function POST(request: NextRequest) {
         free_gifts_tier1_product_handle: freeGiftsSettings.tier1.productHandle,
         free_gifts_tier1_variant_id: freeGiftsSettings.tier1.variantId,
         free_gifts_tier1_reward_text: freeGiftsSettings.tier1.rewardText,
+        free_gifts_tier1_unlocked_message: freeGiftsSettings.tier1.unlockedMessage,
+        free_gifts_tier1_show_unlocked_message: freeGiftsSettings.tier1.showUnlockedMessage,
         
         // Tier 2
         free_gifts_tier2_enabled: freeGiftsSettings.tier2.enabled,
@@ -87,6 +97,8 @@ export async function POST(request: NextRequest) {
         free_gifts_tier2_product_handle: freeGiftsSettings.tier2.productHandle,
         free_gifts_tier2_variant_id: freeGiftsSettings.tier2.variantId,
         free_gifts_tier2_reward_text: freeGiftsSettings.tier2.rewardText,
+        free_gifts_tier2_unlocked_message: freeGiftsSettings.tier2.unlockedMessage,
+        free_gifts_tier2_show_unlocked_message: freeGiftsSettings.tier2.showUnlockedMessage,
         
         // Tier 3
         free_gifts_tier3_enabled: freeGiftsSettings.tier3.enabled,
@@ -94,6 +106,8 @@ export async function POST(request: NextRequest) {
         free_gifts_tier3_product_handle: freeGiftsSettings.tier3.productHandle,
         free_gifts_tier3_variant_id: freeGiftsSettings.tier3.variantId,
         free_gifts_tier3_reward_text: freeGiftsSettings.tier3.rewardText,
+        free_gifts_tier3_unlocked_message: freeGiftsSettings.tier3.unlockedMessage,
+        free_gifts_tier3_show_unlocked_message: freeGiftsSettings.tier3.showUnlockedMessage,
         
         updated_at: new Date().toISOString(),
       })

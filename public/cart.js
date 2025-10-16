@@ -73,17 +73,26 @@
           </div>
 
           <!-- Free Gifts Progress Bar -->
-          <div id="sp-free-gifts-progress" class="sp-free-gifts-progress" style="display: none;">
+          <!-- Free Gifts Progress Bar (Top Position) -->
+          <div id="sp-free-gifts-progress-top" class="sp-free-gifts-progress" style="display: none;">
             <div class="sp-free-gifts-headline"></div>
-            <div class="sp-free-gifts-bar-container">
-              <div class="sp-free-gifts-bar"></div>
+            <div class="sp-free-gifts-bar-wrapper">
+              <div class="sp-free-gifts-bar-container"></div>
             </div>
-            <div class="sp-free-gifts-milestones"></div>
             <div class="sp-free-gifts-message"></div>
           </div>
 
           <!-- Announcement Banner (Bottom) -->
           <div id="sp-announcement-bottom" class="sp-announcement-banner sp-announcement-bottom" style="display: none;"></div>
+
+          <!-- Free Gifts Progress Bar (Bottom Position) -->
+          <div id="sp-free-gifts-progress-bottom" class="sp-free-gifts-progress" style="display: none;">
+            <div class="sp-free-gifts-headline"></div>
+            <div class="sp-free-gifts-bar-wrapper">
+              <div class="sp-free-gifts-bar-container"></div>
+            </div>
+            <div class="sp-free-gifts-message"></div>
+          </div>
 
           <!-- Footer -->
           <div class="sp-cart-footer">
@@ -237,72 +246,85 @@
         color: #000;
       }
 
+      .sp-free-gifts-bar-wrapper {
+        position: relative;
+        height: 50px;
+        margin-bottom: 12px;
+      }
+
       .sp-free-gifts-bar-container {
         position: relative;
-        height: 8px;
-        background: #f0f0f0;
-        border-radius: 4px;
-        overflow: hidden;
-        margin-bottom: 8px;
-      }
-
-      .sp-free-gifts-bar {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 0%;
-        background: #4CAF50;
-        transition: width 0.3s ease;
-        border-radius: 4px;
-      }
-
-      .sp-free-gifts-milestones {
+        height: 20px;
         display: flex;
-        justify-content: space-between;
-        gap: 8px;
-        margin-top: 8px;
+        margin-top: 30px;
       }
 
-      .sp-free-gifts-milestone {
-        flex: 1;
-        text-align: center;
-        padding: 8px;
-        background: #f0f0f0;
-        color: #666;
-        border-radius: 4px;
-        font-size: 11px;
-        font-weight: 600;
+      .sp-free-gifts-segment {
+        position: relative;
+        height: 100%;
+      }
+
+      .sp-free-gifts-segment-bar {
+        height: 8px;
+        background: #E5E7EB;
+        margin-top: 6px;
         transition: all 0.3s ease;
       }
 
-      .sp-free-gifts-milestone.unlocked {
+      .sp-free-gifts-segment-bar.unlocked {
         background: #4CAF50;
-        color: #fff;
       }
 
-      .sp-free-gifts-milestone-threshold {
-        font-size: 10px;
-        opacity: 0.8;
-        display: block;
-        margin-bottom: 2px;
+      .sp-free-gifts-milestone-marker {
+        position: absolute;
+        right: -12px;
+        top: -24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 1;
+      }
+
+      .sp-free-gifts-milestone-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #E5E7EB;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      .sp-free-gifts-milestone-icon.unlocked {
+        background: #4CAF50;
       }
 
       .sp-free-gifts-milestone-text {
-        display: block;
+        margin-top: 28px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #666;
+        text-align: center;
+        white-space: nowrap;
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
-      .sp-free-gifts-milestone-check {
-        font-size: 12px;
-        margin-top: 2px;
-        display: block;
+      .sp-free-gifts-milestone-text.unlocked {
+        color: #4CAF50;
       }
 
       .sp-free-gifts-message {
-        margin: 12px 0 0 0;
+        margin: 8px 0 0 0;
         font-size: 12px;
-        color: #666;
+        color: #4CAF50;
         text-align: center;
+        font-weight: 600;
       }
 
       .sp-free-gifts-message.complete {
@@ -1540,15 +1562,28 @@
   }
 
   function updateFreeGiftsProgress() {
-    const progressEl = document.getElementById('sp-free-gifts-progress');
-    if (!progressEl || !state.settings?.freeGifts?.enabled) {
-      if (progressEl) progressEl.style.display = 'none';
+    // Get both progress bar elements
+    const progressTopEl = document.getElementById('sp-free-gifts-progress-top');
+    const progressBottomEl = document.getElementById('sp-free-gifts-progress-bottom');
+    
+    if (!state.settings?.freeGifts?.enabled) {
+      if (progressTopEl) progressTopEl.style.display = 'none';
+      if (progressBottomEl) progressBottomEl.style.display = 'none';
       return;
     }
 
     const freeGifts = state.settings.freeGifts;
+    const position = freeGifts.position || 'bottom';
     const currentValue = calculateCartValue();
     const conditionType = freeGifts.conditionType || 'quantity';
+    const progressColor = freeGifts.progressColor || '#4CAF50';
+
+    // Show/hide based on position
+    const progressEl = position === 'top' ? progressTopEl : progressBottomEl;
+    const otherProgressEl = position === 'top' ? progressBottomEl : progressTopEl;
+    
+    if (otherProgressEl) otherProgressEl.style.display = 'none';
+    if (!progressEl) return;
 
     // Get enabled tiers
     const enabledTiers = [];
@@ -1564,13 +1599,6 @@
     // Sort by threshold
     enabledTiers.sort((a, b) => a.threshold - b.threshold);
 
-    // Calculate progress
-    const maxThreshold = Math.max(...enabledTiers.map(t => t.threshold));
-    const progressPercentage = Math.min((currentValue / maxThreshold) * 100, 100);
-
-    // Find next tier
-    const nextTier = enabledTiers.find(t => t.threshold > currentValue);
-
     // Update headline
     const headlineEl = progressEl.querySelector('.sp-free-gifts-headline');
     if (headlineEl && freeGifts.headline) {
@@ -1578,46 +1606,56 @@
       headlineEl.style.display = 'block';
     }
 
-    // Update progress bar
-    const barEl = progressEl.querySelector('.sp-free-gifts-bar');
-    if (barEl) {
-      barEl.style.width = `${progressPercentage}%`;
-      barEl.style.background = freeGifts.progressColor || '#4CAF50';
-    }
-
-    // Update milestones
-    const milestonesEl = progressEl.querySelector('.sp-free-gifts-milestones');
-    if (milestonesEl) {
-      milestonesEl.innerHTML = enabledTiers.map(tier => {
+    // Create segmented progress bar
+    const barContainerEl = progressEl.querySelector('.sp-free-gifts-bar-container');
+    if (barContainerEl) {
+      const segmentWidth = 100 / enabledTiers.length;
+      
+      barContainerEl.innerHTML = enabledTiers.map((tier, index) => {
         const isUnlocked = currentValue >= tier.threshold;
+        const isFirst = index === 0;
+        const isLast = index === enabledTiers.length - 1;
+        
+        let borderRadius = '0';
+        if (isFirst) borderRadius = '4px 0 0 4px';
+        if (isLast) borderRadius = '0 4px 4px 0';
+        
         return `
-          <div class="sp-free-gifts-milestone ${isUnlocked ? 'unlocked' : ''}" style="${isUnlocked ? `background: ${freeGifts.progressColor || '#4CAF50'}` : ''}">
-            <span class="sp-free-gifts-milestone-threshold">
-              ${conditionType === 'quantity' 
-                ? `${tier.threshold} ${tier.threshold === 1 ? 'item' : 'items'}`
-                : `$${tier.threshold}`}
-            </span>
-            <span class="sp-free-gifts-milestone-text">${tier.rewardText || 'Free Gift'}</span>
-            ${isUnlocked ? '<span class="sp-free-gifts-milestone-check">✓</span>' : ''}
+          <div class="sp-free-gifts-segment" style="width: ${segmentWidth}%;">
+            <div class="sp-free-gifts-segment-bar ${isUnlocked ? 'unlocked' : ''}" 
+                 style="border-radius: ${borderRadius}; ${isUnlocked ? `background: ${progressColor};` : ''}">
+            </div>
+            <div class="sp-free-gifts-milestone-marker">
+              <div class="sp-free-gifts-milestone-icon ${isUnlocked ? 'unlocked' : ''}" 
+                   style="${isUnlocked ? `background: ${progressColor};` : ''}">
+                ${isUnlocked ? '✓' : '🎁'}
+              </div>
+              <div class="sp-free-gifts-milestone-text ${isUnlocked ? 'unlocked' : ''}" 
+                   style="${isUnlocked ? `color: ${progressColor};` : ''}">
+                ${tier.rewardText || 'Free Gift'}
+              </div>
+            </div>
           </div>
         `;
       }).join('');
     }
 
-    // Update message
+    // Update message with custom unlocked messages
     const messageEl = progressEl.querySelector('.sp-free-gifts-message');
     if (messageEl) {
-      if (nextTier) {
-        const remaining = nextTier.threshold - currentValue;
-        messageEl.className = 'sp-free-gifts-message';
-        messageEl.textContent = conditionType === 'quantity'
-          ? `Add ${remaining} more ${remaining === 1 ? 'item' : 'items'} to unlock ${nextTier.rewardText || 'your gift'}!`
-          : `Spend $${remaining.toFixed(2)} more to unlock ${nextTier.rewardText || 'your gift'}!`;
-      } else if (currentValue >= maxThreshold) {
-        messageEl.className = 'sp-free-gifts-message complete';
-        messageEl.textContent = '🎉 All gifts unlocked!';
+      // Find the latest unlocked tier with showUnlockedMessage enabled
+      const unlockedTiers = enabledTiers.filter(tier => 
+        currentValue >= tier.threshold && tier.showUnlockedMessage !== false
+      );
+      
+      if (unlockedTiers.length > 0) {
+        // Show the message from the highest unlocked tier
+        const latestUnlockedTier = unlockedTiers[unlockedTiers.length - 1];
+        messageEl.textContent = latestUnlockedTier.unlockedMessage || '🎉 Free Gift Unlocked!';
+        messageEl.style.color = progressColor;
+        messageEl.style.display = 'block';
       } else {
-        messageEl.textContent = '';
+        messageEl.style.display = 'none';
       }
     }
 

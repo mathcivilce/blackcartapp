@@ -99,6 +99,7 @@ export interface Settings {
   free_gifts_condition_type?: string;
   free_gifts_headline?: string;
   free_gifts_progress_color?: string;
+  free_gifts_position?: string;
   
   // Tier 1
   free_gifts_tier1_enabled?: boolean;
@@ -106,6 +107,8 @@ export interface Settings {
   free_gifts_tier1_product_handle?: string;
   free_gifts_tier1_variant_id?: string;
   free_gifts_tier1_reward_text?: string;
+  free_gifts_tier1_unlocked_message?: string;
+  free_gifts_tier1_show_unlocked_message?: boolean;
   
   // Tier 2
   free_gifts_tier2_enabled?: boolean;
@@ -113,6 +116,8 @@ export interface Settings {
   free_gifts_tier2_product_handle?: string;
   free_gifts_tier2_variant_id?: string;
   free_gifts_tier2_reward_text?: string;
+  free_gifts_tier2_unlocked_message?: string;
+  free_gifts_tier2_show_unlocked_message?: boolean;
   
   // Tier 3
   free_gifts_tier3_enabled?: boolean;
@@ -120,6 +125,8 @@ export interface Settings {
   free_gifts_tier3_product_handle?: string;
   free_gifts_tier3_variant_id?: string;
   free_gifts_tier3_reward_text?: string;
+  free_gifts_tier3_unlocked_message?: string;
+  free_gifts_tier3_show_unlocked_message?: boolean;
 }
 
 export interface Sale {

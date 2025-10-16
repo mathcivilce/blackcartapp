@@ -167,12 +167,15 @@ export async function GET(request: NextRequest) {
           conditionType: settings?.free_gifts_condition_type || 'quantity',
           headline: settings?.free_gifts_headline || 'Unlock Your Free Gifts!',
           progressColor: settings?.free_gifts_progress_color || '#4CAF50',
+          position: settings?.free_gifts_position || 'bottom',
           tier1: {
             enabled: settings?.free_gifts_tier1_enabled ?? false,
             threshold: settings?.free_gifts_tier1_threshold || 1,
             productHandle: settings?.free_gifts_tier1_product_handle || '',
             variantId: settings?.free_gifts_tier1_variant_id || '',
             rewardText: settings?.free_gifts_tier1_reward_text || 'Free Gift',
+            unlockedMessage: settings?.free_gifts_tier1_unlocked_message || '🎉 Free Gift Unlocked!',
+            showUnlockedMessage: settings?.free_gifts_tier1_show_unlocked_message ?? true,
           },
           tier2: {
             enabled: settings?.free_gifts_tier2_enabled ?? false,
@@ -180,6 +183,8 @@ export async function GET(request: NextRequest) {
             productHandle: settings?.free_gifts_tier2_product_handle || '',
             variantId: settings?.free_gifts_tier2_variant_id || '',
             rewardText: settings?.free_gifts_tier2_reward_text || 'Free Gift',
+            unlockedMessage: settings?.free_gifts_tier2_unlocked_message || '🎉 Free Gift Unlocked!',
+            showUnlockedMessage: settings?.free_gifts_tier2_show_unlocked_message ?? true,
           },
           tier3: {
             enabled: settings?.free_gifts_tier3_enabled ?? false,
@@ -187,6 +192,8 @@ export async function GET(request: NextRequest) {
             productHandle: settings?.free_gifts_tier3_product_handle || '',
             variantId: settings?.free_gifts_tier3_variant_id || '',
             rewardText: settings?.free_gifts_tier3_reward_text || 'Free Gift',
+            unlockedMessage: settings?.free_gifts_tier3_unlocked_message || '🎉 Free Gift Unlocked!',
+            showUnlockedMessage: settings?.free_gifts_tier3_show_unlocked_message ?? true,
           },
         }
       });
@@ -298,12 +305,15 @@ export async function GET(request: NextRequest) {
           conditionType: 'quantity',
           headline: 'Unlock Your Free Gifts!',
           progressColor: '#4CAF50',
+          position: 'bottom',
           tier1: {
             enabled: false,
             threshold: 1,
             productHandle: '',
             variantId: '',
             rewardText: 'Free Gift',
+            unlockedMessage: '🎉 Free Gift Unlocked!',
+            showUnlockedMessage: true,
           },
           tier2: {
             enabled: false,
@@ -311,6 +321,8 @@ export async function GET(request: NextRequest) {
             productHandle: '',
             variantId: '',
             rewardText: 'Free Gift',
+            unlockedMessage: '🎉 Free Gift Unlocked!',
+            showUnlockedMessage: true,
           },
           tier3: {
             enabled: false,
@@ -318,6 +330,8 @@ export async function GET(request: NextRequest) {
             productHandle: '',
             variantId: '',
             rewardText: 'Free Gift',
+            unlockedMessage: '🎉 Free Gift Unlocked!',
+            showUnlockedMessage: true,
           },
         }
       });
@@ -393,12 +407,15 @@ export async function GET(request: NextRequest) {
         conditionType: settings?.free_gifts_condition_type || 'quantity',
         headline: settings?.free_gifts_headline || 'Unlock Your Free Gifts!',
         progressColor: settings?.free_gifts_progress_color || '#4CAF50',
+        position: settings?.free_gifts_position || 'bottom',
         tier1: {
           enabled: settings?.free_gifts_tier1_enabled ?? false,
           threshold: settings?.free_gifts_tier1_threshold || 1,
           productHandle: settings?.free_gifts_tier1_product_handle || '',
           variantId: settings?.free_gifts_tier1_variant_id || '',
           rewardText: settings?.free_gifts_tier1_reward_text || 'Free Gift',
+          unlockedMessage: settings?.free_gifts_tier1_unlocked_message || '🎉 Free Gift Unlocked!',
+          showUnlockedMessage: settings?.free_gifts_tier1_show_unlocked_message ?? true,
         },
         tier2: {
           enabled: settings?.free_gifts_tier2_enabled ?? false,
@@ -406,6 +423,8 @@ export async function GET(request: NextRequest) {
           productHandle: settings?.free_gifts_tier2_product_handle || '',
           variantId: settings?.free_gifts_tier2_variant_id || '',
           rewardText: settings?.free_gifts_tier2_reward_text || 'Free Gift',
+          unlockedMessage: settings?.free_gifts_tier2_unlocked_message || '🎉 Free Gift Unlocked!',
+          showUnlockedMessage: settings?.free_gifts_tier2_show_unlocked_message ?? true,
         },
         tier3: {
           enabled: settings?.free_gifts_tier3_enabled ?? false,
@@ -413,6 +432,8 @@ export async function GET(request: NextRequest) {
           productHandle: settings?.free_gifts_tier3_product_handle || '',
           variantId: settings?.free_gifts_tier3_variant_id || '',
           rewardText: settings?.free_gifts_tier3_reward_text || 'Free Gift',
+          unlockedMessage: settings?.free_gifts_tier3_unlocked_message || '🎉 Free Gift Unlocked!',
+          showUnlockedMessage: settings?.free_gifts_tier3_show_unlocked_message ?? true,
         },
       }
     });

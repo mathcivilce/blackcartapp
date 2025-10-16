@@ -14,12 +14,15 @@ export default function FreeGiftsPage() {
     conditionType: 'quantity',
     headline: 'Unlock Your Free Gifts!',
     progressColor: '#4CAF50',
+    position: 'bottom',
     tier1: {
       enabled: false,
       threshold: 1,
       productHandle: '',
       variantId: '',
       rewardText: 'Free Gift',
+      unlockedMessage: '🎉 Free Gift Unlocked!',
+      showUnlockedMessage: true,
     },
     tier2: {
       enabled: false,
@@ -27,6 +30,8 @@ export default function FreeGiftsPage() {
       productHandle: '',
       variantId: '',
       rewardText: 'Free Gift',
+      unlockedMessage: '🎉 Free Gift Unlocked!',
+      showUnlockedMessage: true,
     },
     tier3: {
       enabled: false,
@@ -34,6 +39,8 @@ export default function FreeGiftsPage() {
       productHandle: '',
       variantId: '',
       rewardText: 'Free Gift',
+      unlockedMessage: '🎉 Free Gift Unlocked!',
+      showUnlockedMessage: true,
     },
   });
 
@@ -277,6 +284,36 @@ export default function FreeGiftsPage() {
               />
             </div>
 
+            {/* Position */}
+            <div style={styles.section}>
+              <label style={styles.label}>Progress Bar Position</label>
+              <div style={styles.buttonGroup}>
+                <button
+                  className={`${styles.alignButton} ${freeGifts.position === 'top' ? styles.active : ''}`}
+                  onClick={() => setFreeGifts({ ...freeGifts, position: 'top' })}
+                  style={{
+                    ...styles.alignButton,
+                    ...(freeGifts.position === 'top' ? styles.active : {})
+                  }}
+                >
+                  Top
+                </button>
+                <button
+                  className={`${styles.alignButton} ${freeGifts.position === 'bottom' ? styles.active : ''}`}
+                  onClick={() => setFreeGifts({ ...freeGifts, position: 'bottom' })}
+                  style={{
+                    ...styles.alignButton,
+                    ...(freeGifts.position === 'bottom' ? styles.active : {})
+                  }}
+                >
+                  Bottom
+                </button>
+              </div>
+              <p style={styles.helpText}>
+                Top: Below cart header | Bottom: Above protection product
+              </p>
+            </div>
+
             {/* Tier 1 */}
             <div style={styles.section}>
               <h2 style={styles.sectionTitle}>Tier 1</h2>
@@ -328,6 +365,28 @@ export default function FreeGiftsPage() {
                     onChange={(e) => handleTierChange('tier1', 'rewardText', e.target.value)}
                     placeholder="e.g., Free Wallet"
                   />
+
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={freeGifts.tier1.showUnlockedMessage}
+                      onChange={(e) => handleTierChange('tier1', 'showUnlockedMessage', e.target.checked)}
+                    />
+                    <span>Show unlocked message when this tier is reached</span>
+                  </label>
+
+                  {freeGifts.tier1.showUnlockedMessage && (
+                    <>
+                      <label style={styles.label}>Unlocked Message</label>
+                      <input
+                        type="text"
+                        style={styles.input}
+                        value={freeGifts.tier1.unlockedMessage}
+                        onChange={(e) => handleTierChange('tier1', 'unlockedMessage', e.target.value)}
+                        placeholder="e.g., 🎉 Free Wallet Unlocked!"
+                      />
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -383,6 +442,28 @@ export default function FreeGiftsPage() {
                     onChange={(e) => handleTierChange('tier2', 'rewardText', e.target.value)}
                     placeholder="e.g., Free Hat"
                   />
+
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={freeGifts.tier2.showUnlockedMessage}
+                      onChange={(e) => handleTierChange('tier2', 'showUnlockedMessage', e.target.checked)}
+                    />
+                    <span>Show unlocked message when this tier is reached</span>
+                  </label>
+
+                  {freeGifts.tier2.showUnlockedMessage && (
+                    <>
+                      <label style={styles.label}>Unlocked Message</label>
+                      <input
+                        type="text"
+                        style={styles.input}
+                        value={freeGifts.tier2.unlockedMessage}
+                        onChange={(e) => handleTierChange('tier2', 'unlockedMessage', e.target.value)}
+                        placeholder="e.g., 🎉 Free Hat Unlocked!"
+                      />
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -438,6 +519,28 @@ export default function FreeGiftsPage() {
                     onChange={(e) => handleTierChange('tier3', 'rewardText', e.target.value)}
                     placeholder="e.g., Free Sunglasses"
                   />
+
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={freeGifts.tier3.showUnlockedMessage}
+                      onChange={(e) => handleTierChange('tier3', 'showUnlockedMessage', e.target.checked)}
+                    />
+                    <span>Show unlocked message when this tier is reached</span>
+                  </label>
+
+                  {freeGifts.tier3.showUnlockedMessage && (
+                    <>
+                      <label style={styles.label}>Unlocked Message</label>
+                      <input
+                        type="text"
+                        style={styles.input}
+                        value={freeGifts.tier3.unlockedMessage}
+                        onChange={(e) => handleTierChange('tier3', 'unlockedMessage', e.target.value)}
+                        placeholder="e.g., 🎉 Free Sunglasses Unlocked!"
+                      />
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -580,6 +683,12 @@ const styles = {
     marginBottom: '12px',
     textTransform: 'uppercase' as const,
     letterSpacing: '1px',
+  },
+  helpText: {
+    fontSize: '12px',
+    color: '#888',
+    marginTop: '6px',
+    marginBottom: '0',
   },
 };
 

@@ -63,12 +63,15 @@ export default function AddOnsPage() {
     conditionType: 'quantity',
     headline: 'Unlock Your Free Gifts!',
     progressColor: '#4CAF50',
+    position: 'bottom',
     tier1: {
       enabled: false,
       threshold: 1,
       productHandle: '',
       variantId: '',
       rewardText: 'Free Gift',
+      unlockedMessage: '🎉 Free Gift Unlocked!',
+      showUnlockedMessage: true,
     },
     tier2: {
       enabled: false,
@@ -76,6 +79,8 @@ export default function AddOnsPage() {
       productHandle: '',
       variantId: '',
       rewardText: 'Free Gift',
+      unlockedMessage: '🎉 Free Gift Unlocked!',
+      showUnlockedMessage: true,
     },
     tier3: {
       enabled: false,
@@ -83,6 +88,8 @@ export default function AddOnsPage() {
       productHandle: '',
       variantId: '',
       rewardText: 'Free Gift',
+      unlockedMessage: '🎉 Free Gift Unlocked!',
+      showUnlockedMessage: true,
     },
   });
 
