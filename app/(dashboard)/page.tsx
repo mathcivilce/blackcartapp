@@ -54,8 +54,14 @@ export default function DashboardPage() {
 
   const filteredSales = getFilteredSales();
 
-  // Prepare chart data - group by day
+  // Prepare chart data - group by day and fill missing days with $0
   const getChartData = () => {
+    // Get date range
+    const now = new Date();
+    const daysAgo = dateRange === 'all' ? 365 : parseInt(dateRange);
+    const startDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+    
+    // Create a map of sales by day
     const salesByDay: { [key: string]: number } = {};
     
     filteredSales.forEach(sale => {
@@ -64,12 +70,20 @@ export default function DashboardPage() {
       salesByDay[dayKey] = (salesByDay[dayKey] || 0) + sale.protection_price;
     });
 
-    // Sort by date and return array
-    const sortedDates = Object.keys(salesByDay).sort();
-    return sortedDates.map(date => ({
-      date,
-      revenue: salesByDay[date]
-    }));
+    // Generate all dates in range
+    const allDates: Array<{ date: string; revenue: number }> = [];
+    const currentDate = new Date(startDate);
+    
+    while (currentDate <= now) {
+      const dayKey = currentDate.toISOString().split('T')[0];
+      allDates.push({
+        date: dayKey,
+        revenue: salesByDay[dayKey] || 0 // Use 0 if no sales on this day
+      });
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return allDates;
   };
 
   const chartData = getChartData();
@@ -217,11 +231,21 @@ export default function DashboardPage() {
 
               {/* X-axis labels */}
               <div style={styles.xAxis}>
-                {chartData.map((d, i) => (
-                  <span key={i} style={styles.xAxisLabel}>
-                    {formatDate(d.date)}
-                  </span>
-                ))}
+                {chartData.length <= 31 ? (
+                  // Show all dates for ranges up to 31 days
+                  chartData.map((d, i) => (
+                    <span key={i} style={styles.xAxisLabel}>
+                      {formatDate(d.date)}
+                    </span>
+                  ))
+                ) : (
+                  // Show fewer labels for longer ranges
+                  chartData.filter((_, i) => i % Math.ceil(chartData.length / 15) === 0).map((d, i) => (
+                    <span key={i} style={styles.xAxisLabel}>
+                      {formatDate(d.date)}
+                    </span>
+                  ))
+                )}
               </div>
             </div>
           </div>
