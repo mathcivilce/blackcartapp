@@ -26,6 +26,9 @@ export default function AdminSalesPage() {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('');
+  const [daysBack, setDaysBack] = useState(7);
   const [error, setError] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
@@ -94,6 +97,72 @@ export default function AdminSalesPage() {
       setError('Network error while loading sales.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleManualSync = async () => {
+    if (!selectedUserId) {
+      setSyncMessage('❌ Please select a user first');
+      setTimeout(() => setSyncMessage(''), 3000);
+      return;
+    }
+
+    setSyncing(true);
+    setSyncMessage('');
+
+    try {
+      const response = await fetch('/api/admin/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId: selectedUserId,
+          days_back: daysBack 
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const result = data.results?.storeResults?.[0];
+        
+        if (result?.success) {
+          const totalSales = result.protection_sales || 0;
+          const newSales = result.new_sales_count || 0;
+          const existingSales = result.existing_sales_count || 0;
+          const ordersChecked = result.orders_checked || 0;
+          const revenue = ((result.revenue || 0) / 100).toFixed(2);
+          const commission = ((result.commission || 0) / 100).toFixed(2);
+          
+          let message = `✅ Sync complete! Found ${totalSales} protection sale${totalSales !== 1 ? 's' : ''} from ${ordersChecked} orders. `;
+          message += `Revenue: $${revenue}, Commission: $${commission}`;
+          
+          if (existingSales > 0) {
+            message += `\n${existingSales} sale${existingSales !== 1 ? 's' : ''} already saved, ${newSales} new sale${newSales !== 1 ? 's' : ''} added`;
+          } else if (newSales > 0) {
+            message += `\n${newSales} new sale${newSales !== 1 ? 's' : ''} added`;
+          } else {
+            message += `\nAll sales already saved in database`;
+          }
+          
+          setSyncMessage(message);
+          
+          if (newSales > 0) {
+            loadSales(); // Reload sales data only if there are new sales
+          }
+        } else {
+          setSyncMessage(`❌ ${result?.error || data.error || 'Sync failed'}`);
+        }
+      } else {
+        setSyncMessage(`❌ ${data.error || 'Sync failed'}`);
+      }
+
+      setTimeout(() => setSyncMessage(''), 10000);
+    } catch (error) {
+      console.error('Sync error:', error);
+      setSyncMessage('❌ Network error during sync');
+      setTimeout(() => setSyncMessage(''), 5000);
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -169,6 +238,56 @@ export default function AdminSalesPage() {
 
       {selectedUserId && (
         <>
+          {/* Manual Sync Section */}
+          <div style={styles.card}>
+            <h2 style={styles.sectionTitle}>Sync Orders</h2>
+            <p style={styles.hint}>
+              Manually sync orders for the selected user to get the latest sales data.
+            </p>
+            
+            <div style={styles.syncControls}>
+              <div style={styles.syncFormGroup}>
+                <label style={styles.label}>Sync Last</label>
+                <select 
+                  value={daysBack} 
+                  onChange={(e) => setDaysBack(Number(e.target.value))}
+                  style={styles.select}
+                  disabled={syncing}
+                >
+                  <option value={1}>1 Day</option>
+                  <option value={3}>3 Days</option>
+                  <option value={7}>7 Days</option>
+                  <option value={14}>14 Days</option>
+                  <option value={30}>30 Days</option>
+                </select>
+              </div>
+              
+              <button
+                onClick={handleManualSync}
+                disabled={syncing}
+                style={{
+                  ...styles.syncButton,
+                  opacity: syncing ? 0.5 : 1,
+                  cursor: syncing ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {syncing ? 'Syncing...' : 'Sync Now'}
+              </button>
+            </div>
+
+            {syncMessage && (
+              <div style={{
+                ...styles.message,
+                backgroundColor: syncMessage.startsWith('✅') ? '#1a3a1a' : '#3a1a1a',
+                color: syncMessage.startsWith('✅') ? '#4caf50' : '#f44336',
+                border: syncMessage.startsWith('✅') ? '1px solid #2e7d32' : '1px solid #c62828',
+                whiteSpace: 'pre-line'
+              }}>
+                {syncMessage}
+              </div>
+            )}
+          </div>
+
           {/* Summary Cards */}
           <div style={styles.statsGrid}>
             <div style={styles.statCard}>
@@ -344,6 +463,41 @@ const styles: Record<string, React.CSSProperties> = {
   },
   formGroup: {
     marginTop: '16px',
+  },
+  syncControls: {
+    display: 'flex',
+    gap: '16px',
+    alignItems: 'flex-end',
+    marginTop: '16px',
+  },
+  syncFormGroup: {
+    flex: '0 0 200px',
+  },
+  select: {
+    width: '100%',
+    padding: '10px 12px',
+    fontSize: '14px',
+    border: '1px solid #222',
+    borderRadius: '8px',
+    backgroundColor: '#000',
+    color: '#fff',
+  },
+  syncButton: {
+    padding: '12px 24px',
+    fontSize: '14px',
+    fontWeight: '600',
+    border: '1px solid #fff',
+    borderRadius: '8px',
+    backgroundColor: '#000',
+    color: '#fff',
+    transition: 'all 0.2s',
+  },
+  message: {
+    marginTop: '16px',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
   },
   label: {
     display: 'block',

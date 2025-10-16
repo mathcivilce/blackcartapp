@@ -188,12 +188,11 @@ export default function SalesPage() {
             disabled={syncing}
             style={{
               ...styles.button,
-              backgroundColor: syncing ? '#333' : '#fff',
-              color: syncing ? '#666' : '#000',
+              opacity: syncing ? 0.5 : 1,
               cursor: syncing ? 'not-allowed' : 'pointer'
             }}
           >
-            {syncing ? '🔄 Syncing...' : '🔄 Sync Now'}
+            {syncing ? 'Syncing...' : 'Sync Now'}
           </button>
         </div>
 
@@ -350,8 +349,9 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '12px 24px',
     fontSize: '14px',
     fontWeight: '600',
-    border: 'none',
+    border: '1px solid #fff',
     borderRadius: '8px',
+    backgroundColor: '#000',
     color: '#fff',
     transition: 'all 0.2s',
   },
