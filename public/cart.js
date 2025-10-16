@@ -18,7 +18,7 @@
       }
       return null;
     })(),
-    // Cache settings
+    // Cache settings -
     cacheKey: 'sp_cart_settings',
     cacheTTL: 1000 * 60 * 60 * 6  // 6 hours
   };
