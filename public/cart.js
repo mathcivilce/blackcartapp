@@ -1055,9 +1055,12 @@
           
           activeBanner.style.display = 'block';
           
-          // Start countdown interval if countdown is enabled
-          if (announcement.countdownEnabled && announcement.countdownEnd) {
-            startCountdownInterval();
+          // Start countdown interval if countdown is enabled (for both fixed and fresh modes)
+          if (announcement.countdownEnabled) {
+            if ((announcement.countdownType === 'fixed' && announcement.countdownEnd) || 
+                (announcement.countdownType === 'fresh' && announcement.countdownDuration)) {
+              startCountdownInterval();
+            }
           }
         }
         
@@ -1549,6 +1552,9 @@
     if (!overlay) {
       return;
     }
+    
+    // Reset countdown start time for fresh timer (so it restarts fresh each time)
+    state.countdownStartTime = null;
     
     try {
       // Optimization #3: Fetch settings and cart in parallel (only fetch cart if not already loaded)
