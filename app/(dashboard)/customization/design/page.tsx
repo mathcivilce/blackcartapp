@@ -55,6 +55,34 @@ export default function DesignPage() {
     showBorder: true,
   });
 
+  const [freeGifts, setFreeGifts] = useState({
+    enabled: false,
+    conditionType: 'quantity',
+    headline: 'Unlock Your Free Gifts!',
+    progressColor: '#4CAF50',
+    tier1: {
+      enabled: false,
+      threshold: 1,
+      productHandle: '',
+      variantId: '',
+      rewardText: 'Free Gift',
+    },
+    tier2: {
+      enabled: false,
+      threshold: 2,
+      productHandle: '',
+      variantId: '',
+      rewardText: 'Free Gift',
+    },
+    tier3: {
+      enabled: false,
+      threshold: 3,
+      productHandle: '',
+      variantId: '',
+      rewardText: 'Free Gift',
+    },
+  });
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -93,6 +121,7 @@ export default function DesignPage() {
       await fetchSettings(store.id);
       await fetchAddons(store.id);
       await fetchAnnouncement(store.id);
+      await fetchFreeGifts(store.id);
     } catch (error) {
       console.error('Error loading user and settings:', error);
       setLoading(false);
@@ -108,6 +137,18 @@ export default function DesignPage() {
       }
     } catch (error) {
       console.error('Error fetching announcement:', error);
+    }
+  };
+
+  const fetchFreeGifts = async (storeIdParam: string) => {
+    try {
+      const response = await fetch('/api/freegifts');
+      if (response.ok) {
+        const data = await response.json();
+        setFreeGifts(data);
+      }
+    } catch (error) {
+      console.error('Error fetching free gifts:', error);
     }
   };
 
@@ -768,7 +809,7 @@ export default function DesignPage() {
 
         {/* Right Column - Cart Preview */}
         <div style={styles.rightColumn}>
-          <CartPreview design={design} addons={addons} announcement={announcement} />
+          <CartPreview design={design} addons={addons} announcement={announcement} freeGifts={freeGifts} />
         </div>
       </div>
     </div>

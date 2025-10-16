@@ -93,6 +93,33 @@ export interface Settings {
   addon_product_id?: string;
   addon_accept_by_default?: boolean;
   addon_adjust_total_price?: boolean;
+  
+  // Free gifts settings
+  free_gifts_enabled?: boolean;
+  free_gifts_condition_type?: string;
+  free_gifts_headline?: string;
+  free_gifts_progress_color?: string;
+  
+  // Tier 1
+  free_gifts_tier1_enabled?: boolean;
+  free_gifts_tier1_threshold?: number;
+  free_gifts_tier1_product_handle?: string;
+  free_gifts_tier1_variant_id?: string;
+  free_gifts_tier1_reward_text?: string;
+  
+  // Tier 2
+  free_gifts_tier2_enabled?: boolean;
+  free_gifts_tier2_threshold?: number;
+  free_gifts_tier2_product_handle?: string;
+  free_gifts_tier2_variant_id?: string;
+  free_gifts_tier2_reward_text?: string;
+  
+  // Tier 3
+  free_gifts_tier3_enabled?: boolean;
+  free_gifts_tier3_threshold?: number;
+  free_gifts_tier3_product_handle?: string;
+  free_gifts_tier3_variant_id?: string;
+  free_gifts_tier3_reward_text?: string;
 }
 
 export interface Sale {

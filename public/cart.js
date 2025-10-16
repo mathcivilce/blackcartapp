@@ -38,7 +38,10 @@
     protectionInCart: false,
     protectionVariantId: null,  // Cache variant ID for removal
     staticSettingsApplied: false,  // Track if static settings have been applied
-    countdownStartTime: null  // Track when fresh countdown started
+    countdownStartTime: null,  // Track when fresh countdown started
+    freeGiftsVariants: {},  // Track which free gifts are in cart: { tier1: variantId, tier2: variantId, tier3: variantId }
+    freeGiftsUnlocked: { tier1: false, tier2: false, tier3: false },  // Track which tiers are unlocked
+    processingFreeGifts: false  // Prevent concurrent free gift operations
   };
 
   // ============================================
@@ -67,6 +70,16 @@
           <!-- Cart Content -->
           <div id="sp-cart-content" class="sp-cart-content">
             <div class="sp-cart-loading">Loading...</div>
+          </div>
+
+          <!-- Free Gifts Progress Bar -->
+          <div id="sp-free-gifts-progress" class="sp-free-gifts-progress" style="display: none;">
+            <div class="sp-free-gifts-headline"></div>
+            <div class="sp-free-gifts-bar-container">
+              <div class="sp-free-gifts-bar"></div>
+            </div>
+            <div class="sp-free-gifts-milestones"></div>
+            <div class="sp-free-gifts-message"></div>
           </div>
 
           <!-- Announcement Banner (Bottom) -->
@@ -207,6 +220,115 @@
 
       .sp-announcement-bottom {
         border-top: 1px solid rgba(0, 0, 0, 0.1);
+      }
+
+      /* Free Gifts Progress Bar */
+      .sp-free-gifts-progress {
+        padding: 16px 20px;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      }
+
+      .sp-free-gifts-headline {
+        margin: 0 0 12px 0;
+        font-size: 14px;
+        font-weight: 600;
+        text-align: center;
+        color: #000;
+      }
+
+      .sp-free-gifts-bar-container {
+        position: relative;
+        height: 8px;
+        background: #f0f0f0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+
+      .sp-free-gifts-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 0%;
+        background: #4CAF50;
+        transition: width 0.3s ease;
+        border-radius: 4px;
+      }
+
+      .sp-free-gifts-milestones {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .sp-free-gifts-milestone {
+        flex: 1;
+        text-align: center;
+        padding: 8px;
+        background: #f0f0f0;
+        color: #666;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .sp-free-gifts-milestone.unlocked {
+        background: #4CAF50;
+        color: #fff;
+      }
+
+      .sp-free-gifts-milestone-threshold {
+        font-size: 10px;
+        opacity: 0.8;
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      .sp-free-gifts-milestone-text {
+        display: block;
+      }
+
+      .sp-free-gifts-milestone-check {
+        font-size: 12px;
+        margin-top: 2px;
+        display: block;
+      }
+
+      .sp-free-gifts-message {
+        margin: 12px 0 0 0;
+        font-size: 12px;
+        color: #666;
+        text-align: center;
+      }
+
+      .sp-free-gifts-message.complete {
+        color: #4CAF50;
+        font-weight: 600;
+      }
+
+      .sp-free-gift-item {
+        border: 2px dashed #4CAF50 !important;
+      }
+
+      .sp-free-gift-badge {
+        background: #4CAF50;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-block;
+        margin-left: 8px;
+      }
+
+      .sp-free-gift-price {
+        text-decoration: line-through;
+        opacity: 0.5;
+        margin-right: 8px;
       }
 
       .sp-cart-close {
@@ -1392,6 +1514,259 @@
   }
 
   // ============================================
+  // FREE GIFTS FUNCTIONS
+  // ============================================
+
+  function calculateCartValue() {
+    if (!state.cart || !state.settings?.freeGifts?.enabled) return 0;
+
+    const freeGifts = state.settings.freeGifts;
+    const conditionType = freeGifts.conditionType || 'quantity';
+
+    // Get all free gift variant IDs to exclude them
+    const freeGiftVariantIds = Object.values(state.freeGiftsVariants).filter(Boolean);
+
+    if (conditionType === 'quantity') {
+      // Count non-free-gift items
+      return state.cart.items.filter(item => 
+        !freeGiftVariantIds.includes(String(item.id || item.variant_id))
+      ).reduce((sum, item) => sum + (item.quantity || 1), 0);
+    } else {
+      // Sum non-free-gift item prices (in dollars)
+      return state.cart.items.filter(item => 
+        !freeGiftVariantIds.includes(String(item.id || item.variant_id))
+      ).reduce((sum, item) => sum + ((item.final_line_price || item.line_price || 0) / 100), 0);
+    }
+  }
+
+  function updateFreeGiftsProgress() {
+    const progressEl = document.getElementById('sp-free-gifts-progress');
+    if (!progressEl || !state.settings?.freeGifts?.enabled) {
+      if (progressEl) progressEl.style.display = 'none';
+      return;
+    }
+
+    const freeGifts = state.settings.freeGifts;
+    const currentValue = calculateCartValue();
+    const conditionType = freeGifts.conditionType || 'quantity';
+
+    // Get enabled tiers
+    const enabledTiers = [];
+    if (freeGifts.tier1?.enabled) enabledTiers.push({ ...freeGifts.tier1, key: 'tier1' });
+    if (freeGifts.tier2?.enabled) enabledTiers.push({ ...freeGifts.tier2, key: 'tier2' });
+    if (freeGifts.tier3?.enabled) enabledTiers.push({ ...freeGifts.tier3, key: 'tier3' });
+
+    if (enabledTiers.length === 0) {
+      progressEl.style.display = 'none';
+      return;
+    }
+
+    // Sort by threshold
+    enabledTiers.sort((a, b) => a.threshold - b.threshold);
+
+    // Calculate progress
+    const maxThreshold = Math.max(...enabledTiers.map(t => t.threshold));
+    const progressPercentage = Math.min((currentValue / maxThreshold) * 100, 100);
+
+    // Find next tier
+    const nextTier = enabledTiers.find(t => t.threshold > currentValue);
+
+    // Update headline
+    const headlineEl = progressEl.querySelector('.sp-free-gifts-headline');
+    if (headlineEl && freeGifts.headline) {
+      headlineEl.textContent = freeGifts.headline;
+      headlineEl.style.display = 'block';
+    }
+
+    // Update progress bar
+    const barEl = progressEl.querySelector('.sp-free-gifts-bar');
+    if (barEl) {
+      barEl.style.width = `${progressPercentage}%`;
+      barEl.style.background = freeGifts.progressColor || '#4CAF50';
+    }
+
+    // Update milestones
+    const milestonesEl = progressEl.querySelector('.sp-free-gifts-milestones');
+    if (milestonesEl) {
+      milestonesEl.innerHTML = enabledTiers.map(tier => {
+        const isUnlocked = currentValue >= tier.threshold;
+        return `
+          <div class="sp-free-gifts-milestone ${isUnlocked ? 'unlocked' : ''}" style="${isUnlocked ? `background: ${freeGifts.progressColor || '#4CAF50'}` : ''}">
+            <span class="sp-free-gifts-milestone-threshold">
+              ${conditionType === 'quantity' 
+                ? `${tier.threshold} ${tier.threshold === 1 ? 'item' : 'items'}`
+                : `$${tier.threshold}`}
+            </span>
+            <span class="sp-free-gifts-milestone-text">${tier.rewardText || 'Free Gift'}</span>
+            ${isUnlocked ? '<span class="sp-free-gifts-milestone-check">✓</span>' : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Update message
+    const messageEl = progressEl.querySelector('.sp-free-gifts-message');
+    if (messageEl) {
+      if (nextTier) {
+        const remaining = nextTier.threshold - currentValue;
+        messageEl.className = 'sp-free-gifts-message';
+        messageEl.textContent = conditionType === 'quantity'
+          ? `Add ${remaining} more ${remaining === 1 ? 'item' : 'items'} to unlock ${nextTier.rewardText || 'your gift'}!`
+          : `Spend $${remaining.toFixed(2)} more to unlock ${nextTier.rewardText || 'your gift'}!`;
+      } else if (currentValue >= maxThreshold) {
+        messageEl.className = 'sp-free-gifts-message complete';
+        messageEl.textContent = '🎉 All gifts unlocked!';
+      } else {
+        messageEl.textContent = '';
+      }
+    }
+
+    progressEl.style.display = 'block';
+  }
+
+  async function getFreeGiftProduct(tier) {
+    if (!tier.productHandle && !tier.variantId) {
+      console.error('[Free Gifts] No product handle or variant ID provided');
+      return null;
+    }
+
+    try {
+      // If variant ID is provided, use it directly
+      if (tier.variantId) {
+        // Fetch product by variant to get details
+        const response = await fetch(`/products.json`);
+        const data = await response.json();
+        
+        for (const product of data.products) {
+          const variant = product.variants.find(v => String(v.id) === String(tier.variantId));
+          if (variant) {
+            return {
+              variantId: variant.id,
+              productId: product.id,
+              title: product.title,
+              variantTitle: variant.title !== 'Default Title' ? variant.title : '',
+              price: variant.price,
+              image: product.images[0]?.src || product.image?.src
+            };
+          }
+        }
+      }
+
+      // Otherwise, fetch by product handle
+      if (tier.productHandle) {
+        const response = await fetch(`/products/${tier.productHandle}.js`);
+        if (!response.ok) {
+          console.error(`[Free Gifts] Product not found: ${tier.productHandle}`);
+          return null;
+        }
+        
+        const product = await response.json();
+        const variant = product.variants[0]; // Use first variant if no specific variant ID
+
+        return {
+          variantId: variant.id,
+          productId: product.id,
+          title: product.title,
+          variantTitle: variant.title !== 'Default Title' ? variant.title : '',
+          price: variant.price,
+          image: product.images[0]?.src || product.image?.src
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error('[Free Gifts] Error fetching product:', error);
+      return null;
+    }
+  }
+
+  async function manageFreeGifts() {
+    if (!state.settings?.freeGifts?.enabled || state.processingFreeGifts) return;
+
+    state.processingFreeGifts = true;
+
+    try {
+      const freeGifts = state.settings.freeGifts;
+      const currentValue = calculateCartValue();
+
+      // Check each tier
+      for (const tierKey of ['tier1', 'tier2', 'tier3']) {
+        const tier = freeGifts[tierKey];
+        if (!tier?.enabled) continue;
+
+        const shouldBeUnlocked = currentValue >= tier.threshold;
+        const isUnlocked = state.freeGiftsUnlocked[tierKey];
+        const isInCart = !!state.freeGiftsVariants[tierKey];
+
+        // If tier should be unlocked but isn't in cart, add it
+        if (shouldBeUnlocked && !isInCart) {
+          console.log(`[Free Gifts] Unlocking ${tierKey}`);
+          const product = await getFreeGiftProduct(tier);
+          
+          if (product) {
+            // Add to cart
+            const formData = {
+              items: [{
+                id: product.variantId,
+                quantity: 1,
+                properties: {
+                  '_free_gift': 'true',
+                  '_free_gift_tier': tierKey
+                }
+              }]
+            };
+
+            const response = await fetch('/cart/add.js', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+              state.freeGiftsVariants[tierKey] = String(product.variantId);
+              state.freeGiftsUnlocked[tierKey] = true;
+            }
+          }
+        }
+        // If tier should not be unlocked but is in cart, remove it
+        else if (!shouldBeUnlocked && isInCart) {
+          console.log(`[Free Gifts] Removing ${tierKey}`);
+          const variantId = state.freeGiftsVariants[tierKey];
+          
+          if (variantId) {
+            // Find the line item key for this variant
+            const lineItem = state.cart.items.find(item => 
+              String(item.id || item.variant_id) === variantId &&
+              item.properties?._free_gift === 'true'
+            );
+
+            if (lineItem) {
+              const lineNumber = state.cart.items.indexOf(lineItem) + 1;
+              
+              await fetch('/cart/change.js', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  line: lineNumber,
+                  quantity: 0
+                })
+              });
+
+              delete state.freeGiftsVariants[tierKey];
+              state.freeGiftsUnlocked[tierKey] = false;
+            }
+          }
+        }
+      }
+
+      // Refresh cart after changes
+      await fetchCart();
+    } finally {
+      state.processingFreeGifts = false;
+    }
+  }
+
+  // ============================================
   // RENDER FUNCTIONS
   // ============================================
 
@@ -1424,6 +1799,9 @@
     const itemsHTML = visibleItems.map((item) => {
       const lineNumber = state.cart.items.indexOf(item) + 1;
       
+      // Check if this is a free gift
+      const isFreeGift = item.properties?._free_gift === 'true' || item.properties?._free_gift === true;
+      
       // Calculate compare-at-price and savings
       const showSavings = state.settings?.design?.showSavings !== false;
       const displayCompareAtPrice = state.settings?.design?.displayCompareAtPrice !== false;
@@ -1444,7 +1822,7 @@
       }
       
       return `
-        <div class="sp-cart-item" data-line="${lineNumber}">
+        <div class="sp-cart-item${isFreeGift ? ' sp-free-gift-item' : ''}" data-line="${lineNumber}">
           <img 
             src="${item.image || item.featured_image?.url || ''}" 
             alt="${item.title}"
@@ -1452,7 +1830,7 @@
           />
           <div class="sp-cart-item-details">
             <div class="sp-cart-item-header">
-              <h3 class="sp-cart-item-title">${item.product_title}</h3>
+              <h3 class="sp-cart-item-title">${item.product_title}${isFreeGift ? '<span class="sp-free-gift-badge">FREE</span>' : ''}</h3>
               <button class="sp-remove-btn" data-line="${lineNumber}" title="Remove item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="3 6 5 6 21 6"></polyline>
@@ -1482,7 +1860,7 @@
                   +
                 </button>
               </div>
-              <p class="sp-cart-item-price">${formatMoney(item.final_line_price)}</p>
+              <p class="sp-cart-item-price">${isFreeGift ? `<span class="sp-free-gift-price">${formatMoney(item.original_line_price || item.final_line_price)}</span><span style="color: #4CAF50; font-weight: 600;">FREE</span>` : formatMoney(item.final_line_price)}</p>
             </div>
           </div>
         </div>
@@ -1501,6 +1879,14 @@
     
     // Always apply dynamic settings (item-specific styles)
     applyDynamicSettings();
+    
+    // Update free gifts progress bar
+    updateFreeGiftsProgress();
+    
+    // Manage free gifts (add/remove based on cart value)
+    if (state.settings?.freeGifts?.enabled) {
+      manageFreeGifts();
+    }
   }
 
   function updateSubtotal(cents) {

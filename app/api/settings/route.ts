@@ -161,6 +161,33 @@ export async function GET(request: NextRequest) {
           productHandle: settings?.addon_product_id || null,
           acceptByDefault: settings?.addon_accept_by_default ?? false,
           adjustTotalPrice: settings?.addon_adjust_total_price ?? true,
+        },
+        freeGifts: {
+          enabled: settings?.free_gifts_enabled ?? false,
+          conditionType: settings?.free_gifts_condition_type || 'quantity',
+          headline: settings?.free_gifts_headline || 'Unlock Your Free Gifts!',
+          progressColor: settings?.free_gifts_progress_color || '#4CAF50',
+          tier1: {
+            enabled: settings?.free_gifts_tier1_enabled ?? false,
+            threshold: settings?.free_gifts_tier1_threshold || 1,
+            productHandle: settings?.free_gifts_tier1_product_handle || '',
+            variantId: settings?.free_gifts_tier1_variant_id || '',
+            rewardText: settings?.free_gifts_tier1_reward_text || 'Free Gift',
+          },
+          tier2: {
+            enabled: settings?.free_gifts_tier2_enabled ?? false,
+            threshold: settings?.free_gifts_tier2_threshold || 2,
+            productHandle: settings?.free_gifts_tier2_product_handle || '',
+            variantId: settings?.free_gifts_tier2_variant_id || '',
+            rewardText: settings?.free_gifts_tier2_reward_text || 'Free Gift',
+          },
+          tier3: {
+            enabled: settings?.free_gifts_tier3_enabled ?? false,
+            threshold: settings?.free_gifts_tier3_threshold || 3,
+            productHandle: settings?.free_gifts_tier3_product_handle || '',
+            variantId: settings?.free_gifts_tier3_variant_id || '',
+            rewardText: settings?.free_gifts_tier3_reward_text || 'Free Gift',
+          },
         }
       });
       
@@ -265,6 +292,33 @@ export async function GET(request: NextRequest) {
           productId: null,
           acceptByDefault: false,
           adjustTotalPrice: true,
+        },
+        freeGifts: {
+          enabled: false,
+          conditionType: 'quantity',
+          headline: 'Unlock Your Free Gifts!',
+          progressColor: '#4CAF50',
+          tier1: {
+            enabled: false,
+            threshold: 1,
+            productHandle: '',
+            variantId: '',
+            rewardText: 'Free Gift',
+          },
+          tier2: {
+            enabled: false,
+            threshold: 2,
+            productHandle: '',
+            variantId: '',
+            rewardText: 'Free Gift',
+          },
+          tier3: {
+            enabled: false,
+            threshold: 3,
+            productHandle: '',
+            variantId: '',
+            rewardText: 'Free Gift',
+          },
         }
       });
     }
@@ -332,6 +386,34 @@ export async function GET(request: NextRequest) {
         productId: settings?.addon_product_id || null,
         acceptByDefault: settings?.addon_accept_by_default ?? false,
         adjustTotalPrice: settings?.addon_adjust_total_price ?? true,
+      },
+      // Free gifts settings
+      freeGifts: {
+        enabled: settings?.free_gifts_enabled ?? false,
+        conditionType: settings?.free_gifts_condition_type || 'quantity',
+        headline: settings?.free_gifts_headline || 'Unlock Your Free Gifts!',
+        progressColor: settings?.free_gifts_progress_color || '#4CAF50',
+        tier1: {
+          enabled: settings?.free_gifts_tier1_enabled ?? false,
+          threshold: settings?.free_gifts_tier1_threshold || 1,
+          productHandle: settings?.free_gifts_tier1_product_handle || '',
+          variantId: settings?.free_gifts_tier1_variant_id || '',
+          rewardText: settings?.free_gifts_tier1_reward_text || 'Free Gift',
+        },
+        tier2: {
+          enabled: settings?.free_gifts_tier2_enabled ?? false,
+          threshold: settings?.free_gifts_tier2_threshold || 2,
+          productHandle: settings?.free_gifts_tier2_product_handle || '',
+          variantId: settings?.free_gifts_tier2_variant_id || '',
+          rewardText: settings?.free_gifts_tier2_reward_text || 'Free Gift',
+        },
+        tier3: {
+          enabled: settings?.free_gifts_tier3_enabled ?? false,
+          threshold: settings?.free_gifts_tier3_threshold || 3,
+          productHandle: settings?.free_gifts_tier3_product_handle || '',
+          variantId: settings?.free_gifts_tier3_variant_id || '',
+          rewardText: settings?.free_gifts_tier3_reward_text || 'Free Gift',
+        },
       }
     });
   } catch (error) {
@@ -393,6 +475,33 @@ export async function GET(request: NextRequest) {
         productId: null,
         acceptByDefault: false,
         adjustTotalPrice: true,
+      },
+      freeGifts: {
+        enabled: false,
+        conditionType: 'quantity',
+        headline: 'Unlock Your Free Gifts!',
+        progressColor: '#4CAF50',
+        tier1: {
+          enabled: false,
+          threshold: 1,
+          productHandle: '',
+          variantId: '',
+          rewardText: 'Free Gift',
+        },
+        tier2: {
+          enabled: false,
+          threshold: 2,
+          productHandle: '',
+          variantId: '',
+          rewardText: 'Free Gift',
+        },
+        tier3: {
+          enabled: false,
+          threshold: 3,
+          productHandle: '',
+          variantId: '',
+          rewardText: 'Free Gift',
+        },
       }
     });
   }
