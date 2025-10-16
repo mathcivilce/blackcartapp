@@ -176,6 +176,7 @@ export async function GET(request: NextRequest) {
             rewardText: settings?.free_gifts_tier1_reward_text || 'Free Gift',
             unlockedMessage: settings?.free_gifts_tier1_unlocked_message || '🎉 Free Gift Unlocked!',
             showUnlockedMessage: settings?.free_gifts_tier1_show_unlocked_message ?? true,
+            icon: settings?.free_gifts_tier1_icon || '🎁',
           },
           tier2: {
             enabled: settings?.free_gifts_tier2_enabled ?? false,
@@ -185,6 +186,7 @@ export async function GET(request: NextRequest) {
             rewardText: settings?.free_gifts_tier2_reward_text || 'Free Gift',
             unlockedMessage: settings?.free_gifts_tier2_unlocked_message || '🎉 Free Gift Unlocked!',
             showUnlockedMessage: settings?.free_gifts_tier2_show_unlocked_message ?? true,
+            icon: settings?.free_gifts_tier2_icon || '🎁',
           },
           tier3: {
             enabled: settings?.free_gifts_tier3_enabled ?? false,
@@ -194,6 +196,7 @@ export async function GET(request: NextRequest) {
             rewardText: settings?.free_gifts_tier3_reward_text || 'Free Gift',
             unlockedMessage: settings?.free_gifts_tier3_unlocked_message || '🎉 Free Gift Unlocked!',
             showUnlockedMessage: settings?.free_gifts_tier3_show_unlocked_message ?? true,
+            icon: settings?.free_gifts_tier3_icon || '🎁',
           },
         }
       });
@@ -314,6 +317,7 @@ export async function GET(request: NextRequest) {
             rewardText: 'Free Gift',
             unlockedMessage: '🎉 Free Gift Unlocked!',
             showUnlockedMessage: true,
+            icon: '🎁',
           },
           tier2: {
             enabled: false,
@@ -323,6 +327,7 @@ export async function GET(request: NextRequest) {
             rewardText: 'Free Gift',
             unlockedMessage: '🎉 Free Gift Unlocked!',
             showUnlockedMessage: true,
+            icon: '🎁',
           },
           tier3: {
             enabled: false,
@@ -332,6 +337,7 @@ export async function GET(request: NextRequest) {
             rewardText: 'Free Gift',
             unlockedMessage: '🎉 Free Gift Unlocked!',
             showUnlockedMessage: true,
+            icon: '🎁',
           },
         }
       });

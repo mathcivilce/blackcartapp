@@ -72,6 +72,7 @@ export default function AddOnsPage() {
       rewardText: 'Free Gift',
       unlockedMessage: '🎉 Free Gift Unlocked!',
       showUnlockedMessage: true,
+      icon: '🎁',
     },
     tier2: {
       enabled: false,
@@ -81,6 +82,7 @@ export default function AddOnsPage() {
       rewardText: 'Free Gift',
       unlockedMessage: '🎉 Free Gift Unlocked!',
       showUnlockedMessage: true,
+      icon: '🎁',
     },
     tier3: {
       enabled: false,
@@ -90,6 +92,7 @@ export default function AddOnsPage() {
       rewardText: 'Free Gift',
       unlockedMessage: '🎉 Free Gift Unlocked!',
       showUnlockedMessage: true,
+      icon: '🎁',
     },
   });
 

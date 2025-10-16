@@ -63,6 +63,7 @@ interface CartPreviewProps {
       rewardText: string;
       unlockedMessage: string;
       showUnlockedMessage: boolean;
+      icon: string;
     };
     tier2: {
       enabled: boolean;
@@ -72,6 +73,7 @@ interface CartPreviewProps {
       rewardText: string;
       unlockedMessage: string;
       showUnlockedMessage: boolean;
+      icon: string;
     };
     tier3: {
       enabled: boolean;
@@ -81,6 +83,7 @@ interface CartPreviewProps {
       rewardText: string;
       unlockedMessage: string;
       showUnlockedMessage: boolean;
+      icon: string;
     };
   };
 }
@@ -353,7 +356,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                         <div style={{
                           position: 'absolute' as const,
                           right: '-12px',
-                          top: '-24px',
+                          top: '0px',
                           display: 'flex',
                           flexDirection: 'column' as const,
                           alignItems: 'center',
@@ -372,7 +375,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                             border: '2px solid #fff',
                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                           }}>
-                            {isUnlocked ? '✓' : '🎁'}
+                            {isUnlocked ? '✓' : (tier?.icon || '🎁')}
                           </div>
                           
                           {/* Reward text below bar */}
@@ -501,7 +504,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                         <div style={{
                           position: 'absolute' as const,
                           right: '-12px',
-                          top: '-24px',
+                          top: '0px',
                           display: 'flex',
                           flexDirection: 'column' as const,
                           alignItems: 'center',
@@ -520,7 +523,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                             border: '2px solid #fff',
                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                           }}>
-                            {isUnlocked ? '✓' : '🎁'}
+                            {isUnlocked ? '✓' : (tier?.icon || '🎁')}
                           </div>
                           
                           {/* Reward text below bar */}

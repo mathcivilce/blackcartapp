@@ -278,7 +278,7 @@
       .sp-free-gifts-milestone-marker {
         position: absolute;
         right: -12px;
-        top: -24px;
+        top: 0px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -1547,17 +1547,28 @@
 
     // Get all free gift variant IDs to exclude them
     const freeGiftVariantIds = Object.values(state.freeGiftsVariants).filter(Boolean);
+    
+    // Get protection product handle to exclude it
+    const protectionHandle = state.settings?.addons?.productHandle || state.settings?.protectionProductHandle;
 
     if (conditionType === 'quantity') {
-      // Count non-free-gift items
-      return state.cart.items.filter(item => 
-        !freeGiftVariantIds.includes(String(item.id || item.variant_id))
-      ).reduce((sum, item) => sum + (item.quantity || 1), 0);
+      // Count non-free-gift and non-protection items
+      return state.cart.items.filter(item => {
+        // Exclude free gifts
+        if (freeGiftVariantIds.includes(String(item.id || item.variant_id))) return false;
+        // Exclude protection products
+        if (protectionHandle && item.handle === protectionHandle) return false;
+        return true;
+      }).reduce((sum, item) => sum + (item.quantity || 1), 0);
     } else {
-      // Sum non-free-gift item prices (in dollars)
-      return state.cart.items.filter(item => 
-        !freeGiftVariantIds.includes(String(item.id || item.variant_id))
-      ).reduce((sum, item) => sum + ((item.final_line_price || item.line_price || 0) / 100), 0);
+      // Sum non-free-gift and non-protection item prices (in dollars)
+      return state.cart.items.filter(item => {
+        // Exclude free gifts
+        if (freeGiftVariantIds.includes(String(item.id || item.variant_id))) return false;
+        // Exclude protection products
+        if (protectionHandle && item.handle === protectionHandle) return false;
+        return true;
+      }).reduce((sum, item) => sum + ((item.final_line_price || item.line_price || 0) / 100), 0);
     }
   }
 
@@ -1628,7 +1639,7 @@
             <div class="sp-free-gifts-milestone-marker">
               <div class="sp-free-gifts-milestone-icon ${isUnlocked ? 'unlocked' : ''}" 
                    style="${isUnlocked ? `background: ${progressColor};` : ''}">
-                ${isUnlocked ? '✓' : '🎁'}
+                ${isUnlocked ? '✓' : (tier.icon || '🎁')}
               </div>
               <div class="sp-free-gifts-milestone-text ${isUnlocked ? 'unlocked' : ''}" 
                    style="${isUnlocked ? `color: ${progressColor};` : ''}">

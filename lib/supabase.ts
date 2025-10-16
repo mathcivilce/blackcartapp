@@ -109,6 +109,7 @@ export interface Settings {
   free_gifts_tier1_reward_text?: string;
   free_gifts_tier1_unlocked_message?: string;
   free_gifts_tier1_show_unlocked_message?: boolean;
+  free_gifts_tier1_icon?: string;
   
   // Tier 2
   free_gifts_tier2_enabled?: boolean;
@@ -118,6 +119,7 @@ export interface Settings {
   free_gifts_tier2_reward_text?: string;
   free_gifts_tier2_unlocked_message?: string;
   free_gifts_tier2_show_unlocked_message?: boolean;
+  free_gifts_tier2_icon?: string;
   
   // Tier 3
   free_gifts_tier3_enabled?: boolean;
@@ -127,6 +129,7 @@ export interface Settings {
   free_gifts_tier3_reward_text?: string;
   free_gifts_tier3_unlocked_message?: string;
   free_gifts_tier3_show_unlocked_message?: boolean;
+  free_gifts_tier3_icon?: string;
 }
 
 export interface Sale {

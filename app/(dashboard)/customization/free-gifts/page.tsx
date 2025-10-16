@@ -23,6 +23,7 @@ export default function FreeGiftsPage() {
       rewardText: 'Free Gift',
       unlockedMessage: '🎉 Free Gift Unlocked!',
       showUnlockedMessage: true,
+      icon: '🎁',
     },
     tier2: {
       enabled: false,
@@ -32,6 +33,7 @@ export default function FreeGiftsPage() {
       rewardText: 'Free Gift',
       unlockedMessage: '🎉 Free Gift Unlocked!',
       showUnlockedMessage: true,
+      icon: '🎁',
     },
     tier3: {
       enabled: false,
@@ -41,6 +43,7 @@ export default function FreeGiftsPage() {
       rewardText: 'Free Gift',
       unlockedMessage: '🎉 Free Gift Unlocked!',
       showUnlockedMessage: true,
+      icon: '🎁',
     },
   });
 
@@ -357,6 +360,16 @@ export default function FreeGiftsPage() {
                     placeholder="e.g., 12345678901234"
                   />
 
+                  <label style={styles.label}>Icon (emoji or symbol)</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={freeGifts.tier1.icon}
+                    onChange={(e) => handleTierChange('tier1', 'icon', e.target.value)}
+                    placeholder="e.g., 🎁 or 🎉"
+                    maxLength={4}
+                  />
+
                   <label style={styles.label}>Reward Text (shown in progress bar)</label>
                   <input
                     type="text"
@@ -434,6 +447,16 @@ export default function FreeGiftsPage() {
                     placeholder="e.g., 12345678901234"
                   />
 
+                  <label style={styles.label}>Icon (emoji or symbol)</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={freeGifts.tier2.icon}
+                    onChange={(e) => handleTierChange('tier2', 'icon', e.target.value)}
+                    placeholder="e.g., 🎁 or 🎉"
+                    maxLength={4}
+                  />
+
                   <label style={styles.label}>Reward Text (shown in progress bar)</label>
                   <input
                     type="text"
@@ -509,6 +532,16 @@ export default function FreeGiftsPage() {
                     value={freeGifts.tier3.variantId}
                     onChange={(e) => handleTierChange('tier3', 'variantId', e.target.value)}
                     placeholder="e.g., 12345678901234"
+                  />
+
+                  <label style={styles.label}>Icon (emoji or symbol)</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={freeGifts.tier3.icon}
+                    onChange={(e) => handleTierChange('tier3', 'icon', e.target.value)}
+                    placeholder="e.g., 🎁 or 🎉"
+                    maxLength={4}
                   />
 
                   <label style={styles.label}>Reward Text (shown in progress bar)</label>
