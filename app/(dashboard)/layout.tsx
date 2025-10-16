@@ -19,7 +19,7 @@ export default function DashboardLayout({
 
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: '▦' },
-    { name: 'Sales', path: '/sales', icon: '▤' },
+    { name: 'Sales', path: '/sales', icon: '$' },
     { name: 'Settings', path: '/settings', icon: '⚙' },
   ];
 
