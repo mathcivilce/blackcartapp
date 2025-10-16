@@ -1142,13 +1142,32 @@
   function checkProtectionInCart() {
     if (!state.cart || !state.settings) return;
     
-    // Check using cached variant ID only (since we fetch it dynamically now)
     let protectionItem;
+    
+    // First try: Check using cached variant ID (fastest)
     if (state.protectionVariantId) {
       protectionItem = state.cart.items.find(item => 
         item.variant_id === state.protectionVariantId ||
         item.id === state.protectionVariantId
       );
+    }
+    
+    // Second try: If not found by variant ID, search by product handle
+    if (!protectionItem) {
+      const productHandle = state.settings?.addons?.productHandle || state.settings?.protectionProductHandle;
+      
+      if (productHandle) {
+        protectionItem = state.cart.items.find(item => {
+          // Check if item handle matches protection handle
+          if (item.handle === productHandle) return true;
+          
+          // Check if product_title or title contains protection keywords
+          const title = (item.product_title || item.title || '').toLowerCase();
+          const protectionKeywords = ['shipping protection', 'shipping insurance', 'package protection'];
+          
+          return protectionKeywords.some(keyword => title.includes(keyword));
+        });
+      }
     }
 
     state.protectionInCart = !!protectionItem;
@@ -1156,6 +1175,7 @@
     // Cache the variant ID if we found the protection item
     if (protectionItem && !state.protectionVariantId) {
       state.protectionVariantId = protectionItem.id || protectionItem.variant_id;
+      console.log('[Cart.js] Protection found in cart, cached variant ID:', state.protectionVariantId);
     }
     
     // Ensure protection product quantity is always 1 (fix if > 1)
@@ -1164,10 +1184,14 @@
       updateCartItem(lineNumber, 1);
     }
     
-    // Update checkbox state
+    // Update checkbox state to match cart contents
     const checkbox = document.getElementById('sp-protection-checkbox');
     if (checkbox) {
       checkbox.checked = state.protectionInCart;
+      console.log('[Cart.js] Checkbox synced with cart state:', {
+        protectionInCart: state.protectionInCart,
+        checkboxChecked: checkbox.checked
+      });
     }
   }
 
