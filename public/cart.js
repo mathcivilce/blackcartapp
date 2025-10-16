@@ -1899,8 +1899,6 @@
               </button>
             </div>
             ${item.variant_title ? `<p class="sp-cart-item-variant">${item.variant_title}</p>` : ''}
-            ${compareAtPriceHTML ? `<div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">${compareAtPriceHTML}<span style="font-size: 14px; font-weight: 400;">${formatMoney(item.final_line_price)}</span></div>` : ''}
-            ${savingsHTML}
             <div class="sp-cart-item-controls">
               <div class="sp-quantity-controls">
                 <button 
@@ -1918,7 +1916,13 @@
                   +
                 </button>
               </div>
-              <p class="sp-cart-item-price">${isFreeGift ? `<span class="sp-free-gift-price">${formatMoney(item.original_line_price || item.final_line_price)}</span><span style="color: #4CAF50; font-weight: 600;">FREE</span>` : formatMoney(item.final_line_price)}</p>
+              <div class="sp-cart-item-price" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                ${isFreeGift ? 
+                  `<span class="sp-free-gift-price">${formatMoney(item.original_line_price || item.final_line_price)}</span><span style="color: #4CAF50; font-weight: 600;">FREE</span>` 
+                  : 
+                  `${savingsHTML ? savingsHTML.replace('<p class="sp-cart-item-savings"', '<span class="sp-cart-item-savings" style="margin: 0; white-space: nowrap;"').replace('</p>', '</span>') : ''}${compareAtPriceHTML}${compareAtPriceHTML ? '<span style="font-size: 16px; font-weight: 400; white-space: nowrap;">' + formatMoney(item.final_line_price) + '</span>' : '<span style="font-size: 16px; font-weight: 400;">' + formatMoney(item.final_line_price) + '</span>'}`
+                }
+              </div>
             </div>
           </div>
         </div>
