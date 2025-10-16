@@ -174,7 +174,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Line chart */}
-              <svg style={styles.svg} viewBox={`0 0 ${Math.max(chartData.length * 50, 800)} 300`} preserveAspectRatio="none">
+              <svg style={styles.svg} viewBox="0 0 100 300" preserveAspectRatio="none">
                 {/* Area fill under the line */}
                 <defs>
                   <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
@@ -183,32 +183,63 @@ export default function DashboardPage() {
                   </linearGradient>
                 </defs>
                 
-                {/* Filled area */}
-                <path
-                  d={
-                    chartData.length > 0
-                      ? `M 0,300 ${chartData.map((d, i) => {
-                          const x = (i / (chartData.length - 1 || 1)) * 100;
-                          const y = 300 - ((d.revenue / maxRevenue) * 280);
-                          return `L ${x}%,${y}`;
-                        }).join(' ')} L 100%,300 Z`
-                      : ''
-                  }
-                  fill="url(#areaGradient)"
-                />
-                
-                {/* Line */}
-                <polyline
-                  points={chartData.map((d, i) => {
-                    const x = (i / (chartData.length - 1 || 1)) * 100;
-                    const y = 300 - ((d.revenue / maxRevenue) * 280);
-                    return `${x}%,${y}`;
-                  }).join(' ')}
-                  fill="none"
-                  stroke="#fff"
-                  strokeWidth="2.5"
-                  vectorEffect="non-scaling-stroke"
-                />
+                {/* Generate smooth curve path */}
+                {(() => {
+                  if (chartData.length === 0) return null;
+                  
+                  const points = chartData.map((d, i) => ({
+                    x: (i / (chartData.length - 1 || 1)) * 100,
+                    y: 300 - ((d.revenue / maxRevenue) * 280)
+                  }));
+                  
+                  // Helper function to create smooth curve using Catmull-Rom spline
+                  const createSmoothPath = (points: Array<{x: number, y: number}>) => {
+                    if (points.length < 2) return '';
+                    
+                    let path = `M ${points[0].x},${points[0].y}`;
+                    
+                    for (let i = 0; i < points.length - 1; i++) {
+                      const p0 = points[i > 0 ? i - 1 : i];
+                      const p1 = points[i];
+                      const p2 = points[i + 1];
+                      const p3 = points[i + 2] || p2;
+                      
+                      // Calculate control points for smooth curve
+                      const cp1x = p1.x + (p2.x - p0.x) / 6;
+                      const cp1y = p1.y + (p2.y - p0.y) / 6;
+                      const cp2x = p2.x - (p3.x - p1.x) / 6;
+                      const cp2y = p2.y - (p3.y - p1.y) / 6;
+                      
+                      path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+                    }
+                    
+                    return path;
+                  };
+                  
+                  const linePath = createSmoothPath(points);
+                  
+                  // Create area path (for fill)
+                  const areaPath = `${linePath} L ${points[points.length - 1].x},300 L ${points[0].x},300 Z`;
+                  
+                  return (
+                    <>
+                      {/* Filled area */}
+                      <path
+                        d={areaPath}
+                        fill="url(#areaGradient)"
+                      />
+                      
+                      {/* Line */}
+                      <path
+                        d={linePath}
+                        fill="none"
+                        stroke="#fff"
+                        strokeWidth="2"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                    </>
+                  );
+                })()}
                 
                 {/* Data points */}
                 {chartData.map((d, i) => {
@@ -217,12 +248,12 @@ export default function DashboardPage() {
                   return (
                     <circle
                       key={i}
-                      cx={`${x}%`}
+                      cx={x}
                       cy={y}
-                      r="4"
+                      r="0.8"
                       fill="#fff"
                       stroke="#111"
-                      strokeWidth="2"
+                      strokeWidth="0.4"
                       vectorEffect="non-scaling-stroke"
                     />
                   );
