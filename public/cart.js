@@ -1470,10 +1470,19 @@
       checkoutText.textContent = state.settings.design.buttonText;
     }
 
+    // Calculate displayed total
+    let displayTotal = cents;
+    
+    // If adjustTotalPrice is false, subtract protection price from displayed total
+    if (state.protectionInCart && state.settings?.addons?.adjustTotalPrice === false) {
+      const protectionPrice = Math.round((state.settings?.addons?.price || 0) * 100);
+      displayTotal = Math.max(0, cents - protectionPrice);
+    }
+
     // Show/hide total on button based on design settings
     if (state.settings?.design?.showTotalOnButton) {
       if (checkoutTotal) {
-        checkoutTotal.textContent = formatMoney(cents);
+        checkoutTotal.textContent = formatMoney(displayTotal);
       }
       if (checkoutSeparator) {
         checkoutSeparator.style.display = 'inline';

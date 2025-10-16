@@ -160,6 +160,7 @@ export async function GET(request: NextRequest) {
           price: settings?.addon_price || 4.90,
           productHandle: settings?.addon_product_id || null,
           acceptByDefault: settings?.addon_accept_by_default ?? false,
+          adjustTotalPrice: settings?.addon_adjust_total_price ?? true,
         }
       });
       
@@ -263,6 +264,7 @@ export async function GET(request: NextRequest) {
           price: 4.90,
           productId: null,
           acceptByDefault: false,
+          adjustTotalPrice: true,
         }
       });
     }
@@ -329,6 +331,7 @@ export async function GET(request: NextRequest) {
         price: settings?.addon_price || 4.90,
         productId: settings?.addon_product_id || null,
         acceptByDefault: settings?.addon_accept_by_default ?? false,
+        adjustTotalPrice: settings?.addon_adjust_total_price ?? true,
       }
     });
   } catch (error) {
@@ -389,6 +392,7 @@ export async function GET(request: NextRequest) {
         price: 4.90,
         productId: null,
         acceptByDefault: false,
+        adjustTotalPrice: true,
       }
     });
   }
