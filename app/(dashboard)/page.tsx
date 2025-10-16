@@ -160,28 +160,56 @@ export default function DashboardPage() {
               </div>
 
               {/* Line chart */}
-              <svg style={styles.svg} viewBox={`0 0 ${chartData.length * 50} 300`} preserveAspectRatio="none">
+              <svg style={styles.svg} viewBox={`0 0 ${Math.max(chartData.length * 50, 800)} 300`} preserveAspectRatio="none">
+                {/* Area fill under the line */}
+                <defs>
+                  <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#fff" stopOpacity="0.1" />
+                    <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                
+                {/* Filled area */}
+                <path
+                  d={
+                    chartData.length > 0
+                      ? `M 0,300 ${chartData.map((d, i) => {
+                          const x = (i / (chartData.length - 1 || 1)) * 100;
+                          const y = 300 - ((d.revenue / maxRevenue) * 280);
+                          return `L ${x}%,${y}`;
+                        }).join(' ')} L 100%,300 Z`
+                      : ''
+                  }
+                  fill="url(#areaGradient)"
+                />
+                
+                {/* Line */}
                 <polyline
                   points={chartData.map((d, i) => {
-                    const x = i * 50 + 25;
-                    const y = 300 - (d.revenue / maxRevenue) * 280;
-                    return `${x},${y}`;
+                    const x = (i / (chartData.length - 1 || 1)) * 100;
+                    const y = 300 - ((d.revenue / maxRevenue) * 280);
+                    return `${x}%,${y}`;
                   }).join(' ')}
-                  style={styles.chartLine}
+                  fill="none"
+                  stroke="#fff"
+                  strokeWidth="2.5"
+                  vectorEffect="non-scaling-stroke"
                 />
+                
                 {/* Data points */}
                 {chartData.map((d, i) => {
-                  const x = i * 50 + 25;
-                  const y = 300 - (d.revenue / maxRevenue) * 280;
+                  const x = (i / (chartData.length - 1 || 1)) * 100;
+                  const y = 300 - ((d.revenue / maxRevenue) * 280);
                   return (
                     <circle
                       key={i}
-                      cx={x}
+                      cx={`${x}%`}
                       cy={y}
                       r="4"
                       fill="#fff"
-                      stroke="#000"
+                      stroke="#111"
                       strokeWidth="2"
+                      vectorEffect="non-scaling-stroke"
                     />
                   );
                 })}
@@ -353,23 +381,21 @@ const styles: Record<string, React.CSSProperties> = {
     height: '300px',
     position: 'relative',
     zIndex: 1,
-  },
-  chartLine: {
-    fill: 'none',
-    stroke: '#fff',
-    strokeWidth: '2',
-    vectorEffect: 'non-scaling-stroke',
+    overflow: 'visible',
   },
   xAxis: {
     display: 'flex',
     justifyContent: 'space-between',
     paddingTop: '8px',
     marginTop: 'auto',
+    gap: '4px',
   },
   xAxisLabel: {
     fontSize: '11px',
     color: '#888',
     textAlign: 'center',
+    flex: '0 0 auto',
+    minWidth: '40px',
   },
 };
 
