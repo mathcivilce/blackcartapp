@@ -162,8 +162,10 @@ export default function InvoicesPage() {
   if (loading) {
     return (
       <div style={styles.container}>
-        <div style={styles.loading}>
-          <p>Loading invoices...</p>
+        <div style={styles.loadingContainer}>
+          <div style={styles.spinner}></div>
+          <p style={styles.loadingText}>Loading invoices...</p>
+          <p style={styles.loadingHint}>This may take a few seconds</p>
         </div>
       </div>
     );
@@ -471,11 +473,32 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '14px',
     lineHeight: '1.8',
   },
-  loading: {
-    textAlign: 'center',
-    padding: '60px 20px',
-    fontSize: '16px',
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '100px 20px',
+    gap: '16px',
+  },
+  spinner: {
+    width: '48px',
+    height: '48px',
+    border: '4px solid #222',
+    borderTop: '4px solid #fff',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+  },
+  loadingText: {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#fff',
+    margin: 0,
+  },
+  loadingHint: {
+    fontSize: '14px',
     color: '#888',
+    margin: 0,
   },
   error: {
     background: '#3a1a1a',

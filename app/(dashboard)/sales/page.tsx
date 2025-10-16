@@ -195,7 +195,11 @@ export default function SalesPage() {
         <h2 style={styles.sectionTitle}>Recent Sales</h2>
         
         {loading ? (
-          <p style={styles.loading}>Loading sales data...</p>
+          <div style={styles.loadingContainer}>
+            <div style={styles.spinner}></div>
+            <p style={styles.loadingText}>Loading sales data...</p>
+            <p style={styles.loadingHint}>This may take a few seconds</p>
+          </div>
         ) : sales.length === 0 ? (
           <div style={styles.emptyState}>
             <p style={styles.emptyText}>No sales data yet</p>
@@ -343,10 +347,32 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#888',
     margin: '8px 0 0 0',
   },
-  loading: {
-    textAlign: 'center',
-    padding: '40px',
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '60px 20px',
+    gap: '16px',
+  },
+  spinner: {
+    width: '48px',
+    height: '48px',
+    border: '4px solid #222',
+    borderTop: '4px solid #fff',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+  },
+  loadingText: {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#fff',
+    margin: 0,
+  },
+  loadingHint: {
+    fontSize: '14px',
     color: '#888',
+    margin: 0,
   },
   emptyState: {
     textAlign: 'center',
