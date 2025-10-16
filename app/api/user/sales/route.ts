@@ -47,8 +47,8 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ [Sales API] User authenticated:', user.id);
 
-    // Get user's store
-    const { data: store, error: storeError } = await supabase
+    // Get user's store using authenticated client (bypasses potential service role issues)
+    const { data: store, error: storeError } = await authClient
       .from('stores')
       .select('id, shop_domain, shop_name')
       .eq('user_id', user.id)
@@ -70,8 +70,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get sales for this store
-    const { data: sales, error: salesError } = await supabase
+    // Get sales for this store using authenticated client (uses new RLS policy)
+    const { data: sales, error: salesError } = await authClient
       .from('sales')
       .select('*')
       .eq('store_id', store.id)
