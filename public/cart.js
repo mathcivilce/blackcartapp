@@ -2107,6 +2107,10 @@
         return;
       }
       
+      // OPTIMIZATION: Auto-add protection when cart opens (if enabled)
+      // Variant ID is already prefetched, so this is instant (no delay)
+      await maybeAutoAddProtection();
+      
       // Open the cart UI
       state.isOpen = true;
       overlay.classList.add('sp-open');
@@ -2378,18 +2382,9 @@
       applySettings();
       
       // OPTIMIZATION: Pre-fetch protection variant ID if auto-add is enabled
+      // This caches the variant ID for instant adding later (no cart modification)
       if (settings.addons?.acceptByDefault && settings.addons?.productHandle) {
-        prefetchProtectionVariant(settings.addons.productHandle).then(() => {
-          // OPTIMIZATION: Pre-add protection to empty cart
-          // This eliminates the 300ms delay when user adds their first product
-          if (!state.protectionInCart && state.cart?.item_count === 0) {
-            // Cart is empty and protection auto-add is enabled
-            // Add protection now so it's ready when user adds products
-            addProtectionToCart(true, true).catch(() => {
-              // Silently fail, will try again when product is added
-            });
-          }
-        }).catch(() => {
+        prefetchProtectionVariant(settings.addons.productHandle).catch(() => {
           // Silently fail, will fetch on-demand if needed
         });
       }
