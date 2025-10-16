@@ -1857,16 +1857,25 @@
       let compareAtPriceHTML = '';
       let savingsHTML = '';
       
-      // Check for compare_at_price
-      if (item.compare_at_price && item.compare_at_price > item.final_line_price) {
+      // Check for compare_at_price (compare per-item prices)
+      // item.compare_at_price = compare-at price per item
+      // item.final_price = actual price per item after discounts
+      // item.price = original price per item before discounts
+      const itemFinalPrice = item.final_price || item.price || 0;
+      
+      if (item.compare_at_price && item.compare_at_price > itemFinalPrice) {
+        // Calculate line-level prices for display
+        const compareAtLinePrice = item.compare_at_price * item.quantity;
+        const savingsPerItem = item.compare_at_price - itemFinalPrice;
+        const savingsLineTotal = savingsPerItem * item.quantity;
+        
         if (displayCompareAtPrice) {
-          compareAtPriceHTML = `<span style="font-size: 13px; color: #999; text-decoration: line-through; margin-right: 8px;">${formatMoney(item.compare_at_price)}</span>`;
+          compareAtPriceHTML = `<span style="font-size: 13px; color: #999; text-decoration: line-through; margin-right: 8px;">${formatMoney(compareAtLinePrice)}</span>`;
         }
         if (showSavings) {
-          const savings = item.compare_at_price - item.final_line_price;
           const savingsColor = state.settings?.design?.savingsTextColor || '#2ea818';
           const savingsText = state.settings?.design?.savingsText || 'Save';
-          savingsHTML = `<p class="sp-cart-item-savings" style="color: ${savingsColor};">${savingsText} ${formatMoney(savings)}</p>`;
+          savingsHTML = `<p class="sp-cart-item-savings" style="color: ${savingsColor};">${savingsText} ${formatMoney(savingsLineTotal)}</p>`;
         }
       }
       
