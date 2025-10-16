@@ -658,6 +658,12 @@
         if (cached) {
           state.settings = cached;
           
+          // Debug: Log adjustTotalPrice from cache
+          console.log('[Cart.js] Settings loaded from cache', {
+            adjustTotalPrice: cached?.addons?.adjustTotalPrice,
+            hasAddons: !!cached?.addons
+          });
+          
           // Check if cart is active
           if (cached.cart_active === false) {
             return null;
@@ -675,6 +681,13 @@
               // Settings changed, update
               state.settings = fresh;
               setCachedSettings(fresh);
+              
+              // Debug: Log adjustTotalPrice from fresh API
+              console.log('[Cart.js] Settings refreshed from API (background)', {
+                adjustTotalPrice: fresh?.addons?.adjustTotalPrice,
+                hasAddons: !!fresh?.addons
+              });
+              
               // Reset static settings flag so they get re-applied
               state.staticSettingsApplied = false;
               // Only apply if cart exists
@@ -697,6 +710,12 @@
       }
       
       state.settings = fresh;
+      
+      // Debug: Log adjustTotalPrice from fresh API
+      console.log('[Cart.js] Settings loaded from API', {
+        adjustTotalPrice: fresh?.addons?.adjustTotalPrice,
+        hasAddons: !!fresh?.addons
+      });
       
       // Check if cart is active
       if (fresh.cart_active === false) {
@@ -1473,10 +1492,29 @@
     // Calculate displayed total
     let displayTotal = cents;
     
-    // If adjustTotalPrice is false, subtract protection price from displayed total
-    if (state.protectionInCart && state.settings?.addons?.adjustTotalPrice === false) {
+    // Check if we should adjust the total price
+    // Default to true if not set (include protection price in total)
+    const adjustTotalPrice = state.settings?.addons?.adjustTotalPrice !== false;
+    
+    // If adjustTotalPrice is explicitly false, subtract protection price from displayed total
+    if (state.protectionInCart && !adjustTotalPrice) {
       const protectionPrice = Math.round((state.settings?.addons?.price || 0) * 100);
       displayTotal = Math.max(0, cents - protectionPrice);
+      
+      // Debug logging
+      console.log('[Cart.js] Adjust Total Price is OFF - subtracting protection from display', {
+        cartTotal: cents,
+        protectionPrice: protectionPrice,
+        displayTotal: displayTotal,
+        adjustTotalPrice: adjustTotalPrice
+      });
+    } else if (state.protectionInCart) {
+      // Debug logging when adjustment is ON or undefined
+      console.log('[Cart.js] Adjust Total Price is ON - showing full total', {
+        cartTotal: cents,
+        adjustTotalPrice: state.settings?.addons?.adjustTotalPrice,
+        protectionInCart: state.protectionInCart
+      });
     }
 
     // Show/hide total on button based on design settings
