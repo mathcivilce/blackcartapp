@@ -96,12 +96,33 @@ export async function POST(request: NextRequest) {
         results.totalOrders += orders.length;
 
         let storeProtectionCount = 0;
+        let storeProtectionTotal = 0; // Total protection sales found (new + existing)
         let storeRevenue = 0;
+        let storeTotalRevenue = 0; // Total revenue from all protection sales found
         let storeCommission = 0;
+        let storeTotalCommission = 0; // Total commission from all protection sales found
+        let skippedCount = 0; // Already existing sales
         const newSales = [];
 
         // Process each order
         for (const order of orders) {
+          // Find protection product in line items first
+          const protectionItem = order.line_items.find(item => 
+            isProtectionProduct(item, protectionProductId)
+          );
+
+          if (!protectionItem) {
+            continue; // No protection product in this order
+          }
+
+          const protectionPrice = priceStringToCents(protectionItem.price);
+          const commission = calculateCommission(protectionPrice);
+          
+          // Count all protection sales found (for accurate reporting)
+          storeProtectionTotal++;
+          storeTotalRevenue += protectionPrice;
+          storeTotalCommission += commission;
+
           // Check if order already exists in sales table (deduplication)
           const { data: existingSale } = await supabase
             .from('sales')
@@ -112,68 +133,62 @@ export async function POST(request: NextRequest) {
 
           if (existingSale) {
             console.log(`⏭️  Order ${order.name} already recorded, skipping`);
+            skippedCount++;
             continue;
           }
 
-          // Find protection product in line items
-          const protectionItem = order.line_items.find(item => 
-            isProtectionProduct(item, protectionProductId)
-          );
+          console.log(`✅ Found NEW protection sale in order ${order.name}`);
+          
+          const orderDate = new Date(order.created_at);
+          const monthId = getMonthIdentifier(orderDate);
+          const weekId = getWeekIdentifier(orderDate);
 
-          if (protectionItem) {
-            console.log(`✅ Found protection in order ${order.name}`);
-            
-            const protectionPrice = priceStringToCents(protectionItem.price);
-            const commission = calculateCommission(protectionPrice);
-            const orderDate = new Date(order.created_at);
-            const monthId = getMonthIdentifier(orderDate);
-            const weekId = getWeekIdentifier(orderDate);
+          // Record the sale
+          const { error: insertError } = await supabase
+            .from('sales')
+            .insert({
+              store_id: store.id,
+              order_id: order.id.toString(),
+              order_number: order.name,
+              protection_price: protectionPrice,
+              commission: commission,
+              month: monthId,
+              week: weekId,
+              created_at: order.created_at
+            });
 
-            // Record the sale
-            const { error: insertError } = await supabase
-              .from('sales')
-              .insert({
-                store_id: store.id,
-                order_id: order.id.toString(),
-                order_number: order.name,
-                protection_price: protectionPrice,
-                commission: commission,
-                month: monthId,
-                week: weekId,
-                created_at: order.created_at
-              });
-
-            if (insertError) {
-              console.error(`❌ Failed to record sale for order ${order.name}:`, insertError);
-            } else {
-              storeProtectionCount++;
-              storeRevenue += protectionPrice;
-              storeCommission += commission;
-              newSales.push({
-                order_number: order.name,
-                protection_price: protectionPrice,
-                commission: commission
-              });
-            }
+          if (insertError) {
+            console.error(`❌ Failed to record sale for order ${order.name}:`, insertError);
+          } else {
+            storeProtectionCount++; // Count only new sales
+            storeRevenue += protectionPrice;
+            storeCommission += commission;
+            newSales.push({
+              order_number: order.name,
+              protection_price: protectionPrice,
+              commission: commission
+            });
           }
         }
 
         results.successfulStores++;
-        results.totalProtectionSales += storeProtectionCount;
-        results.totalRevenue += storeRevenue;
-        results.totalCommission += storeCommission;
+        results.totalProtectionSales += storeProtectionTotal; // Use total found, not just new
+        results.totalRevenue += storeTotalRevenue;
+        results.totalCommission += storeTotalCommission;
 
         results.storeResults.push({
           store_domain: store.shop_domain,
           success: true,
           orders_checked: orders.length,
-          protection_sales: storeProtectionCount,
-          revenue: storeRevenue,
-          commission: storeCommission,
+          protection_sales: storeProtectionTotal, // Total found
+          new_sales_count: storeProtectionCount, // New sales saved
+          existing_sales_count: skippedCount, // Already saved
+          revenue: storeTotalRevenue, // Total revenue from all found
+          commission: storeTotalCommission, // Total commission from all found
           new_sales: newSales
         });
 
-        console.log(`✅ Store complete: ${storeProtectionCount} protection sales found`);
+        console.log(`✅ Store complete: ${storeProtectionTotal} protection sales found (${storeProtectionCount} new, ${skippedCount} already saved)`);
 
       } catch (storeError) {
         console.error(`❌ Error processing store ${store.shop_domain}:`, storeError);

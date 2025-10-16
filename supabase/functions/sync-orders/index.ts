@@ -109,6 +109,15 @@ function getMonthIdentifier(date: Date): string {
   return `${year}-${month}`;
 }
 
+// Helper: Get week identifier
+function getWeekIdentifier(date: Date): string {
+  const year = date.getFullYear();
+  const startOfYear = new Date(year, 0, 1);
+  const daysSinceStartOfYear = Math.floor((date.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+  const weekNumber = Math.ceil((daysSinceStartOfYear + startOfYear.getDay() + 1) / 7);
+  return `${year}-W${String(weekNumber).padStart(2, '0')}`;
+}
+
 serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -218,12 +227,33 @@ serve(async (req) => {
         console.log(`📦 Found ${orders.length} orders`);
         results.totalOrders += orders.length;
 
-        let storeProtectionCount = 0;
-        let storeRevenue = 0;
-        let storeCommission = 0;
+        let storeProtectionCount = 0; // New sales saved
+        let storeProtectionTotal = 0; // Total protection sales found
+        let storeRevenue = 0; // Revenue from new sales
+        let storeTotalRevenue = 0; // Total revenue from all found
+        let storeCommission = 0; // Commission from new sales
+        let storeTotalCommission = 0; // Total commission from all found
+        let skippedCount = 0; // Already existing sales
 
         // Process each order
         for (const order of orders) {
+          // Find protection product first
+          const protectionItem = order.line_items.find(item =>
+            isProtectionProduct(item, protectionProductId)
+          );
+
+          if (!protectionItem) {
+            continue; // No protection in this order
+          }
+
+          const protectionPrice = priceStringToCents(protectionItem.price);
+          const commission = calculateCommission(protectionPrice);
+          
+          // Count all protection sales found (for accurate reporting)
+          storeProtectionTotal++;
+          storeTotalRevenue += protectionPrice;
+          storeTotalCommission += commission;
+
           // Check for duplicate
           const { data: existingSale } = await supabase
             .from('sales')
@@ -234,59 +264,56 @@ serve(async (req) => {
 
           if (existingSale) {
             console.log(`⏭️ Order ${order.name} already recorded`);
+            skippedCount++;
             continue;
           }
 
-          // Find protection product
-          const protectionItem = order.line_items.find(item =>
-            isProtectionProduct(item, protectionProductId)
-          );
+          console.log(`✅ NEW protection sale in ${order.name}`);
+          
+          const orderDate = new Date(order.created_at);
+          const monthId = getMonthIdentifier(orderDate);
+          const weekId = getWeekIdentifier(orderDate);
 
-          if (protectionItem) {
-            console.log(`✅ Protection found in ${order.name}`);
-            
-            const protectionPrice = priceStringToCents(protectionItem.price);
-            const commission = calculateCommission(protectionPrice);
-            const monthId = getMonthIdentifier(new Date(order.created_at));
+          // Insert sale record
+          const { error: insertError } = await supabase
+            .from('sales')
+            .insert({
+              store_id: store.id,
+              order_id: order.id.toString(),
+              order_number: order.name,
+              protection_price: protectionPrice,
+              commission: commission,
+              month: monthId,
+              week: weekId,
+              created_at: order.created_at
+            });
 
-            // Insert sale record
-            const { error: insertError } = await supabase
-              .from('sales')
-              .insert({
-                store_id: store.id,
-                order_id: order.id.toString(),
-                order_number: order.name,
-                protection_price: protectionPrice,
-                commission: commission,
-                month: monthId,
-                created_at: order.created_at
-              });
-
-            if (insertError) {
-              console.error(`❌ Failed to insert ${order.name}:`, insertError);
-            } else {
-              storeProtectionCount++;
-              storeRevenue += protectionPrice;
-              storeCommission += commission;
-            }
+          if (insertError) {
+            console.error(`❌ Failed to insert ${order.name}:`, insertError);
+          } else {
+            storeProtectionCount++; // Count only new sales
+            storeRevenue += protectionPrice;
+            storeCommission += commission;
           }
         }
 
         results.successfulStores++;
-        results.totalProtectionSales += storeProtectionCount;
-        results.totalRevenue += storeRevenue;
-        results.totalCommission += storeCommission;
+        results.totalProtectionSales += storeProtectionTotal; // Use total found
+        results.totalRevenue += storeTotalRevenue;
+        results.totalCommission += storeTotalCommission;
 
         results.storeResults.push({
           store_domain: store.shop_domain,
           success: true,
           orders_checked: orders.length,
-          protection_sales: storeProtectionCount,
-          revenue: storeRevenue,
-          commission: storeCommission
+          protection_sales: storeProtectionTotal, // Total found
+          new_sales_count: storeProtectionCount, // New sales saved
+          existing_sales_count: skippedCount, // Already saved
+          revenue: storeTotalRevenue, // Total revenue from all found
+          commission: storeTotalCommission // Total commission from all found
         });
 
-        console.log(`✅ ${store.shop_domain}: ${storeProtectionCount} sales`);
+        console.log(`✅ ${store.shop_domain}: ${storeProtectionTotal} found (${storeProtectionCount} new, ${skippedCount} already saved)`);
 
       } catch (storeError) {
         console.error(`❌ Error processing ${store.shop_domain}:`, storeError);

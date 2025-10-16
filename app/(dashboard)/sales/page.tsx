@@ -16,6 +16,8 @@ interface SyncResult {
   success: boolean;
   orders_checked?: number;
   protection_sales?: number;
+  new_sales_count?: number;
+  existing_sales_count?: number;
   revenue?: number;
   commission?: number;
   error?: string;
@@ -70,12 +72,29 @@ export default function SalesPage() {
         const result = data.results?.storeResults?.[0] as SyncResult;
         
         if (result?.success) {
-          setSyncMessage(
-            `✅ Sync complete! Found ${result.protection_sales || 0} protection sales from ${result.orders_checked || 0} orders. ` +
-            `Revenue: $${((result.revenue || 0) / 100).toFixed(2)}, ` +
-            `Commission: $${((result.commission || 0) / 100).toFixed(2)}`
-          );
-          loadSales(); // Reload sales data
+          const totalSales = result.protection_sales || 0;
+          const newSales = result.new_sales_count || 0;
+          const existingSales = result.existing_sales_count || 0;
+          const ordersChecked = result.orders_checked || 0;
+          const revenue = ((result.revenue || 0) / 100).toFixed(2);
+          const commission = ((result.commission || 0) / 100).toFixed(2);
+          
+          let message = `✅ Sync complete! Found ${totalSales} protection sale${totalSales !== 1 ? 's' : ''} from ${ordersChecked} orders. `;
+          message += `Revenue: $${revenue}, Commission: $${commission}`;
+          
+          if (existingSales > 0) {
+            message += `\n${existingSales} sale${existingSales !== 1 ? 's' : ''} already saved, ${newSales} new sale${newSales !== 1 ? 's' : ''} added`;
+          } else if (newSales > 0) {
+            message += `\n${newSales} new sale${newSales !== 1 ? 's' : ''} added`;
+          } else {
+            message += `\nAll sales already saved in database`;
+          }
+          
+          setSyncMessage(message);
+          
+          if (newSales > 0) {
+            loadSales(); // Reload sales data only if there are new sales
+          }
         } else {
           setSyncMessage(`❌ ${result?.error || data.error || 'Sync failed'}`);
         }
@@ -183,7 +202,8 @@ export default function SalesPage() {
             ...styles.message,
             backgroundColor: syncMessage.startsWith('✅') ? '#1a3a1a' : '#3a1a1a',
             color: syncMessage.startsWith('✅') ? '#4caf50' : '#f44336',
-            border: syncMessage.startsWith('✅') ? '1px solid #2e7d32' : '1px solid #c62828'
+            border: syncMessage.startsWith('✅') ? '1px solid #2e7d32' : '1px solid #c62828',
+            whiteSpace: 'pre-line'
           }}>
             {syncMessage}
           </div>
