@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const accessToken = request.cookies.get('sb-access-token');
   const { pathname } = request.nextUrl;
 
@@ -28,8 +29,26 @@ export function middleware(request: NextRequest) {
 
   // Redirect to login if not authenticated
   if (!accessToken) {
-    const loginUrl = new URL('/login', request.url);
-    return NextResponse.redirect(loginUrl);
+    const response = NextResponse.redirect(new URL('/login', request.url));
+    response.cookies.delete('sb-access-token');
+    response.cookies.delete('sb-refresh-token');
+    return response;
+  }
+
+  // Verify token validity with Supabase
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const { data: { user }, error } = await supabase.auth.getUser(accessToken.value);
+
+  if (error || !user) {
+    // Token is invalid or expired, clear cookies and redirect to login
+    const response = NextResponse.redirect(new URL('/login', request.url));
+    response.cookies.delete('sb-access-token');
+    response.cookies.delete('sb-refresh-token');
+    return response;
   }
 
   return NextResponse.next();

@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState('7'); // 7, 14, 30, 90, 365, all
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; date: string; revenue: number } | null>(null);
 
   useEffect(() => {
     loadSales();
@@ -28,12 +29,38 @@ export default function DashboardPage() {
       
       if (response.ok) {
         setSales(data.sales || []);
+      } else if (response.status === 401) {
+        // Session expired, redirect to login
+        window.location.href = '/login';
       }
     } catch (error) {
       console.error('Failed to load sales:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const width = rect.width;
+    const percentage = x / width;
+    
+    // Find the closest data point
+    const index = Math.round(percentage * (chartData.length - 1));
+    if (index >= 0 && index < chartData.length) {
+      const dataPoint = chartData[index];
+      setTooltip({
+        x: e.clientX,
+        y: e.clientY,
+        date: dataPoint.date,
+        revenue: dataPoint.revenue
+      });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setTooltip(null);
   };
 
   // Calculate totals
@@ -152,7 +179,11 @@ export default function DashboardPage() {
             <p style={styles.emptyHint}>Sales will appear here once customers purchase shipping protection</p>
           </div>
         ) : (
-          <div style={styles.chartContainer}>
+          <div 
+            style={styles.chartContainer}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
             {/* Y-axis labels */}
             <div style={styles.yAxis}>
               <span style={styles.yAxisLabel}>{formatCurrency(maxRevenue)}</span>
@@ -293,6 +324,18 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div style={{
+          ...styles.tooltip,
+          left: `${tooltip.x + 10}px`,
+          top: `${tooltip.y - 40}px`,
+        }}>
+          <div style={styles.tooltipDate}>{formatDate(tooltip.date)}</div>
+          <div style={styles.tooltipValue}>{formatCurrency(tooltip.revenue)}</div>
+        </div>
+      )}
     </div>
   );
 }
@@ -406,6 +449,8 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     gap: '16px',
     minHeight: '300px',
+    cursor: 'crosshair',
+    position: 'relative',
   },
   yAxis: {
     display: 'flex',
@@ -462,6 +507,26 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'center',
     flex: '0 0 auto',
     minWidth: '40px',
+  },
+  tooltip: {
+    position: 'fixed',
+    background: '#1a1a1a',
+    border: '1px solid #333',
+    borderRadius: '8px',
+    padding: '8px 12px',
+    pointerEvents: 'none',
+    zIndex: 1000,
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+  },
+  tooltipDate: {
+    fontSize: '12px',
+    color: '#888',
+    marginBottom: '4px',
+  },
+  tooltipValue: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#fff',
   },
 };
 
