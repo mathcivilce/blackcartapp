@@ -1899,7 +1899,7 @@
               </button>
             </div>
             ${item.variant_title ? `<p class="sp-cart-item-variant">${item.variant_title}</p>` : ''}
-            ${compareAtPriceHTML || item.compare_at_price ? `<div style="margin-top: 4px;">${compareAtPriceHTML}<span style="font-size: 14px; font-weight: 400;">${formatMoney(item.final_line_price)}</span></div>` : ''}
+            ${compareAtPriceHTML ? `<div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">${compareAtPriceHTML}<span style="font-size: 14px; font-weight: 400;">${formatMoney(item.final_line_price)}</span></div>` : ''}
             ${savingsHTML}
             <div class="sp-cart-item-controls">
               <div class="sp-quantity-controls">
