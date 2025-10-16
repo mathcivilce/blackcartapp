@@ -45,6 +45,7 @@ export default function InvoicesPage() {
       }
 
       const data = await response.json();
+      console.log('Invoices API Response:', { status: response.status, ok: response.ok, data });
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch invoices');

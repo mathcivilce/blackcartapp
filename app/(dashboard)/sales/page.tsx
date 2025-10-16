@@ -38,9 +38,13 @@ export default function SalesPage() {
       // We'll create this endpoint to fetch user's sales
       const response = await fetch('/api/user/sales');
       
+      const data = await response.json();
+      console.log('Sales API Response:', { status: response.status, ok: response.ok, data });
+      
       if (response.ok) {
-        const data = await response.json();
         setSales(data.sales || []);
+      } else {
+        console.error('Failed to load sales:', data);
       }
     } catch (error) {
       console.error('Failed to load sales:', error);
