@@ -37,7 +37,8 @@
     protectionEnabled: false,
     protectionInCart: false,
     protectionVariantId: null,  // Cache variant ID for removal
-    staticSettingsApplied: false  // Track if static settings have been applied
+    staticSettingsApplied: false,  // Track if static settings have been applied
+    countdownStartTime: null  // Track when fresh countdown started
   };
 
   // ============================================
@@ -769,7 +770,18 @@
     if (!announcement || !announcement.text) return '';
     
     if (announcement.countdownEnabled && announcement.text.includes('{{ countdown }}')) {
-      const countdown = formatCountdown(announcement.countdownEnd);
+      let countdown = '';
+      
+      if (announcement.countdownType === 'fresh' && announcement.countdownDuration) {
+        // Fresh timer: Show full duration initially
+        const mins = Math.floor(announcement.countdownDuration / 60);
+        const secs = announcement.countdownDuration % 60;
+        countdown = mins + 'm ' + secs + 's';
+      } else if (announcement.countdownType === 'fixed' && announcement.countdownEnd) {
+        // Fixed timer: Calculate from end date
+        countdown = formatCountdown(announcement.countdownEnd);
+      }
+      
       return announcement.text.replace('{{ countdown }}', countdown);
     }
     
@@ -787,7 +799,32 @@
     const activeBanner = announcement.position === 'top' ? topBanner : bottomBanner;
 
     if (activeBanner && activeBanner.style.display !== 'none') {
-      const text = formatAnnouncementText(announcement);
+      let countdown = '';
+      
+      if (announcement.countdownType === 'fresh' && announcement.countdownDuration) {
+        // Fresh timer: Calculate countdown from duration
+        if (!state.countdownStartTime) {
+          state.countdownStartTime = Date.now();
+        }
+        const elapsed = Date.now() - state.countdownStartTime;
+        const remaining = Math.max(0, (announcement.countdownDuration * 1000) - elapsed);
+        const seconds = Math.floor(remaining / 1000);
+        
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        
+        if (remaining > 0) {
+          countdown = mins + 'm ' + secs + 's';
+        } else {
+          countdown = 'EXPIRED';
+        }
+      } else if (announcement.countdownType === 'fixed' && announcement.countdownEnd) {
+        // Fixed timer: Use existing formatCountdown function
+        countdown = formatCountdown(announcement.countdownEnd);
+      }
+      
+      // Replace {{ countdown }} placeholder with actual countdown
+      const text = announcement.text.replace('{{ countdown }}', countdown);
       activeBanner.textContent = text;
     }
   }
@@ -1569,6 +1606,9 @@
       
       // Stop countdown interval when cart is closed (prevent memory leak)
       stopCountdownInterval();
+      
+      // Reset countdown start time for fresh timer (so it restarts next time)
+      state.countdownStartTime = null;
     }
   }
 

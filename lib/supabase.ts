@@ -79,7 +79,9 @@ export interface Settings {
   announcement_background_color?: string;
   announcement_position?: string;
   announcement_countdown_enabled?: boolean;
+  announcement_countdown_type?: string;
   announcement_countdown_end?: string;
+  announcement_countdown_duration?: number;
   announcement_font_size?: number;
   announcement_show_border?: boolean;
   

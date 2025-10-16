@@ -48,7 +48,9 @@ export default function DesignPage() {
     backgroundColor: '#000000',
     position: 'top',
     countdownEnabled: false,
+    countdownType: 'fixed',
     countdownEnd: '',
+    countdownDuration: 300,
     fontSize: 14,
     showBorder: true,
   });

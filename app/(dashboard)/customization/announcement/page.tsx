@@ -11,7 +11,9 @@ export default function AnnouncementPage() {
     backgroundColor: '#000000',
     position: 'top',
     countdownEnabled: false,
+    countdownType: 'fixed',
     countdownEnd: '',
+    countdownDuration: 300,
     fontSize: 14,
     showBorder: true,
   });
@@ -187,12 +189,12 @@ export default function AnnouncementPage() {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
     setAnnouncement(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : (name === 'countdownDuration' ? parseInt(value) : value)
     }));
   };
 
@@ -216,6 +218,13 @@ export default function AnnouncementPage() {
         }
         .design-left-column::-webkit-scrollbar-thumb:hover {
           background: #444;
+        }
+        input[type="radio"]:checked + span {
+          font-weight: 600;
+        }
+        label:has(input[type="radio"]:checked) {
+          border-color: #1c8cd9 !important;
+          background: rgba(28, 140, 217, 0.1) !important;
         }
       `}</style>
       <h1 style={styles.title}>Announcement</h1>
@@ -289,20 +298,85 @@ export default function AnnouncementPage() {
             </div>
 
             {announcement.countdownEnabled && (
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Countdown End Time</label>
-                <input
-                  type="datetime-local"
-                  name="countdownEnd"
-                  value={announcement.countdownEnd}
-                  onChange={handleInputChange}
-                  style={styles.textInput}
-                  disabled={!announcement.enabled}
-                />
-                <p style={styles.helpText}>
-                  Select when the countdown should end
-                </p>
-              </div>
+              <>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Countdown Type</label>
+                  <div style={styles.radioGroup}>
+                    <label style={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="countdownType"
+                        value="fixed"
+                        checked={announcement.countdownType === 'fixed'}
+                        onChange={handleInputChange}
+                        style={styles.radio}
+                        disabled={!announcement.enabled}
+                      />
+                      <span>⏰ Fixed Date (everyone sees same deadline)</span>
+                      <div style={styles.infoIcon} title="All customers see a countdown to the same specific date and time. When it expires, it's expired for everyone.">
+                        ℹ️
+                      </div>
+                    </label>
+                    <label style={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="countdownType"
+                        value="fresh"
+                        checked={announcement.countdownType === 'fresh'}
+                        onChange={handleInputChange}
+                        style={styles.radio}
+                        disabled={!announcement.enabled}
+                      />
+                      <span>🔄 Fresh Timer (each customer gets their own countdown)</span>
+                      <div style={styles.infoIcon} title="Each customer sees a fresh countdown starting from your set duration every time they open the cart. Creates urgency!">
+                        ℹ️
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {announcement.countdownType === 'fixed' ? (
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Countdown End Time</label>
+                    <input
+                      type="datetime-local"
+                      name="countdownEnd"
+                      value={announcement.countdownEnd}
+                      onChange={handleInputChange}
+                      style={styles.textInput}
+                      disabled={!announcement.enabled}
+                    />
+                    <p style={styles.helpText}>
+                      Select when the countdown should end
+                    </p>
+                  </div>
+                ) : (
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Countdown Duration</label>
+                    <div style={styles.durationGroup}>
+                      <select
+                        name="countdownDuration"
+                        value={announcement.countdownDuration}
+                        onChange={handleInputChange}
+                        style={styles.selectInput}
+                        disabled={!announcement.enabled}
+                      >
+                        <option value="60">1 minute</option>
+                        <option value="180">3 minutes</option>
+                        <option value="300">5 minutes</option>
+                        <option value="600">10 minutes</option>
+                        <option value="900">15 minutes</option>
+                        <option value="1800">30 minutes</option>
+                        <option value="3600">1 hour</option>
+                        <option value="7200">2 hours</option>
+                      </select>
+                    </div>
+                    <p style={styles.helpText}>
+                      How long each customer's countdown should run for
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -541,6 +615,51 @@ const styles = {
   checkbox: {
     width: '18px',
     height: '18px',
+    cursor: 'pointer',
+  },
+  radioGroup: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '12px',
+  },
+  radioLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    color: '#fff',
+    cursor: 'pointer',
+    padding: '12px',
+    border: '1px solid #333',
+    borderRadius: '8px',
+    background: '#000',
+    transition: 'all 0.2s',
+  },
+  radio: {
+    width: '18px',
+    height: '18px',
+    cursor: 'pointer',
+    accentColor: '#1c8cd9',
+  },
+  infoIcon: {
+    marginLeft: 'auto',
+    fontSize: '16px',
+    cursor: 'help',
+    opacity: 0.6,
+    transition: 'opacity 0.2s',
+  },
+  durationGroup: {
+    display: 'flex',
+    gap: '12px',
+  },
+  selectInput: {
+    flex: 1,
+    padding: '12px',
+    fontSize: '14px',
+    border: '1px solid #333',
+    borderRadius: '6px',
+    background: '#000',
+    color: '#fff',
     cursor: 'pointer',
   },
   label: {

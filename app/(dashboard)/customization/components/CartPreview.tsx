@@ -43,7 +43,9 @@ interface CartPreviewProps {
     backgroundColor: string;
     position: string;
     countdownEnabled?: boolean;
+    countdownType?: string;
     countdownEnd?: string;
+    countdownDuration?: number;
     fontSize?: number;
     showBorder?: boolean;
   };
@@ -86,17 +88,44 @@ export default function CartPreview({ design, addons, announcement }: CartPrevie
 
   // Update countdown every second if countdown is enabled
   React.useEffect(() => {
-    if (announcement?.countdownEnabled && announcement?.countdownEnd) {
-      const updateCountdown = () => {
-        setCountdown(formatCountdown(announcement.countdownEnd!));
-      };
-      
-      updateCountdown(); // Initial update
-      const interval = setInterval(updateCountdown, 1000);
-      
-      return () => clearInterval(interval);
+    if (announcement?.countdownEnabled) {
+      if (announcement.countdownType === 'fixed' && announcement.countdownEnd) {
+        // Fixed countdown: show time until specific date
+        const updateCountdown = () => {
+          setCountdown(formatCountdown(announcement.countdownEnd!));
+        };
+        
+        updateCountdown(); // Initial update
+        const interval = setInterval(updateCountdown, 1000);
+        
+        return () => clearInterval(interval);
+      } else if (announcement.countdownType === 'fresh' && announcement.countdownDuration) {
+        // Fresh countdown: show duration counting down from start
+        const startTime = Date.now();
+        const endTime = startTime + (announcement.countdownDuration * 1000);
+        
+        const updateCountdown = () => {
+          const now = Date.now();
+          const remaining = Math.max(0, endTime - now);
+          const seconds = Math.floor(remaining / 1000);
+          
+          const mins = Math.floor(seconds / 60);
+          const secs = seconds % 60;
+          
+          if (remaining > 0) {
+            setCountdown(`${mins}m ${secs}s`);
+          } else {
+            setCountdown('EXPIRED');
+          }
+        };
+        
+        updateCountdown(); // Initial update
+        const interval = setInterval(updateCountdown, 1000);
+        
+        return () => clearInterval(interval);
+      }
     }
-  }, [announcement?.countdownEnabled, announcement?.countdownEnd]);
+  }, [announcement?.countdownEnabled, announcement?.countdownType, announcement?.countdownEnd, announcement?.countdownDuration]);
 
   const renderAnnouncementText = () => {
     if (!announcement?.text) return '';

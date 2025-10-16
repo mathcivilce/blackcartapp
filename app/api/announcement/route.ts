@@ -29,7 +29,9 @@ export async function GET(request: NextRequest) {
       backgroundColor: settings?.announcement_background_color || '#000000',
       position: settings?.announcement_position || 'top',
       countdownEnabled: settings?.announcement_countdown_enabled ?? false,
+      countdownType: settings?.announcement_countdown_type || 'fixed',
       countdownEnd: settings?.announcement_countdown_end || null,
+      countdownDuration: settings?.announcement_countdown_duration || 300,
       fontSize: settings?.announcement_font_size || 14,
       showBorder: settings?.announcement_show_border ?? true,
     });
@@ -57,7 +59,9 @@ export async function POST(request: NextRequest) {
     if (announcementSettings.backgroundColor !== undefined) dbSettings.announcement_background_color = announcementSettings.backgroundColor;
     if (announcementSettings.position !== undefined) dbSettings.announcement_position = announcementSettings.position;
     if (announcementSettings.countdownEnabled !== undefined) dbSettings.announcement_countdown_enabled = announcementSettings.countdownEnabled;
+    if (announcementSettings.countdownType !== undefined) dbSettings.announcement_countdown_type = announcementSettings.countdownType;
     if (announcementSettings.countdownEnd !== undefined) dbSettings.announcement_countdown_end = announcementSettings.countdownEnd;
+    if (announcementSettings.countdownDuration !== undefined) dbSettings.announcement_countdown_duration = announcementSettings.countdownDuration;
     if (announcementSettings.fontSize !== undefined) dbSettings.announcement_font_size = announcementSettings.fontSize;
     if (announcementSettings.showBorder !== undefined) dbSettings.announcement_show_border = announcementSettings.showBorder;
 
