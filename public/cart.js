@@ -289,6 +289,7 @@
         margin: 0;
         line-height: 1.4;
         flex: 1;
+        text-transform: none;
       }
       
       .sp-cart-item-header {
