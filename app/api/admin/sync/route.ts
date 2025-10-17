@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       }, { status: 403 });
     }
 
-    const { userId, days_back = 7 } = await request.json();
+    const { userId, days_back, start_date, end_date } = await request.json();
 
     if (!userId) {
       return NextResponse.json({
@@ -60,7 +60,16 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log(`🔄 Admin sync requested by ${user.email} for user ${userId}`);
+    // Prepare sync parameters - use either days_back or date range
+    const syncParams: any = { store_id: '' }; // Will be set below
+    if (start_date && end_date) {
+      syncParams.start_date = start_date;
+      syncParams.end_date = end_date;
+      console.log(`🔄 Admin sync requested by ${user.email} for user ${userId} (date range: ${start_date} to ${end_date})`);
+    } else {
+      syncParams.days_back = days_back || 7;
+      console.log(`🔄 Admin sync requested by ${user.email} for user ${userId} (last ${syncParams.days_back} days)`);
+    }
 
     // Use service role to get target user's store
     const serviceClient = createClient(
@@ -95,16 +104,16 @@ export async function POST(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
+    // Set the store_id in syncParams
+    syncParams.store_id = store.id;
+    
     const syncResponse = await fetch(`${supabaseUrl}/functions/v1/sync-orders`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${supabaseServiceKey}`,
       },
-      body: JSON.stringify({
-        store_id: store.id,
-        days_back
-      })
+      body: JSON.stringify(syncParams)
     });
 
     if (!syncResponse.ok) {
@@ -118,9 +127,13 @@ export async function POST(request: NextRequest) {
 
     const syncResults = await syncResponse.json();
 
+    const message = start_date && end_date 
+      ? `Successfully synced orders from ${start_date} to ${end_date} for ${store.shop_domain}`
+      : `Successfully synced orders from last ${syncParams.days_back} days for ${store.shop_domain}`;
+
     return NextResponse.json({
       success: true,
-      message: `Successfully synced orders from last ${days_back} days for ${store.shop_domain}`,
+      message,
       results: syncResults.results
     });
 

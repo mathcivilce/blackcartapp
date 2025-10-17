@@ -29,18 +29,32 @@ interface ShopifyOrder {
 async function fetchShopifyOrders(
   shopDomain: string,
   apiToken: string,
-  daysBack: number = 2
+  daysBack?: number,
+  startDate?: string,
+  endDate?: string
 ): Promise<{ orders: ShopifyOrder[]; error?: string }> {
   try {
-    const now = new Date();
-    const startDate = new Date(now);
-    startDate.setDate(startDate.getDate() - daysBack);
+    let createdAtMin: string;
+    let createdAtMax: string;
+
+    if (startDate && endDate) {
+      // Use custom date range
+      createdAtMin = new Date(startDate).toISOString();
+      createdAtMax = new Date(endDate).toISOString();
+    } else {
+      // Use days_back
+      const now = new Date();
+      const pastDate = new Date(now);
+      pastDate.setDate(pastDate.getDate() - (daysBack || 2));
+      createdAtMin = pastDate.toISOString();
+      createdAtMax = now.toISOString();
+    }
 
     const params = new URLSearchParams({
       status: 'any',
       limit: '250',
-      created_at_min: startDate.toISOString(),
-      created_at_max: now.toISOString(),
+      created_at_min: createdAtMin,
+      created_at_max: createdAtMax,
     });
 
     const url = `https://${shopDomain}/admin/api/2024-01/orders.json?${params}`;
@@ -139,9 +153,13 @@ serve(async (req) => {
     })
 
     // Parse request body (optional parameters)
-    const { store_id, days_back = 2 } = await req.json().catch(() => ({}));
+    const { store_id, days_back, start_date, end_date } = await req.json().catch(() => ({}));
 
-    console.log(`📅 Syncing orders from last ${days_back} days`);
+    if (start_date && end_date) {
+      console.log(`📅 Syncing orders from ${start_date} to ${end_date}`);
+    } else {
+      console.log(`📅 Syncing orders from last ${days_back || 2} days`);
+    }
 
     // Get stores to sync
     let storeQuery = supabase
@@ -210,7 +228,9 @@ serve(async (req) => {
         const { orders, error } = await fetchShopifyOrders(
           store.shop_domain,
           store.api_token,
-          days_back
+          days_back,
+          start_date,
+          end_date
         );
 
         if (error) {

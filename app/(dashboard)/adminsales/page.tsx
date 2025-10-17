@@ -20,6 +20,13 @@ interface User {
   createdAt: string;
 }
 
+interface AllAccountsSummary {
+  totalSales: number;
+  totalRevenue: number;
+  userCommission: number;
+  platformFee: number;
+}
+
 export default function AdminSalesPage() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -29,12 +36,31 @@ export default function AdminSalesPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
   const [daysBack, setDaysBack] = useState(7);
+  const [useCustomDates, setUseCustomDates] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [error, setError] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  
+  // All Accounts states
+  const [allAccountsSummary, setAllAccountsSummary] = useState<AllAccountsSummary | null>(null);
+  const [allAccountsLoading, setAllAccountsLoading] = useState(true);
+  const [batchSyncing, setBatchSyncing] = useState(false);
+  const [batchSyncMessage, setBatchSyncMessage] = useState('');
+  const [batchDaysBack, setBatchDaysBack] = useState(7);
+  const [batchUseCustomDates, setBatchUseCustomDates] = useState(false);
+  const [batchStartDate, setBatchStartDate] = useState('');
+  const [batchEndDate, setBatchEndDate] = useState('');
 
   useEffect(() => {
     checkAdminAndLoadUsers();
   }, []);
+
+  useEffect(() => {
+    if (isAdmin) {
+      loadAllAccountsSummary();
+    }
+  }, [isAdmin]);
 
   useEffect(() => {
     if (selectedUserId) {
@@ -100,11 +126,112 @@ export default function AdminSalesPage() {
     }
   };
 
+  const loadAllAccountsSummary = async () => {
+    try {
+      setAllAccountsLoading(true);
+      
+      const response = await fetch('/api/admin/sales/all');
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setAllAccountsSummary(data.summary);
+        console.log('✅ All accounts summary loaded:', data.summary);
+      } else {
+        console.error('Failed to load all accounts summary:', data);
+      }
+    } catch (error) {
+      console.error('Failed to load all accounts summary:', error);
+    } finally {
+      setAllAccountsLoading(false);
+    }
+  };
+
+  const handleBatchSync = async () => {
+    setBatchSyncing(true);
+    setBatchSyncMessage('');
+
+    // Prepare request body based on whether custom dates are used
+    let requestBody: any = {};
+    
+    if (batchUseCustomDates) {
+      if (!batchStartDate || !batchEndDate) {
+        setBatchSyncMessage('❌ Please select both start and end dates');
+        setBatchSyncing(false);
+        setTimeout(() => setBatchSyncMessage(''), 3000);
+        return;
+      }
+      requestBody = {
+        start_date: batchStartDate,
+        end_date: batchEndDate
+      };
+    } else {
+      requestBody = {
+        days_back: batchDaysBack
+      };
+    }
+
+    try {
+      const response = await fetch('/api/admin/sync/all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        const { summary } = data;
+        
+        let message = `✅ Batch sync complete!\n`;
+        message += `Stores synced: ${summary.successfulSyncs}/${summary.totalStores}\n`;
+        if (summary.failedSyncs > 0) {
+          message += `Failed: ${summary.failedSyncs}\n`;
+        }
+        message += `Total sales: ${summary.totalSales}\n`;
+        message += `Revenue: $${(summary.totalRevenue / 100).toFixed(2)}\n`;
+        message += `Commission: $${(summary.totalCommission / 100).toFixed(2)}\n`;
+        if (summary.totalNewSales > 0) {
+          message += `New sales added: ${summary.totalNewSales}`;
+        }
+        
+        setBatchSyncMessage(message);
+        
+        // Reload all accounts summary
+        loadAllAccountsSummary();
+      } else {
+        setBatchSyncMessage(`❌ ${data.error || 'Batch sync failed'}`);
+      }
+
+      setTimeout(() => setBatchSyncMessage(''), 15000);
+    } catch (error) {
+      console.error('Batch sync error:', error);
+      setBatchSyncMessage('❌ Network error during batch sync');
+      setTimeout(() => setBatchSyncMessage(''), 5000);
+    } finally {
+      setBatchSyncing(false);
+    }
+  };
+
   const handleManualSync = async () => {
     if (!selectedUserId) {
       setSyncMessage('❌ Please select a user first');
       setTimeout(() => setSyncMessage(''), 3000);
       return;
+    }
+
+    // Prepare request body based on whether custom dates are used
+    let requestBody: any = { userId: selectedUserId };
+    
+    if (useCustomDates) {
+      if (!startDate || !endDate) {
+        setSyncMessage('❌ Please select both start and end dates');
+        setTimeout(() => setSyncMessage(''), 3000);
+        return;
+      }
+      requestBody.start_date = startDate;
+      requestBody.end_date = endDate;
+    } else {
+      requestBody.days_back = daysBack;
     }
 
     setSyncing(true);
@@ -114,10 +241,7 @@ export default function AdminSalesPage() {
       const response = await fetch('/api/admin/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userId: selectedUserId,
-          days_back: daysBack 
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const data = await response.json();
@@ -206,6 +330,125 @@ export default function AdminSalesPage() {
         </div>
       </div>
 
+      {/* All Accounts Section */}
+      <div style={styles.card}>
+        <h2 style={styles.sectionTitle}>All Accounts</h2>
+        <p style={styles.hint}>
+          Aggregated statistics from all user accounts combined.
+        </p>
+
+        {/* Batch Sync Controls */}
+        <div style={styles.dateToggleContainer}>
+          <label style={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={batchUseCustomDates}
+              onChange={(e) => setBatchUseCustomDates(e.target.checked)}
+              style={styles.checkbox}
+            />
+            <span>Use custom date range</span>
+          </label>
+        </div>
+
+        <div style={styles.syncControls}>
+          {!batchUseCustomDates ? (
+            <div style={styles.syncFormGroup}>
+              <label style={styles.label}>Sync Last</label>
+              <select 
+                value={batchDaysBack} 
+                onChange={(e) => setBatchDaysBack(Number(e.target.value))}
+                style={styles.select}
+                disabled={batchSyncing}
+              >
+                <option value={1}>1 Day</option>
+                <option value={3}>3 Days</option>
+                <option value={7}>7 Days</option>
+                <option value={14}>14 Days</option>
+                <option value={30}>30 Days</option>
+              </select>
+            </div>
+          ) : (
+            <>
+              <div style={styles.syncFormGroup}>
+                <label style={styles.label}>Start Date</label>
+                <input
+                  type="date"
+                  value={batchStartDate}
+                  onChange={(e) => setBatchStartDate(e.target.value)}
+                  style={styles.dateInput}
+                  disabled={batchSyncing}
+                />
+              </div>
+              <div style={styles.syncFormGroup}>
+                <label style={styles.label}>End Date</label>
+                <input
+                  type="date"
+                  value={batchEndDate}
+                  onChange={(e) => setBatchEndDate(e.target.value)}
+                  style={styles.dateInput}
+                  disabled={batchSyncing}
+                />
+              </div>
+            </>
+          )}
+          
+          <button
+            onClick={handleBatchSync}
+            disabled={batchSyncing}
+            style={{
+              ...styles.syncButton,
+              opacity: batchSyncing ? 0.5 : 1,
+              cursor: batchSyncing ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {batchSyncing ? 'Syncing All...' : 'Sync Now (All Accounts)'}
+          </button>
+        </div>
+
+        {batchSyncMessage && (
+          <div style={{
+            ...styles.message,
+            backgroundColor: batchSyncMessage.startsWith('✅') ? '#1a3a1a' : '#3a1a1a',
+            color: batchSyncMessage.startsWith('✅') ? '#4caf50' : '#f44336',
+            border: batchSyncMessage.startsWith('✅') ? '1px solid #2e7d32' : '1px solid #c62828',
+            whiteSpace: 'pre-line'
+          }}>
+            {batchSyncMessage}
+          </div>
+        )}
+
+        {/* All Accounts Stats */}
+        {allAccountsLoading ? (
+          <div style={styles.loadingContainer}>
+            <div style={styles.spinner}></div>
+            <p style={styles.loadingText}>Loading all accounts data...</p>
+          </div>
+        ) : allAccountsSummary ? (
+          <div style={styles.statsGrid}>
+            <div style={styles.statCard}>
+              <h3 style={styles.statLabel}>Total Sales</h3>
+              <p style={styles.statValue}>{allAccountsSummary.totalSales}</p>
+            </div>
+            <div style={styles.statCard}>
+              <h3 style={styles.statLabel}>Total Revenue</h3>
+              <p style={styles.statValue}>{formatCurrency(allAccountsSummary.totalRevenue)}</p>
+            </div>
+            <div style={styles.statCard}>
+              <h3 style={styles.statLabel}>Users Commission (75%)</h3>
+              <p style={styles.statValue}>{formatCurrency(allAccountsSummary.userCommission)}</p>
+            </div>
+            <div style={styles.statCard}>
+              <h3 style={styles.statLabel}>Platform Fee (25%)</h3>
+              <p style={styles.statValue}>{formatCurrency(allAccountsSummary.platformFee)}</p>
+            </div>
+          </div>
+        ) : (
+          <div style={styles.emptyState}>
+            <p style={styles.emptyText}>No data available</p>
+          </div>
+        )}
+      </div>
+
       {/* User Selection */}
       <div style={styles.card}>
         <h2 style={styles.sectionTitle}>Select User</h2>
@@ -245,22 +488,59 @@ export default function AdminSalesPage() {
               Manually sync orders for the selected user to get the latest sales data.
             </p>
             
+            <div style={styles.dateToggleContainer}>
+              <label style={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={useCustomDates}
+                  onChange={(e) => setUseCustomDates(e.target.checked)}
+                  style={styles.checkbox}
+                />
+                <span>Use custom date range</span>
+              </label>
+            </div>
+
             <div style={styles.syncControls}>
-              <div style={styles.syncFormGroup}>
-                <label style={styles.label}>Sync Last</label>
-                <select 
-                  value={daysBack} 
-                  onChange={(e) => setDaysBack(Number(e.target.value))}
-                  style={styles.select}
-                  disabled={syncing}
-                >
-                  <option value={1}>1 Day</option>
-                  <option value={3}>3 Days</option>
-                  <option value={7}>7 Days</option>
-                  <option value={14}>14 Days</option>
-                  <option value={30}>30 Days</option>
-                </select>
-              </div>
+              {!useCustomDates ? (
+                <div style={styles.syncFormGroup}>
+                  <label style={styles.label}>Sync Last</label>
+                  <select 
+                    value={daysBack} 
+                    onChange={(e) => setDaysBack(Number(e.target.value))}
+                    style={styles.select}
+                    disabled={syncing}
+                  >
+                    <option value={1}>1 Day</option>
+                    <option value={3}>3 Days</option>
+                    <option value={7}>7 Days</option>
+                    <option value={14}>14 Days</option>
+                    <option value={30}>30 Days</option>
+                  </select>
+                </div>
+              ) : (
+                <>
+                  <div style={styles.syncFormGroup}>
+                    <label style={styles.label}>Start Date</label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      style={styles.dateInput}
+                      disabled={syncing}
+                    />
+                  </div>
+                  <div style={styles.syncFormGroup}>
+                    <label style={styles.label}>End Date</label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      style={styles.dateInput}
+                      disabled={syncing}
+                    />
+                  </div>
+                </>
+              )}
               
               <button
                 onClick={handleManualSync}
@@ -481,6 +761,32 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '8px',
     backgroundColor: '#000',
     color: '#fff',
+  },
+  dateInput: {
+    width: '100%',
+    padding: '10px 12px',
+    fontSize: '14px',
+    border: '1px solid #222',
+    borderRadius: '8px',
+    backgroundColor: '#000',
+    color: '#fff',
+    colorScheme: 'dark',
+  },
+  dateToggleContainer: {
+    marginBottom: '16px',
+  },
+  checkboxLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    color: '#fff',
+    fontSize: '14px',
+    cursor: 'pointer',
+  },
+  checkbox: {
+    width: '16px',
+    height: '16px',
+    cursor: 'pointer',
   },
   syncButton: {
     padding: '12px 24px',
