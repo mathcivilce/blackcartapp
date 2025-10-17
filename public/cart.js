@@ -2338,6 +2338,8 @@
   }
 
   function interceptCartLinks() {
+    console.log('[Cart.js] Setting up cart icon/link interception...');
+    
     // Common cart selectors
     const cartSelectors = [
       'a[href="/cart"]',
@@ -2358,6 +2360,8 @@
     document.addEventListener('click', (e) => {
       const target = e.target.closest(cartSelectors.join(','));
       if (target) {
+        console.log('[Cart.js] Cart icon/link clicked:', target);
+        
         // Check the target itself and its parents for href
         let href = target.getAttribute('href');
         
@@ -2371,6 +2375,7 @@
         
         // If we found a cart-related href, intercept it
         if (href && (href === '/cart' || href.includes('/cart') || href === '#cart')) {
+          console.log('[Cart.js] Intercepting cart link, opening custom cart');
           e.preventDefault();
           e.stopPropagation();
           openCart();
@@ -2380,10 +2385,15 @@
   }
 
   function interceptAddToCart() {
+    console.log('[Cart.js] Setting up Add to Cart interception...');
+    
     // Intercept form submissions
     document.addEventListener('submit', (e) => {
       const form = e.target;
+      console.log('[Cart.js] Form submit detected:', form.getAttribute('action'));
+      
       if (form.getAttribute('action')?.includes('/cart/add')) {
+        console.log('[Cart.js] Intercepting Add to Cart form submission');
         e.preventDefault();
         e.stopPropagation();
         
@@ -2395,6 +2405,7 @@
         })
         .then(response => response.json())
         .then(async (data) => {
+          console.log('[Cart.js] Product added to cart successfully');
           // Successfully added to cart
           // OPTIMIZATION: Skip duplicate fetchCart if protection will be added
           // (addProtectionToCart will fetch cart after adding protection)
@@ -2405,10 +2416,10 @@
           openCart();
         })
         .catch(error => {
-          // Error adding to cart
+          console.error('[Cart.js] Error adding to cart:', error);
         });
       }
-    });
+    }, true); // Use capture phase
 
     // Intercept "Add to Cart" button clicks
     document.addEventListener('click', (e) => {
@@ -2416,8 +2427,10 @@
       const button = target.closest('button[name="add"], button[type="submit"]');
       
       if (button) {
+        console.log('[Cart.js] Add to Cart button clicked');
         const form = button.closest('form[action*="/cart/add"]');
         if (form) {
+          console.log('[Cart.js] Intercepting Add to Cart button click');
           e.preventDefault();
           e.stopPropagation();
           
@@ -2429,6 +2442,7 @@
           })
           .then(response => response.json())
           .then(async (data) => {
+            console.log('[Cart.js] Product added via button click');
             // Successfully added to cart
             // OPTIMIZATION: Skip duplicate fetchCart if protection will be added
             // (addProtectionToCart will fetch cart after adding protection)
@@ -2439,8 +2453,10 @@
             openCart();
           })
           .catch(error => {
-            // Error adding to cart
+            console.error('[Cart.js] Error adding to cart via button:', error);
           });
+        } else {
+          console.log('[Cart.js] Button clicked but no cart form found');
         }
       }
     }, true); // Use capture phase
@@ -2584,11 +2600,18 @@
       console.log('[Cart.js] Removal protection enabled');
     }
 
+    // Expose global function to open cart immediately (before attaching listeners)
+    window.openShippingProtectionCart = openCart;
+    
     // Attach event listeners immediately (non-blocking)
     attachEventListeners();
-
-    // Expose global function to open cart immediately
-    window.openShippingProtectionCart = openCart;
+    
+    // Additional safety: Re-attach event listeners after a delay
+    // (in case they get removed or overridden by theme)
+    setTimeout(() => {
+      console.log('[Cart.js] Re-attaching event listeners for safety...');
+      attachEventListeners();
+    }, 500);
 
     // PRE-LOAD OPTIMIZATION: Fetch settings and cart in background (non-blocking!)
     // This makes cart opening nearly instant (uses cache on return visits)
