@@ -151,8 +151,15 @@ export default function SettingsPage() {
       setStoreDomain(data.store.shop_domain);
       setAccessToken(data.store.access_token);
 
+      // IMPORTANT: Update cart_active from the response to reflect current database state
+      // This ensures the UI shows the correct cart status after domain change
+      if (data.settings && data.settings.cart_active !== undefined) {
+        console.log('📊 Updating cart_active from validation response:', data.settings.cart_active);
+        setCartActive(data.settings.cart_active);
+      }
+
       // Show success message
-      setSaveMessage('Store connected and validated successfully!');
+      setSaveMessage('Store connected and validated successfully! Settings preserved.');
       setTimeout(() => setSaveMessage(''), 5000);
 
     } catch (error) {
@@ -187,14 +194,20 @@ export default function SettingsPage() {
         return;
       }
 
-      const { store } = await response.json();
+      const { store, settings } = await response.json();
       
       // Set the access token to display installation instructions
       if (store?.access_token) {
         setAccessToken(store.access_token);
       }
 
-      setSaveMessage('Settings saved successfully!');
+      // Update cart_active from response to reflect current database state
+      if (settings && settings.cart_active !== undefined) {
+        console.log('📊 Updating cart_active from save response:', settings.cart_active);
+        setCartActive(settings.cart_active);
+      }
+
+      setSaveMessage('Settings saved successfully! All preferences preserved.');
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {
       console.error('Failed to save settings:', error);
@@ -284,6 +297,21 @@ export default function SettingsPage() {
 
       <div style={styles.card}>
         <h2 style={styles.sectionTitle}>Shopify Connection</h2>
+        
+        {storeDomain && (
+          <div style={{
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            backgroundColor: '#e3f2fd',
+            border: '1px solid #2196f3',
+            color: '#0d47a1'
+          }}>
+            <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.5' }}>
+              ℹ️ <strong>Note:</strong> Changing your store domain or API token will preserve all your settings including cart activation status, design preferences, and add-on configurations.
+            </p>
+          </div>
+        )}
         
         <div style={styles.formGroup}>
           <label style={styles.label}>Store Domain</label>

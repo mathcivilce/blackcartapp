@@ -164,6 +164,8 @@ export async function POST(request: NextRequest) {
     console.log('✅ Store saved/updated:', store.id);
 
     // Step 7: Ensure settings record exists for this store
+    // IMPORTANT: Only create settings if they don't exist
+    // Never modify existing settings (preserve user's cart_active and other preferences)
     const { data: existingSettings } = await supabase
       .from('settings')
       .select('*')
@@ -175,18 +177,21 @@ export async function POST(request: NextRequest) {
         .from('settings')
         .insert({
           store_id: store.id,
-          cart_active: true,
+          cart_active: true,  // Default to true for NEW stores only
           enabled: true
         });
 
       if (settingsError) {
         console.error('⚠️ Failed to create settings:', settingsError);
       } else {
-        console.log('✅ Settings created for store');
+        console.log('✅ Settings created for NEW store');
       }
+    } else {
+      console.log('✅ Existing settings preserved (cart_active:', existingSettings.cart_active, ')');
     }
 
     // Step 8: Return success with validated store information
+    // Include current settings (especially cart_active) so frontend can update its state
     return NextResponse.json({
       success: true,
       message: 'Store connected successfully',
@@ -199,6 +204,11 @@ export async function POST(request: NextRequest) {
         access_token: store.access_token,
         // Security note: domain might differ from user input if they had typo
         domain_corrected: canonicalDomain !== cleanDomain
+      },
+      // Return current settings so frontend can update its state
+      settings: {
+        cart_active: existingSettings?.cart_active ?? true,
+        enabled: existingSettings?.enabled ?? true
       }
     });
 

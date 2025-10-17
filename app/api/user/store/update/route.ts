@@ -51,14 +51,16 @@ export async function POST(request: NextRequest) {
       storeId = newStore.id;
       accessTokenValue = newStore.access_token;
 
-      // Create default settings
+      // Create default settings for NEW stores only
       await supabase
         .from('settings')
         .insert({
           store_id: storeId,
-          cart_active: true,
+          cart_active: true,  // Default to active for new stores
           enabled: true
         });
+      
+      console.log('✅ Created default settings for new store');
     } else {
       // Update existing store
       const updateData: any = {};
@@ -70,14 +72,28 @@ export async function POST(request: NextRequest) {
           .from('stores')
           .update(updateData)
           .eq('id', storeId);
+        
+        console.log('✅ Updated store info, settings preserved');
       }
     }
+
+    // Get current settings to return to frontend
+    const { data: currentSettings } = await supabase
+      .from('settings')
+      .select('cart_active, enabled')
+      .eq('store_id', storeId)
+      .single();
 
     return NextResponse.json({
       success: true,
       store: {
         id: storeId,
         access_token: accessTokenValue
+      },
+      // Return current settings so frontend can update its state
+      settings: {
+        cart_active: currentSettings?.cart_active ?? true,
+        enabled: currentSettings?.enabled ?? true
       }
     });
   } catch (error) {
