@@ -1727,7 +1727,16 @@
     }
   }
 
-  async function addProtectionToCart(silentMode = false, skipRender = false) {
+  // Helper function for add-to-cart flows - skips internal fetch for performance
+  async function maybeAutoAddProtectionWithoutFetch() {
+    // Only auto-add if acceptByDefault is enabled and protection is not already in cart
+    if (willAutoAddProtection()) {
+      // OPTIMIZATION: Skip render AND fetch - caller will handle both
+      await addProtectionToCart(true, true, true); // silent mode + skip render + skip fetch
+    }
+  }
+
+  async function addProtectionToCart(silentMode = false, skipRender = false, skipFetch = false) {
     const productHandle = state.settings?.addons?.productHandle || state.settings?.protectionProductHandle;
     
     if (!state.settings || !productHandle) {
@@ -1799,7 +1808,10 @@
         state.protectionVariantId = variantId;
         state.protectionInCart = true; // Update state
         
-        await fetchCart();
+        // OPTIMIZATION: Skip cart fetch if caller will fetch (avoids duplicate fetch)
+        if (!skipFetch) {
+          await fetchCart();
+        }
         
         // Optimization: Skip render if caller will render (avoids duplicate render)
         if (!skipRender) {
@@ -2660,12 +2672,9 @@
         .then(async (data) => {
           console.log('[Cart.js] Product added to cart successfully');
           // Successfully added to cart
-          // OPTIMIZATION: Skip duplicate fetchCart if protection will be added
-          // (addProtectionToCart will fetch cart after adding protection)
-          if (!willAutoAddProtection()) {
-            await fetchCart();
-          }
-          await maybeAutoAddProtection(); // Auto-add protection if enabled
+          // OPTIMIZATION: Use fetch-once strategy for better performance
+          await maybeAutoAddProtectionWithoutFetch(); // Add protection without fetching
+          await fetchCart(); // Single fetch after all cart modifications
           openCart();
         })
         .catch(error => {
@@ -2697,12 +2706,9 @@
           .then(async (data) => {
             console.log('[Cart.js] Product added via button click');
             // Successfully added to cart
-            // OPTIMIZATION: Skip duplicate fetchCart if protection will be added
-            // (addProtectionToCart will fetch cart after adding protection)
-            if (!willAutoAddProtection()) {
-              await fetchCart();
-            }
-            await maybeAutoAddProtection(); // Auto-add protection if enabled
+            // OPTIMIZATION: Use fetch-once strategy for better performance
+            await maybeAutoAddProtectionWithoutFetch(); // Add protection without fetching
+            await fetchCart(); // Single fetch after all cart modifications
             openCart();
           })
           .catch(error => {
@@ -2716,22 +2722,16 @@
 
     // Listen for Shopify's cart events
     document.addEventListener('cart:updated', async () => {
-      // OPTIMIZATION: Skip duplicate fetchCart if protection will be added
-      // (addProtectionToCart will fetch cart after adding protection)
-      if (!willAutoAddProtection()) {
-        await fetchCart();
-      }
-      await maybeAutoAddProtection(); // Auto-add protection if enabled
+      // OPTIMIZATION: Use fetch-once strategy for better performance
+      await maybeAutoAddProtectionWithoutFetch(); // Add protection without fetching
+      await fetchCart(); // Single fetch after all cart modifications
       openCart();
     });
 
     document.addEventListener('product:added-to-cart', async () => {
-      // OPTIMIZATION: Skip duplicate fetchCart if protection will be added
-      // (addProtectionToCart will fetch cart after adding protection)
-      if (!willAutoAddProtection()) {
-        await fetchCart();
-      }
-      await maybeAutoAddProtection(); // Auto-add protection if enabled
+      // OPTIMIZATION: Use fetch-once strategy for better performance
+      await maybeAutoAddProtectionWithoutFetch(); // Add protection without fetching
+      await fetchCart(); // Single fetch after all cart modifications
       openCart();
     });
   }
