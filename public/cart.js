@@ -2486,16 +2486,51 @@
     // Wait for Shopify object to be available
     const shopifyAvailable = await waitForShopify();
     if (!shopifyAvailable) {
+      console.warn('[Cart.js] Shopify object not available, cart will not initialize');
       return;
     }
+
+    // Wait for document.body to be available
+    if (!document.body) {
+      console.warn('[Cart.js] document.body not ready, waiting...');
+      await new Promise(resolve => {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', resolve);
+        } else {
+          resolve();
+        }
+      });
+    }
+
+    console.log('[Cart.js] Initializing cart...');
 
     // Inject CSS immediately (non-blocking)
     injectCSS();
 
     // Create cart HTML immediately (non-blocking)
-    const cartContainer = document.createElement('div');
-    cartContainer.innerHTML = createCartHTML();
-    document.body.appendChild(cartContainer.firstElementChild);
+    try {
+      const cartContainer = document.createElement('div');
+      cartContainer.innerHTML = createCartHTML();
+      const cartElement = cartContainer.firstElementChild;
+      
+      if (!cartElement) {
+        console.error('[Cart.js] Failed to create cart HTML element');
+        return;
+      }
+      
+      document.body.appendChild(cartElement);
+      console.log('[Cart.js] Cart HTML injected successfully');
+      
+      // Verify injection
+      const overlay = document.getElementById('sp-cart-overlay');
+      if (!overlay) {
+        console.error('[Cart.js] Cart overlay not found after injection');
+        return;
+      }
+    } catch (error) {
+      console.error('[Cart.js] Error injecting cart HTML:', error);
+      return;
+    }
 
     // Attach event listeners immediately (non-blocking)
     attachEventListeners();
