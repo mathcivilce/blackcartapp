@@ -13,6 +13,9 @@ export default function AddOnsPage() {
       productId: '',
       acceptByDefault: false,
       adjustTotalPrice: true,
+      useCustomImage: false,
+      customImageUrl: '',
+      customImageSize: 48,
     }
   });
 
@@ -424,6 +427,73 @@ export default function AddOnsPage() {
                 When enabled, the total price on the checkout button will include the add-on price when the protection is active.
               </p>
             </div>
+
+            <div style={styles.checkboxGroup}>
+              <label style={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  name="useCustomImage"
+                  checked={addons.shippingProtection.useCustomImage}
+                  onChange={handleInputChange}
+                  style={styles.checkbox}
+                  disabled={!addons.featureEnabled}
+                />
+                <span>Use custom image for protection product</span>
+              </label>
+              <p style={styles.helperText}>
+                Enable to use a custom image instead of the default add-on icon.
+              </p>
+            </div>
+
+            {addons.shippingProtection.useCustomImage && (
+              <>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Custom Image URL</label>
+                  <input
+                    type="text"
+                    name="customImageUrl"
+                    value={addons.shippingProtection.customImageUrl}
+                    onChange={handleInputChange}
+                    style={styles.textInput}
+                    placeholder="https://example.com/image.png"
+                    disabled={!addons.featureEnabled}
+                  />
+                  <p style={styles.helperText}>
+                    Enter the full URL of your custom image. Recommended format: PNG or SVG.
+                  </p>
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Image Size</label>
+                  <div style={styles.sliderGroup}>
+                    <input
+                      type="range"
+                      name="customImageSize"
+                      value={addons.shippingProtection.customImageSize}
+                      onChange={handleInputChange}
+                      min="24"
+                      max="80"
+                      style={styles.slider}
+                      disabled={!addons.featureEnabled}
+                    />
+                    <input
+                      type="number"
+                      name="customImageSize"
+                      value={addons.shippingProtection.customImageSize}
+                      onChange={handleInputChange}
+                      min="24"
+                      max="80"
+                      style={styles.numberInput}
+                      disabled={!addons.featureEnabled}
+                    />
+                    <span style={styles.unit}>px</span>
+                  </div>
+                  <p style={styles.helperText}>
+                    Adjust the size of your custom image. Default is 48px.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
 
           {saveMessage && (
@@ -461,7 +531,10 @@ export default function AddOnsPage() {
               description: addons.shippingProtection.description,
               price: addons.shippingProtection.price,
               acceptByDefault: addons.shippingProtection.acceptByDefault,
-              adjustTotalPrice: addons.shippingProtection.adjustTotalPrice
+              adjustTotalPrice: addons.shippingProtection.adjustTotalPrice,
+              useCustomImage: addons.shippingProtection.useCustomImage,
+              customImageUrl: addons.shippingProtection.customImageUrl,
+              customImageSize: addons.shippingProtection.customImageSize
             }}
             announcement={announcement}
             freeGifts={freeGifts}
@@ -571,6 +644,34 @@ const styles = {
     width: '18px',
     height: '18px',
     cursor: 'pointer',
+  },
+  sliderGroup: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  slider: {
+    flex: 1,
+    height: '6px',
+    borderRadius: '3px',
+    background: '#333',
+    outline: 'none',
+    cursor: 'pointer',
+  },
+  numberInput: {
+    width: '70px',
+    padding: '8px',
+    fontSize: '14px',
+    border: '1px solid #333',
+    borderRadius: '6px',
+    background: '#000',
+    color: '#fff',
+    textAlign: 'center' as const,
+  },
+  unit: {
+    color: '#888',
+    fontSize: '14px',
+    minWidth: '25px',
   },
   toggleSwitch: {
     position: 'relative' as const,

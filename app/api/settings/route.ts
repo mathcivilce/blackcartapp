@@ -176,6 +176,9 @@ export async function GET(request: NextRequest) {
           productHandle: settings?.addon_product_id || null,
           acceptByDefault: settings?.addon_accept_by_default ?? false,
           adjustTotalPrice: settings?.addon_adjust_total_price ?? true,
+          useCustomImage: settings?.addon_use_custom_image ?? false,
+          customImageUrl: settings?.addon_custom_image_url || '',
+          customImageSize: settings?.addon_custom_image_size || 48,
         },
         freeGifts: {
           enabled: settings?.free_gifts_enabled ?? false,
@@ -332,6 +335,9 @@ export async function GET(request: NextRequest) {
           productId: null,
           acceptByDefault: false,
           adjustTotalPrice: true,
+          useCustomImage: false,
+          customImageUrl: '',
+          customImageSize: 48,
         },
         freeGifts: {
           enabled: false,
@@ -451,6 +457,9 @@ export async function GET(request: NextRequest) {
         productId: settings?.addon_product_id || null,
         acceptByDefault: settings?.addon_accept_by_default ?? false,
         adjustTotalPrice: settings?.addon_adjust_total_price ?? true,
+        useCustomImage: settings?.addon_use_custom_image ?? false,
+        customImageUrl: settings?.addon_custom_image_url || '',
+        customImageSize: settings?.addon_custom_image_size || 48,
       },
       // Free gifts settings
       freeGifts: {
@@ -562,6 +571,9 @@ export async function GET(request: NextRequest) {
         productId: null,
         acceptByDefault: false,
         adjustTotalPrice: true,
+        useCustomImage: false,
+        customImageUrl: '',
+        customImageSize: 48,
       },
       freeGifts: {
         enabled: false,

@@ -1186,6 +1186,25 @@
       priceEl.textContent = formatMoney(addonPrice);
     }
 
+    // Apply custom image settings
+    const protectionIconEl = document.querySelector('.sp-protection-icon img');
+    if (protectionIconEl && state.settings.addons) {
+      const useCustomImage = state.settings.addons.useCustomImage || false;
+      const customImageUrl = state.settings.addons.customImageUrl || '';
+      const customImageSize = state.settings.addons.customImageSize || 48;
+      
+      if (useCustomImage && customImageUrl) {
+        protectionIconEl.src = customImageUrl;
+        protectionIconEl.width = customImageSize;
+        protectionIconEl.height = customImageSize;
+      } else {
+        // Use default image
+        protectionIconEl.src = 'https://www.cartbase.app/add-on.png';
+        protectionIconEl.width = 48;
+        protectionIconEl.height = 48;
+      }
+    }
+
     // Apply design settings
     if (state.settings.design) {
       const design = state.settings.design;
@@ -2078,7 +2097,7 @@
         const savingsLineTotal = savingsPerItem * item.quantity;
         
         if (displayCompareAtPrice) {
-          compareAtPriceHTML = `<span style="font-size: 13px; color: #999; text-decoration: line-through; margin-right: 8px;">${formatMoney(compareAtLinePrice)}</span>`;
+          compareAtPriceHTML = `<span style="font-size: 13px; color: #999; text-decoration: line-through; margin-right: 0px;">${formatMoney(compareAtLinePrice)}</span>`;
         }
         if (showSavings) {
           const savingsColor = state.settings?.design?.savingsTextColor || '#2ea818';

@@ -43,6 +43,9 @@ interface CartPreviewProps {
     price: string;
     acceptByDefault: boolean;
     adjustTotalPrice?: boolean;
+    useCustomImage?: boolean;
+    customImageUrl?: string;
+    customImageSize?: number;
   };
   announcement?: {
     enabled: boolean;
@@ -618,11 +621,11 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
               <div style={styles.protectionToggle}>
                 <div style={styles.protectionIcon}>
                   <img 
-                    src="/add-on.png" 
+                    src={addons.useCustomImage && addons.customImageUrl ? addons.customImageUrl : "/add-on.png"} 
                     alt="Add-on icon" 
-                    width="48" 
-                    height="48" 
-                    style={{ display: 'block' }}
+                    width={addons.useCustomImage && addons.customImageSize ? addons.customImageSize : 48} 
+                    height={addons.useCustomImage && addons.customImageSize ? addons.customImageSize : 48} 
+                    style={{ display: 'block', objectFit: 'contain' }}
                   />
                 </div>
                 <div style={styles.protectionInfo}>

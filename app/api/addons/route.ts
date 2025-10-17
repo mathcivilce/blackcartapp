@@ -31,6 +31,9 @@ export async function GET(request: NextRequest) {
         productId: settings?.addon_product_id || '',
         acceptByDefault: settings?.addon_accept_by_default ?? false,
         adjustTotalPrice: settings?.addon_adjust_total_price ?? true,
+        useCustomImage: settings?.addon_use_custom_image ?? false,
+        customImageUrl: settings?.addon_custom_image_url || '',
+        customImageSize: settings?.addon_custom_image_size || 48,
       }
     });
   } catch (error) {
@@ -59,6 +62,9 @@ export async function POST(request: NextRequest) {
       if (shippingProtection.productId !== undefined) dbSettings.addon_product_id = shippingProtection.productId;
       if (shippingProtection.acceptByDefault !== undefined) dbSettings.addon_accept_by_default = shippingProtection.acceptByDefault;
       if (shippingProtection.adjustTotalPrice !== undefined) dbSettings.addon_adjust_total_price = shippingProtection.adjustTotalPrice;
+      if (shippingProtection.useCustomImage !== undefined) dbSettings.addon_use_custom_image = shippingProtection.useCustomImage;
+      if (shippingProtection.customImageUrl !== undefined) dbSettings.addon_custom_image_url = shippingProtection.customImageUrl;
+      if (shippingProtection.customImageSize !== undefined) dbSettings.addon_custom_image_size = shippingProtection.customImageSize;
     }
 
     const { error } = await supabase

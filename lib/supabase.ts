@@ -110,6 +110,9 @@ export interface Settings {
   addon_product_id?: string;
   addon_accept_by_default?: boolean;
   addon_adjust_total_price?: boolean;
+  addon_use_custom_image?: boolean;
+  addon_custom_image_url?: string;
+  addon_custom_image_size?: number;
   
   // Free gifts settings
   free_gifts_enabled?: boolean;
