@@ -1722,6 +1722,10 @@
         })
       });
       const cart = await response.json();
+      
+      // Enrich cart items with compare_at_price after update
+      await enrichCartItemsWithComparePrice(cart);
+      
       state.cart = cart;
       state.isLoading = false;
       return cart;
@@ -2061,16 +2065,11 @@
       let compareAtPriceHTML = '';
       let savingsHTML = '';
       
-      // Debug: Log FULL item object to see all available data
-      console.log('[Cart.js] FULL item object for:', item.product_title, item);
-      
       // Check for compare_at_price (compare per-item prices)
       // item.compare_at_price = compare-at price per item
       // item.final_price = actual price per item after discounts
       // item.price = original price per item before discounts
       const itemFinalPrice = item.final_price || item.price || 0;
-      
-      console.log('[Cart.js] Comparing:', item.compare_at_price, '>', itemFinalPrice, '=', (item.compare_at_price && item.compare_at_price > itemFinalPrice));
       
       if (item.compare_at_price && item.compare_at_price > itemFinalPrice) {
         // Calculate line-level prices for display
@@ -2078,25 +2077,14 @@
         const savingsPerItem = item.compare_at_price - itemFinalPrice;
         const savingsLineTotal = savingsPerItem * item.quantity;
         
-        console.log('[Cart.js] Generating price displays:', {
-          compareAtLinePrice: compareAtLinePrice,
-          savingsLineTotal: savingsLineTotal,
-          displayCompareAtPrice: displayCompareAtPrice,
-          showSavings: showSavings
-        });
-        
         if (displayCompareAtPrice) {
           compareAtPriceHTML = `<span style="font-size: 13px; color: #999; text-decoration: line-through; margin-right: 8px;">${formatMoney(compareAtLinePrice)}</span>`;
-          console.log('[Cart.js] compareAtPriceHTML generated:', compareAtPriceHTML);
         }
         if (showSavings) {
           const savingsColor = state.settings?.design?.savingsTextColor || '#2ea818';
           const savingsText = state.settings?.design?.savingsText || 'Save';
           savingsHTML = `<p class="sp-cart-item-savings" style="color: ${savingsColor};">${savingsText} ${formatMoney(savingsLineTotal)}</p>`;
-          console.log('[Cart.js] savingsHTML generated:', savingsHTML);
         }
-      } else {
-        console.log('[Cart.js] No compare-at-price display - condition not met');
       }
       
       return `
@@ -2118,7 +2106,17 @@
                 </svg>
               </button>
             </div>
-            ${item.variant_title ? `<p class="sp-cart-item-variant">${item.variant_title}</p>` : ''}
+            ${item.variant_title ? `
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 4px;">
+                <p class="sp-cart-item-variant" style="margin: 0;">${item.variant_title}</p>
+                ${compareAtPriceHTML || savingsHTML ? `
+                  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                    ${savingsHTML ? savingsHTML.replace('<p class="sp-cart-item-savings"', '<span class="sp-cart-item-savings" style="margin: 0; white-space: nowrap; font-size: 11px;"').replace('</p>', '</span>') : ''}
+                    ${compareAtPriceHTML}
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
             <div class="sp-cart-item-controls">
               <div class="sp-quantity-controls">
                 <button 
@@ -2136,13 +2134,13 @@
                   +
                 </button>
               </div>
-              <div class="sp-cart-item-price" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+              <p class="sp-cart-item-price" style="margin: 0;">
                 ${isFreeGift ? 
                   `<span class="sp-free-gift-price">${formatMoney(item.original_line_price || item.final_line_price)}</span><span style="color: #4CAF50; font-weight: 600;">FREE</span>` 
                   : 
-                  `${savingsHTML ? savingsHTML.replace('<p class="sp-cart-item-savings"', '<span class="sp-cart-item-savings" style="margin: 0; white-space: nowrap;"').replace('</p>', '</span>') : ''}${compareAtPriceHTML}${compareAtPriceHTML ? '<span style="font-size: 16px; font-weight: 400; white-space: nowrap;">' + formatMoney(item.final_line_price) + '</span>' : '<span style="font-size: 16px; font-weight: 400;">' + formatMoney(item.final_line_price) + '</span>'}`
+                  formatMoney(item.final_line_price)
                 }
-              </div>
+              </p>
             </div>
           </div>
         </div>
