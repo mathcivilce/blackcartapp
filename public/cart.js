@@ -2660,13 +2660,6 @@
     
     // Attach event listeners immediately (non-blocking)
     attachEventListeners();
-    
-    // Additional safety: Re-attach event listeners after a delay
-    // (in case they get removed or overridden by theme)
-    setTimeout(() => {
-      console.log('[Cart.js] Re-attaching event listeners for safety...');
-      attachEventListeners();
-    }, 500);
 
     // PRE-LOAD OPTIMIZATION: Fetch settings and cart in background (non-blocking!)
     // This makes cart opening nearly instant (uses cache on return visits)
