@@ -2023,17 +2023,8 @@
       let compareAtPriceHTML = '';
       let savingsHTML = '';
       
-      // Debug: Log item price data
-      console.log('[Cart.js] Item pricing data for:', item.product_title, {
-        compare_at_price: item.compare_at_price,
-        final_price: item.final_price,
-        price: item.price,
-        final_line_price: item.final_line_price,
-        original_line_price: item.original_line_price,
-        quantity: item.quantity,
-        showSavings: showSavings,
-        displayCompareAtPrice: displayCompareAtPrice
-      });
+      // Debug: Log FULL item object to see all available data
+      console.log('[Cart.js] FULL item object for:', item.product_title, item);
       
       // Check for compare_at_price (compare per-item prices)
       // item.compare_at_price = compare-at price per item
