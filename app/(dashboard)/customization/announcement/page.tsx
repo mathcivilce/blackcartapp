@@ -16,6 +16,9 @@ export default function AnnouncementPage() {
     countdownDuration: 300,
     fontSize: 14,
     showBorder: true,
+    textBold: false,
+    textItalic: false,
+    textUnderline: false,
     countdownBold: false,
     countdownItalic: false,
     countdownUnderline: false,
@@ -539,6 +542,52 @@ export default function AnnouncementPage() {
                 />
                 <span style={styles.unit}>px</span>
               </div>
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Announcement Text Formatting</label>
+              <div style={styles.checkboxGroup}>
+                <label style={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    name="textBold"
+                    checked={announcement.textBold}
+                    onChange={handleInputChange}
+                    style={styles.checkbox}
+                    disabled={!announcement.enabled}
+                  />
+                  <span><strong>Bold</strong></span>
+                </label>
+              </div>
+              <div style={styles.checkboxGroup}>
+                <label style={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    name="textItalic"
+                    checked={announcement.textItalic}
+                    onChange={handleInputChange}
+                    style={styles.checkbox}
+                    disabled={!announcement.enabled}
+                  />
+                  <span><em>Italic</em></span>
+                </label>
+              </div>
+              <div style={styles.checkboxGroup}>
+                <label style={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    name="textUnderline"
+                    checked={announcement.textUnderline}
+                    onChange={handleInputChange}
+                    style={styles.checkbox}
+                    disabled={!announcement.enabled}
+                  />
+                  <span style={{ textDecoration: 'underline' }}>Underline</span>
+                </label>
+              </div>
+              <p style={styles.helpText}>
+                Apply text formatting to the announcement text (does not affect countdown)
+              </p>
             </div>
 
             <div style={styles.checkboxGroup}>

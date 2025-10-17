@@ -94,6 +94,9 @@ export interface Settings {
   announcement_countdown_duration?: number;
   announcement_font_size?: number;
   announcement_show_border?: boolean;
+  announcement_text_bold?: boolean;
+  announcement_text_italic?: boolean;
+  announcement_text_underline?: boolean;
   announcement_countdown_bold?: boolean;
   announcement_countdown_italic?: boolean;
   announcement_countdown_underline?: boolean;

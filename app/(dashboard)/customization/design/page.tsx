@@ -360,7 +360,7 @@ export default function DesignPage() {
                   name="cornerRadius"
                   value={design.cornerRadius}
                   onChange={handleInputChange}
-                  min="0"
+                  min="1"
                   max="30"
                   style={styles.slider}
                 />
@@ -369,6 +369,7 @@ export default function DesignPage() {
                   name="cornerRadius"
                   value={design.cornerRadius}
                   onChange={handleInputChange}
+                  min="1"
                   style={styles.numberInput}
                 />
                 <span style={styles.unit}>px</span>

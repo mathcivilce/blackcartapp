@@ -1370,6 +1370,9 @@
           activeBanner.style.backgroundColor = announcement.backgroundColor || '#000000';
           activeBanner.style.color = announcement.textColor || '#FFFFFF';
           activeBanner.style.fontSize = (announcement.fontSize || 14) + 'px';
+          activeBanner.style.fontWeight = announcement.textBold ? 'bold' : '600';
+          activeBanner.style.fontStyle = announcement.textItalic ? 'italic' : 'normal';
+          activeBanner.style.textDecoration = announcement.textUnderline ? 'underline' : 'none';
           
           // Apply border
           if (announcement.showBorder === false) {

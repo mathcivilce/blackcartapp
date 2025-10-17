@@ -56,6 +56,9 @@ interface CartPreviewProps {
     countdownDuration?: number;
     fontSize?: number;
     showBorder?: boolean;
+    textBold?: boolean;
+    textItalic?: boolean;
+    textUnderline?: boolean;
     countdownBold?: boolean;
     countdownItalic?: boolean;
     countdownUnderline?: boolean;
@@ -269,7 +272,9 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
             color: announcement.textColor,
             textAlign: 'center' as const,
             fontSize: `${announcement.fontSize || 14}px`,
-            fontWeight: '600',
+            fontWeight: announcement.textBold ? 'bold' : '600',
+            fontStyle: announcement.textItalic ? 'italic' : 'normal',
+            textDecoration: announcement.textUnderline ? 'underline' : 'none',
             borderBottom: announcement.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
             whiteSpace: 'pre-wrap' as const,
           }}>
@@ -463,7 +468,9 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
             color: announcement.textColor,
             textAlign: 'center' as const,
             fontSize: `${announcement.fontSize || 14}px`,
-            fontWeight: '600',
+            fontWeight: announcement.textBold ? 'bold' : '600',
+            fontStyle: announcement.textItalic ? 'italic' : 'normal',
+            textDecoration: announcement.textUnderline ? 'underline' : 'none',
             borderTop: announcement.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
             whiteSpace: 'pre-wrap' as const,
           }}>

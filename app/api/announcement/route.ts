@@ -34,6 +34,9 @@ export async function GET(request: NextRequest) {
       countdownDuration: settings?.announcement_countdown_duration || 300,
       fontSize: settings?.announcement_font_size || 14,
       showBorder: settings?.announcement_show_border ?? true,
+      textBold: settings?.announcement_text_bold ?? false,
+      textItalic: settings?.announcement_text_italic ?? false,
+      textUnderline: settings?.announcement_text_underline ?? false,
       countdownBold: settings?.announcement_countdown_bold ?? false,
       countdownItalic: settings?.announcement_countdown_italic ?? false,
       countdownUnderline: settings?.announcement_countdown_underline ?? false,
@@ -68,6 +71,9 @@ export async function POST(request: NextRequest) {
     if (announcementSettings.countdownDuration !== undefined) dbSettings.announcement_countdown_duration = announcementSettings.countdownDuration;
     if (announcementSettings.fontSize !== undefined) dbSettings.announcement_font_size = announcementSettings.fontSize;
     if (announcementSettings.showBorder !== undefined) dbSettings.announcement_show_border = announcementSettings.showBorder;
+    if (announcementSettings.textBold !== undefined) dbSettings.announcement_text_bold = announcementSettings.textBold;
+    if (announcementSettings.textItalic !== undefined) dbSettings.announcement_text_italic = announcementSettings.textItalic;
+    if (announcementSettings.textUnderline !== undefined) dbSettings.announcement_text_underline = announcementSettings.textUnderline;
     if (announcementSettings.countdownBold !== undefined) dbSettings.announcement_countdown_bold = announcementSettings.countdownBold;
     if (announcementSettings.countdownItalic !== undefined) dbSettings.announcement_countdown_italic = announcementSettings.countdownItalic;
     if (announcementSettings.countdownUnderline !== undefined) dbSettings.announcement_countdown_underline = announcementSettings.countdownUnderline;
