@@ -2521,15 +2521,67 @@
       document.body.appendChild(cartElement);
       console.log('[Cart.js] Cart HTML injected successfully');
       
-      // Verify injection
-      const overlay = document.getElementById('sp-cart-overlay');
-      if (!overlay) {
-        console.error('[Cart.js] Cart overlay not found after injection');
-        return;
-      }
+      // Verify injection immediately
+      setTimeout(() => {
+        const overlay = document.getElementById('sp-cart-overlay');
+        if (!overlay) {
+          console.warn('[Cart.js] Cart overlay disappeared after injection! Re-injecting...');
+          
+          // Try re-injection
+          const cartContainer2 = document.createElement('div');
+          cartContainer2.innerHTML = createCartHTML();
+          const cartElement2 = cartContainer2.firstElementChild;
+          
+          if (cartElement2) {
+            document.body.appendChild(cartElement2);
+            console.log('[Cart.js] Cart HTML re-injected');
+            
+            // Set up mutation observer to prevent removal
+            setupRemovalProtection();
+          }
+        } else {
+          console.log('[Cart.js] Cart overlay verified present');
+          // Set up mutation observer to prevent removal
+          setupRemovalProtection();
+        }
+      }, 100);
+      
     } catch (error) {
       console.error('[Cart.js] Error injecting cart HTML:', error);
       return;
+    }
+    
+    // Function to protect cart from removal
+    function setupRemovalProtection() {
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.removedNodes.forEach((node) => {
+            if (node.id === 'sp-cart-overlay' || (node.querySelector && node.querySelector('#sp-cart-overlay'))) {
+              console.warn('[Cart.js] Cart HTML was removed by theme/app! Re-injecting...');
+              console.log('[Cart.js] Removed by element:', mutation.target);
+              
+              // Re-inject immediately
+              setTimeout(() => {
+                if (!document.getElementById('sp-cart-overlay')) {
+                  const cartContainer = document.createElement('div');
+                  cartContainer.innerHTML = createCartHTML();
+                  const cartElement = cartContainer.firstElementChild;
+                  
+                  if (cartElement) {
+                    document.body.appendChild(cartElement);
+                    console.log('[Cart.js] Cart HTML restored after removal');
+                    // Re-attach event listeners after re-injection
+                    attachEventListeners();
+                  }
+                }
+              }, 10);
+            }
+          });
+        });
+      });
+      
+      observer.observe(document.body, { childList: true, subtree: true });
+      console.log('[Cart.js] Removal protection enabled');
     }
 
     // Attach event listeners immediately (non-blocking)
