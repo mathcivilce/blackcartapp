@@ -742,10 +742,27 @@
   }
 
   // ============================================
-  // LOCALSTORAGE CACHE FUNCTIONS
+  // LOCALSTORAGE CACHE FUNCTIONS (Enhanced with error handling)
   // ============================================
 
+  function isLocalStorageAvailable() {
+    try {
+      const test = '__localStorage_test__';
+      localStorage.setItem(test, test);
+      localStorage.removeItem(test);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   function getCachedSettings() {
+    // Skip localStorage if not available
+    if (!isLocalStorageAvailable()) {
+      console.warn('[Cart.js] localStorage not available, skipping cache');
+      return null;
+    }
+    
     try {
       const cached = localStorage.getItem(CONFIG.cacheKey);
       if (!cached) return null;
@@ -768,24 +785,32 @@
       
       return data;
     } catch (error) {
+      console.warn('[Cart.js] Cache read failed:', error.message);
       // If localStorage fails or cache is corrupted, remove and fail gracefully
       try {
         localStorage.removeItem(CONFIG.cacheKey);
       } catch (e) {
-        // Ignore if we can't remove
+        // Can't even remove, localStorage fully blocked
       }
       return null;
     }
   }
 
   function setCachedSettings(settings) {
+    // Skip localStorage if not available
+    if (!isLocalStorageAvailable()) {
+      return; // Silently skip caching
+    }
+    
     try {
       localStorage.setItem(CONFIG.cacheKey, JSON.stringify({
         data: settings,
         timestamp: Date.now()
       }));
     } catch (error) {
+      console.warn('[Cart.js] Cache write failed:', error.message);
       // If localStorage fails (quota exceeded, etc.), silently fail
+      // Cart still works without caching
     }
   }
 
