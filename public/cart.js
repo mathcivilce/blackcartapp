@@ -137,22 +137,54 @@
 
   function injectCSS() {
     const css = `
-      /* Hide native Shopify cart drawer/popup */
-      cart-drawer,
+      /* Hide native Shopify cart drawer/popup (ONLY the drawer itself, not buttons/icons) */
+      
+      /* Hide custom element drawers */
+      cart-drawer > dialog,
+      cart-drawer > aside,
+      cart-drawer > .drawer,
       cart-notification,
-      .cart-drawer,
-      .cart-popup,
-      .mini-cart,
-      #cart-drawer,
-      #mini-cart,
-      [id*="cart-drawer"],
-      [class*="cart-drawer"],
-      [id*="CartDrawer"],
-      [class*="CartDrawer"] {
+      
+      /* Hide drawer dialogs and panels */
+      dialog.cart-drawer__dialog,
+      dialog[class*="cart-drawer"],
+      aside.cart-drawer,
+      aside[class*="cart-drawer"],
+      div.cart-drawer[role="dialog"],
+      div.cart-popup,
+      div.mini-cart,
+      
+      /* Hide specific IDs (exact matches only) */
+      #cart-drawer.drawer,
+      #mini-cart.drawer,
+      #CartDrawer[role="dialog"],
+      
+      /* Hide drawer containers that are NOT custom elements */
+      div.cart-drawer:not(.header *),
+      div.cart-popup:not(.header *),
+      div[id="cart-drawer"]:not(.header *),
+      div[id="CartDrawer"]:not(.header *) {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
         pointer-events: none !important;
+      }
+      
+      /* Explicitly ensure cart buttons/icons/links stay visible */
+      button[class*="cart"],
+      a[class*="cart"],
+      cart-icon,
+      .cart-icon,
+      .header [class*="cart"],
+      .header [id*="cart"],
+      [class*="cart-trigger"],
+      [class*="cart-button"],
+      [aria-label*="cart" i] button,
+      [aria-label*="cart" i] a {
+        display: revert !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
       }
 
       /* Overlay */
@@ -818,20 +850,56 @@
   // SHOPIFY CART API FUNCTIONS
   // ============================================
 
-  async function fetchCart() {
-    try {
-      const response = await fetch('/cart.js');
-      const cart = await response.json();
-      
-      // Enrich cart items with compare_at_price from variant data
-      await enrichCartItemsWithComparePrice(cart);
-      
-      state.cart = cart;
-      checkProtectionInCart();
-      return cart;
-    } catch (error) {
-      return null;
+  async function fetchCart(retries = 2) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        // Create abort controller for timeout (3 seconds per attempt)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        
+        console.log(`[Cart.js] Fetching cart data${attempt > 1 ? ` (attempt ${attempt}/${retries})` : ''}...`);
+        
+        const response = await fetch('/cart.js', { 
+          signal: controller.signal,
+          keepalive: true // Improve reliability
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`Cart API returned status ${response.status}`);
+        }
+        
+        const cart = await response.json();
+        console.log('[Cart.js] Cart data fetched successfully' + (attempt > 1 ? ` (attempt ${attempt})` : ''), `(${cart.item_count} items)`);
+        
+        // Enrich cart items with compare_at_price from variant data
+        await enrichCartItemsWithComparePrice(cart);
+        
+        state.cart = cart;
+        checkProtectionInCart();
+        return cart;
+        
+      } catch (error) {
+        const isTimeout = error.name === 'AbortError';
+        const errorType = isTimeout ? 'timeout' : error.message;
+        
+        console.warn(`[Cart.js] Cart fetch failed on attempt ${attempt}/${retries}:`, errorType);
+        
+        // If this was the last attempt, give up
+        if (attempt === retries) {
+          console.error('[Cart.js] All cart fetch attempts exhausted. Cart data unavailable.');
+          return null;
+        }
+        
+        // Exponential backoff: 500ms, 1000ms
+        const delay = 500 * attempt;
+        console.log(`[Cart.js] Retrying cart fetch in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
+    
+    return null;
   }
   
   // Fetch compare_at_price for all cart items (Shopify cart API doesn't include it)
@@ -2711,10 +2779,22 @@
 
     console.log('[Cart.js] Initializing cart...');
 
-    // Inject CSS immediately (non-blocking)
+    // STEP 1: Fetch settings FIRST before any DOM manipulation
+    console.log('[Cart.js] Fetching settings to check cart_active status...');
+    const settings = await fetchSettings(true); // Use cache if available
+    
+    // STEP 2: Check if cart is active
+    if (settings === null) {
+      console.warn('[Cart.js] Cart is disabled (cart_active = false). Exiting without interfering with native cart.');
+      return; // Exit gracefully - don't inject CSS, HTML, or event listeners
+    }
+    
+    console.log('[Cart.js] Cart is active (cart_active = true). Proceeding with initialization...');
+
+    // STEP 3: Inject CSS (only if cart is active)
     injectCSS();
 
-    // Create cart HTML immediately (non-blocking)
+    // STEP 4: Create cart HTML (only if cart is active)
     try {
       const cartContainer = document.createElement('div');
       cartContainer.innerHTML = createCartHTML();
@@ -2791,29 +2871,18 @@
       console.log('[Cart.js] Removal protection enabled');
     }
 
-    // Expose global function to open cart immediately (before attaching listeners)
+    // STEP 5: Expose global function to open cart
     window.openShippingProtectionCart = openCart;
     
-    // Attach event listeners immediately (non-blocking)
+    // STEP 6: Attach event listeners (only if cart is active)
     attachEventListeners();
 
-    // PRE-LOAD OPTIMIZATION: Fetch settings and cart in background (non-blocking!)
-    // This makes cart opening nearly instant (uses cache on return visits)
-    Promise.all([
-      fetchSettings(),
-      fetchCart()
-    ]).then(([settings, cart]) => {
-      if (settings === null) {
-        // Cart is not active, hide cart functionality
-        const overlay = document.getElementById('sp-cart-overlay');
-        if (overlay) {
-          overlay.remove();
-        }
-        return;
-      }
-      
-      // Settings loaded, apply them
-      applySettings();
+    // STEP 7: Apply settings that were already fetched
+    applySettings();
+    
+    // STEP 8: Pre-fetch cart data in background for instant opening
+    fetchCart().then(cart => {
+      console.log('[Cart.js] Cart data pre-loaded in background');
       
       // OPTIMIZATION: Pre-fetch protection variant ID if auto-add is enabled
       // This caches the variant ID for instant adding later (no cart modification)
@@ -2823,8 +2892,8 @@
         });
       }
     }).catch(() => {
-      // Silently fail if settings/cart can't load
-      // Cart will still work with default behavior
+      // Silently fail if cart can't load
+      console.warn('[Cart.js] Failed to pre-load cart data');
     });
   }
 
