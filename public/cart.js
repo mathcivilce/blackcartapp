@@ -822,12 +822,50 @@
     try {
       const response = await fetch('/cart.js');
       const cart = await response.json();
+      
+      // Enrich cart items with compare_at_price from variant data
+      await enrichCartItemsWithComparePrice(cart);
+      
       state.cart = cart;
       checkProtectionInCart();
       return cart;
     } catch (error) {
       return null;
     }
+  }
+  
+  // Fetch compare_at_price for all cart items (Shopify cart API doesn't include it)
+  async function enrichCartItemsWithComparePrice(cart) {
+    if (!cart || !cart.items) return;
+    
+    // Fetch variant data for all items in parallel
+    const variantPromises = cart.items.map(async (item) => {
+      try {
+        // Skip if already has compare_at_price (shouldn't happen, but just in case)
+        if (item.compare_at_price) return;
+        
+        // Fetch variant data using product handle
+        const response = await fetch(`/products/${item.handle}.js`);
+        if (!response.ok) return;
+        
+        const productData = await response.json();
+        
+        // Find the matching variant
+        const variant = productData.variants.find(v => v.id === item.variant_id);
+        
+        if (variant && variant.compare_at_price) {
+          // Add compare_at_price to the cart item (in cents)
+          item.compare_at_price = variant.compare_at_price;
+          console.log('[Cart.js] Enriched item with compare_at_price:', item.product_title, variant.compare_at_price);
+        }
+      } catch (error) {
+        console.warn('[Cart.js] Failed to fetch variant data for:', item.product_title, error);
+        // Continue with other items even if one fails
+      }
+    });
+    
+    // Wait for all enrichments to complete
+    await Promise.all(variantPromises);
   }
 
   async function fetchSettings(useCache = true) {
