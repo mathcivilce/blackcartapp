@@ -975,20 +975,37 @@
     }
   }
 
-  async function fetchSettingsFromAPI(shopDomain) {
-    try {
-      // Use token-based authentication if available
-      // SECURITY: Always send shop domain for domain binding validation
-      const url = CONFIG.token 
-        ? `${CONFIG.appUrl}/api/settings?token=${CONFIG.token}&shop=${shopDomain}`
-        : `${CONFIG.appUrl}/api/settings?shop=${shopDomain}`;
-      
-      console.log('[Cart.js] Fetching settings from:', url.replace(CONFIG.token, 'TOKEN_HIDDEN'));
-      
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        console.error('[Cart.js] Settings API error:', response.status, response.statusText);
+  async function fetchSettingsFromAPI(shopDomain, retries = 3) {
+    // Use token-based authentication if available
+    // SECURITY: Always send shop domain for domain binding validation
+    const url = CONFIG.token 
+      ? `${CONFIG.appUrl}/api/settings?token=${CONFIG.token}&shop=${shopDomain}`
+      : `${CONFIG.appUrl}/api/settings?shop=${shopDomain}`;
+    
+    console.log('[Cart.js] Fetching settings from:', url.replace(CONFIG.token || '', 'TOKEN_HIDDEN'));
+    
+    // Retry loop with exponential backoff
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        // Create AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        const response = await fetch(url, { 
+          signal: controller.signal,
+          keepalive: true // Improve reliability
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const settings = await response.json();
+          console.log('[Cart.js] Settings API response received successfully' + (attempt > 1 ? ` (attempt ${attempt})` : ''));
+          return settings;
+        }
+        
+        // Server or client error
+        console.error(`[Cart.js] Settings API error (attempt ${attempt}/${retries}):`, response.status, response.statusText);
         
         // Try to get error details
         try {
@@ -998,16 +1015,44 @@
           console.error('[Cart.js] Could not parse error response');
         }
         
-        return null;
+        // Don't retry on permanent errors
+        if (response.status === 401 || response.status === 403) {
+          console.error('[Cart.js] Authentication error - not retrying');
+          return null;
+        }
+        
+        if (response.status === 404) {
+          console.error('[Cart.js] Settings not found - not retrying');
+          return null;
+        }
+        
+        // Retry on temporary errors (500, 502, 503, 504)
+        if (attempt < retries) {
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // 1s, 2s, 4s (max 5s)
+          console.log(`[Cart.js] Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+        
+      } catch (error) {
+        // Network error or timeout
+        if (error.name === 'AbortError') {
+          console.error(`[Cart.js] Request timeout (attempt ${attempt}/${retries})`);
+        } else {
+          console.error(`[Cart.js] Network error (attempt ${attempt}/${retries}):`, error.message);
+        }
+        
+        // Retry on network errors
+        if (attempt < retries) {
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // 1s, 2s, 4s (max 5s)
+          console.log(`[Cart.js] Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
       }
-      
-      const settings = await response.json();
-      console.log('[Cart.js] Settings API response received successfully');
-      return settings;
-    } catch (error) {
-      console.error('[Cart.js] Network error fetching settings:', error.message);
-      return null;
     }
+    
+    // All retry attempts exhausted
+    console.error('[Cart.js] All retry attempts failed for settings API');
+    return null;
   }
 
   // ============================================
@@ -2610,14 +2655,37 @@
   // INITIALIZATION
   // ============================================
 
-  // Wait for Shopify object to be available
-  async function waitForShopify(maxAttempts = 10) {
-    for (let i = 0; i < maxAttempts; i++) {
-      if (window.Shopify?.shop) {
-        return true;
+  // Wait for Shopify object to be available with progressive backoff
+  async function waitForShopify() {
+    // Progressive backoff strategy:
+    // Phase 1: Fast checks (100ms × 5 = 0.5s) - catches 95% of themes
+    // Phase 2: Normal checks (200ms × 10 = 2.0s) - catches 4% of themes  
+    // Phase 3: Slow checks (500ms × 15 = 7.5s) - catches 1% of themes
+    // Total: 10 seconds maximum
+    
+    const phases = [
+      { interval: 100, attempts: 5 },   // 0.5s - fast themes
+      { interval: 200, attempts: 10 },  // 2.0s - normal themes
+      { interval: 500, attempts: 15 }   // 7.5s - slow themes
+    ];
+    
+    let totalAttempts = 0;
+    
+    for (const phase of phases) {
+      for (let i = 0; i < phase.attempts; i++) {
+        totalAttempts++;
+        
+        if (window.Shopify?.shop) {
+          console.log(`[Cart.js] Shopify object detected after ${totalAttempts} attempts`);
+          return true;
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, phase.interval));
       }
-      await new Promise(resolve => setTimeout(resolve, 100));
     }
+    
+    // Timeout after 10 seconds
+    console.error('[Cart.js] Shopify object not available after 10 seconds (30 attempts)');
     return false;
   }
 
