@@ -837,8 +837,11 @@
       
       // Validate shop domain is available
       if (!shopDomain) {
+        console.error('[Cart.js] Cannot fetch settings - shop domain not available');
         return null;
       }
+      
+      console.log('[Cart.js] Fetching settings for shop:', shopDomain);
       
       // Try to load from cache first (instant!)
       if (useCache) {
@@ -849,11 +852,13 @@
           // Debug: Log adjustTotalPrice from cache
           console.log('[Cart.js] Settings loaded from cache', {
             adjustTotalPrice: cached?.addons?.adjustTotalPrice,
-            hasAddons: !!cached?.addons
+            hasAddons: !!cached?.addons,
+            cart_active: cached?.cart_active
           });
           
           // Check if cart is active
           if (cached.cart_active === false) {
+            console.warn('[Cart.js] Cart is disabled in cached settings');
             return null;
           }
           
@@ -883,7 +888,8 @@
                 applySettings();
               }
             }
-          }).catch(() => {
+          }).catch((err) => {
+            console.warn('[Cart.js] Background settings refresh failed:', err.message);
             // Silently fail background refresh, cached settings still work
           });
           
@@ -891,9 +897,12 @@
         }
       }
       
+      console.log('[Cart.js] No cache available, fetching from API...');
+      
       // No cache, fetch fresh
       const fresh = await fetchSettingsFromAPI(shopDomain);
       if (!fresh) {
+        console.error('[Cart.js] Failed to fetch settings from API');
         return null;
       }
       
@@ -902,11 +911,13 @@
       // Debug: Log adjustTotalPrice from fresh API
       console.log('[Cart.js] Settings loaded from API', {
         adjustTotalPrice: fresh?.addons?.adjustTotalPrice,
-        hasAddons: !!fresh?.addons
+        hasAddons: !!fresh?.addons,
+        cart_active: fresh?.cart_active
       });
       
       // Check if cart is active
       if (fresh.cart_active === false) {
+        console.warn('[Cart.js] Cart is disabled in settings');
         return null;
       }
       
@@ -921,6 +932,7 @@
       
       return fresh;
     } catch (error) {
+      console.error('[Cart.js] Error in fetchSettings():', error);
       return null;
     }
   }
@@ -933,15 +945,29 @@
         ? `${CONFIG.appUrl}/api/settings?token=${CONFIG.token}&shop=${shopDomain}`
         : `${CONFIG.appUrl}/api/settings?shop=${shopDomain}`;
       
+      console.log('[Cart.js] Fetching settings from:', url.replace(CONFIG.token, 'TOKEN_HIDDEN'));
+      
       const response = await fetch(url);
       
       if (!response.ok) {
+        console.error('[Cart.js] Settings API error:', response.status, response.statusText);
+        
+        // Try to get error details
+        try {
+          const errorData = await response.json();
+          console.error('[Cart.js] API error details:', errorData);
+        } catch (e) {
+          console.error('[Cart.js] Could not parse error response');
+        }
+        
         return null;
       }
       
       const settings = await response.json();
+      console.log('[Cart.js] Settings API response received successfully');
       return settings;
     } catch (error) {
+      console.error('[Cart.js] Network error fetching settings:', error.message);
       return null;
     }
   }
