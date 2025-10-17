@@ -77,16 +77,19 @@ export async function POST(request: NextRequest) {
 
     const { data: stores, error: storesError } = await serviceClient
       .from('stores')
-      .select('id, shop_domain, shopify_access_token, user_id')
-      .not('shopify_access_token', 'is', null);
+      .select('id, shop_domain, api_token, user_id')
+      .not('api_token', 'is', null);
 
     if (storesError) {
       console.error('❌ [Admin Batch Sync API] Error fetching stores:', storesError);
       return NextResponse.json({
         success: false,
-        error: 'Failed to fetch stores'
+        error: 'Failed to fetch stores',
+        details: storesError.message || storesError
       }, { status: 500 });
     }
+
+    console.log(`✅ [Admin Batch Sync API] Found ${stores?.length || 0} stores with API tokens`);
 
     if (!stores || stores.length === 0) {
       return NextResponse.json({
