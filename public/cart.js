@@ -18,7 +18,8 @@
       }
       return null;
     })(),
-    // Cache settings -
+    // Cache settings
+    enableCache: false,  // 🔧 TEMPORARY: Set to false to disable caching (always fetch fresh)
     cacheKey: 'sp_cart_settings',
     cacheTTL: 1000 * 60 * 60 * 6  // 6 hours
   };
@@ -789,6 +790,11 @@
   }
 
   function getCachedSettings() {
+    // Check if caching is enabled
+    if (!CONFIG.enableCache) {
+      return null; // Skip cache when disabled
+    }
+    
     // Skip localStorage if not available
     if (!isLocalStorageAvailable()) {
       console.warn('[Cart.js] localStorage not available, skipping cache');
@@ -829,6 +835,11 @@
   }
 
   function setCachedSettings(settings) {
+    // Check if caching is enabled
+    if (!CONFIG.enableCache) {
+      return; // Skip caching when disabled
+    }
+    
     // Skip localStorage if not available
     if (!isLocalStorageAvailable()) {
       return; // Silently skip caching
@@ -948,6 +959,12 @@
       }
       
       console.log('[Cart.js] Fetching settings for shop:', shopDomain);
+      
+      // Check if caching is enabled globally
+      if (!CONFIG.enableCache) {
+        console.log('[Cart.js] Cache disabled - fetching fresh settings from API...');
+        useCache = false;
+      }
       
       // Try to load from cache first (instant!)
       if (useCache) {
