@@ -27,6 +27,14 @@ interface CartPreviewProps {
     cartImageMobileSize: string;
     cartImageDesktopSize: string;
     cartImagePosition: string;
+    showPaymentIcons?: boolean;
+    paymentIconAmex?: boolean;
+    paymentIconApplePay?: boolean;
+    paymentIconGooglePay?: boolean;
+    paymentIconMastercard?: boolean;
+    paymentIconPaypal?: boolean;
+    paymentIconShopPay?: boolean;
+    paymentIconVisa?: boolean;
   };
   addons: {
     enabled: boolean;
@@ -656,6 +664,33 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
               Or continue shopping
             </button>
           )}
+          
+          {/* Payment Icons */}
+          {design.showPaymentIcons && (
+            <div style={styles.paymentIcons}>
+              {design.paymentIconVisa && (
+                <img src="/visa.svg" alt="Visa" style={styles.paymentIcon} />
+              )}
+              {design.paymentIconMastercard && (
+                <img src="/mastercard.svg" alt="Mastercard" style={styles.paymentIcon} />
+              )}
+              {design.paymentIconAmex && (
+                <img src="/amex.svg" alt="American Express" style={styles.paymentIcon} />
+              )}
+              {design.paymentIconPaypal && (
+                <img src="/paypal.svg" alt="PayPal" style={styles.paymentIcon} />
+              )}
+              {design.paymentIconApplePay && (
+                <img src="/applepay.svg" alt="Apple Pay" style={styles.paymentIcon} />
+              )}
+              {design.paymentIconGooglePay && (
+                <img src="/googlepay.svg" alt="Google Pay" style={styles.paymentIcon} />
+              )}
+              {design.paymentIconShopPay && (
+                <img src="/shoppay.svg" alt="Shop Pay" style={styles.paymentIcon} />
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -888,6 +923,19 @@ const styles = {
     border: 'none',
     cursor: 'pointer',
     textAlign: 'center' as const,
+  },
+  paymentIcons: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '8px',
+    marginTop: '16px',
+    flexWrap: 'wrap' as const,
+  },
+  paymentIcon: {
+    height: '24px',
+    width: 'auto',
+    objectFit: 'contain' as const,
   },
 };
 

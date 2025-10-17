@@ -49,6 +49,14 @@ export async function GET(request: NextRequest) {
       cartImageMobileSize: settings?.cart_image_mobile_size?.toString() || '100',
       cartImageDesktopSize: settings?.cart_image_desktop_size?.toString() || '120',
       cartImagePosition: settings?.cart_image_position || 'left',
+      showPaymentIcons: settings?.show_payment_icons ?? false,
+      paymentIconAmex: settings?.payment_icon_amex ?? false,
+      paymentIconApplePay: settings?.payment_icon_applepay ?? false,
+      paymentIconGooglePay: settings?.payment_icon_googlepay ?? false,
+      paymentIconMastercard: settings?.payment_icon_mastercard ?? false,
+      paymentIconPaypal: settings?.payment_icon_paypal ?? false,
+      paymentIconShopPay: settings?.payment_icon_shoppay ?? false,
+      paymentIconVisa: settings?.payment_icon_visa ?? false,
     });
   } catch (error) {
     console.error('Design settings API error:', error);
@@ -94,6 +102,14 @@ export async function POST(request: NextRequest) {
     if (designSettings.cartImageMobileSize !== undefined) dbSettings.cart_image_mobile_size = parseInt(designSettings.cartImageMobileSize);
     if (designSettings.cartImageDesktopSize !== undefined) dbSettings.cart_image_desktop_size = parseInt(designSettings.cartImageDesktopSize);
     if (designSettings.cartImagePosition !== undefined) dbSettings.cart_image_position = designSettings.cartImagePosition;
+    if (designSettings.showPaymentIcons !== undefined) dbSettings.show_payment_icons = designSettings.showPaymentIcons;
+    if (designSettings.paymentIconAmex !== undefined) dbSettings.payment_icon_amex = designSettings.paymentIconAmex;
+    if (designSettings.paymentIconApplePay !== undefined) dbSettings.payment_icon_applepay = designSettings.paymentIconApplePay;
+    if (designSettings.paymentIconGooglePay !== undefined) dbSettings.payment_icon_googlepay = designSettings.paymentIconGooglePay;
+    if (designSettings.paymentIconMastercard !== undefined) dbSettings.payment_icon_mastercard = designSettings.paymentIconMastercard;
+    if (designSettings.paymentIconPaypal !== undefined) dbSettings.payment_icon_paypal = designSettings.paymentIconPaypal;
+    if (designSettings.paymentIconShopPay !== undefined) dbSettings.payment_icon_shoppay = designSettings.paymentIconShopPay;
+    if (designSettings.paymentIconVisa !== undefined) dbSettings.payment_icon_visa = designSettings.paymentIconVisa;
 
     const { error } = await supabase
       .from('settings')

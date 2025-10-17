@@ -31,6 +31,14 @@ export default function DesignPage() {
     cartImageMobileSize: '100',
     cartImageDesktopSize: '120',
     cartImagePosition: 'left',
+    showPaymentIcons: false,
+    paymentIconAmex: false,
+    paymentIconApplePay: false,
+    paymentIconGooglePay: false,
+    paymentIconMastercard: false,
+    paymentIconPaypal: false,
+    paymentIconShopPay: false,
+    paymentIconVisa: false,
   });
 
   const [addons, setAddons] = useState({
@@ -437,6 +445,111 @@ export default function DesignPage() {
                 />
               </div>
             </div>
+          </div>
+
+          <div style={styles.card}>
+            <div style={styles.toggleHeader}>
+              <h2 style={styles.sectionTitle}>Payment Icons</h2>
+              <label style={styles.toggleSwitch}>
+                <input
+                  type="checkbox"
+                  name="showPaymentIcons"
+                  checked={design.showPaymentIcons}
+                  onChange={handleInputChange}
+                  style={{ opacity: 0, width: 0, height: 0 }}
+                />
+                <span style={{
+                  ...styles.toggleSlider,
+                  backgroundColor: design.showPaymentIcons ? '#2196F3' : '#ccc'
+                }}>
+                  <span style={{
+                    ...styles.toggleKnob,
+                    transform: design.showPaymentIcons ? 'translateX(22px)' : 'translateX(0)'
+                  }}></span>
+                </span>
+              </label>
+            </div>
+            <p style={styles.description}>
+              Display payment method icons below the checkout button
+            </p>
+
+            {design.showPaymentIcons && (
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Select payment methods to display</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      name="paymentIconVisa"
+                      checked={design.paymentIconVisa}
+                      onChange={handleInputChange}
+                      style={styles.checkbox}
+                    />
+                    <span>Visa</span>
+                  </label>
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      name="paymentIconMastercard"
+                      checked={design.paymentIconMastercard}
+                      onChange={handleInputChange}
+                      style={styles.checkbox}
+                    />
+                    <span>Mastercard</span>
+                  </label>
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      name="paymentIconAmex"
+                      checked={design.paymentIconAmex}
+                      onChange={handleInputChange}
+                      style={styles.checkbox}
+                    />
+                    <span>American Express</span>
+                  </label>
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      name="paymentIconPaypal"
+                      checked={design.paymentIconPaypal}
+                      onChange={handleInputChange}
+                      style={styles.checkbox}
+                    />
+                    <span>PayPal</span>
+                  </label>
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      name="paymentIconApplePay"
+                      checked={design.paymentIconApplePay}
+                      onChange={handleInputChange}
+                      style={styles.checkbox}
+                    />
+                    <span>Apple Pay</span>
+                  </label>
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      name="paymentIconGooglePay"
+                      checked={design.paymentIconGooglePay}
+                      onChange={handleInputChange}
+                      style={styles.checkbox}
+                    />
+                    <span>Google Pay</span>
+                  </label>
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      name="paymentIconShopPay"
+                      checked={design.paymentIconShopPay}
+                      onChange={handleInputChange}
+                      style={styles.checkbox}
+                    />
+                    <span>Shop Pay</span>
+                  </label>
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={styles.card}>

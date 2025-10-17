@@ -126,6 +126,9 @@
               <span id="sp-checkout-text">Proceed to Checkout</span><span id="sp-checkout-total-separator" style="display: none;"> • </span><span id="sp-checkout-total"></span>
             </button>
             <p class="sp-cart-note" id="sp-continue-shopping" style="cursor: pointer;">Or continue shopping</p>
+            
+            <!-- Payment Icons -->
+            <div id="sp-payment-icons" class="sp-payment-icons" style="display: none;"></div>
           </div>
         </div>
       </div>
@@ -576,6 +579,22 @@
         color: #666;
         font-size: 14px;
         margin: 12px 0 0;
+      }
+
+      /* Payment Icons */
+      .sp-payment-icons {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+        flex-wrap: wrap;
+      }
+
+      .sp-payment-icon {
+        height: 24px;
+        width: auto;
+        object-fit: contain;
       }
 
       /* Protection Toggle */
@@ -1207,6 +1226,46 @@
       if (noteEl) {
         noteEl.style.display = design.showContinueShopping ? 'block' : 'none';
         noteEl.style.color = design.cartTextColor;
+      }
+      
+      // Apply payment icons
+      const paymentIconsContainer = document.getElementById('sp-payment-icons');
+      if (paymentIconsContainer && design.showPaymentIcons) {
+        const icons = [];
+        const appUrl = (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
+          ? 'http://localhost:3001'
+          : 'https://www.cartbase.app';
+        
+        if (design.paymentIconVisa) {
+          icons.push('<img src="' + appUrl + '/visa.svg" alt="Visa" class="sp-payment-icon" />');
+        }
+        if (design.paymentIconMastercard) {
+          icons.push('<img src="' + appUrl + '/mastercard.svg" alt="Mastercard" class="sp-payment-icon" />');
+        }
+        if (design.paymentIconAmex) {
+          icons.push('<img src="' + appUrl + '/amex.svg" alt="American Express" class="sp-payment-icon" />');
+        }
+        if (design.paymentIconPaypal) {
+          icons.push('<img src="' + appUrl + '/paypal.svg" alt="PayPal" class="sp-payment-icon" />');
+        }
+        if (design.paymentIconApplePay) {
+          icons.push('<img src="' + appUrl + '/applepay.svg" alt="Apple Pay" class="sp-payment-icon" />');
+        }
+        if (design.paymentIconGooglePay) {
+          icons.push('<img src="' + appUrl + '/googlepay.svg" alt="Google Pay" class="sp-payment-icon" />');
+        }
+        if (design.paymentIconShopPay) {
+          icons.push('<img src="' + appUrl + '/shoppay.svg" alt="Shop Pay" class="sp-payment-icon" />');
+        }
+        
+        if (icons.length > 0) {
+          paymentIconsContainer.innerHTML = icons.join('');
+          paymentIconsContainer.style.display = 'flex';
+        } else {
+          paymentIconsContainer.style.display = 'none';
+        }
+      } else if (paymentIconsContainer) {
+        paymentIconsContainer.style.display = 'none';
       }
       
       // Apply cart accent color (to footer and protection container)
