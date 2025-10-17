@@ -2209,10 +2209,15 @@
   }
 
   async function openCart() {
+    console.log('[Cart.js] openCart() called');
+    
     const overlay = document.getElementById('sp-cart-overlay');
     if (!overlay) {
+      console.error('[Cart.js] Cannot open cart - overlay not found!');
       return;
     }
+    
+    console.log('[Cart.js] Overlay found, proceeding to open cart');
     
     // Reset countdown start time for fresh timer (so it restarts fresh each time)
     state.countdownStartTime = null;
@@ -2223,6 +2228,8 @@
       const needsCartFetch = !state.cart;
       const needsSettingsFetch = !state.settings;
       
+      console.log('[Cart.js] Needs cart fetch:', needsCartFetch, 'Needs settings fetch:', needsSettingsFetch);
+      
       // Fetch in parallel if both are needed (Optimization #3)
       if (needsCartFetch && needsSettingsFetch) {
         const [settings, cart] = await Promise.all([
@@ -2231,11 +2238,13 @@
         ]);
         
         if (!settings) {
+          console.warn('[Cart.js] Settings not available, aborting cart open');
           return;
         }
       } else if (needsSettingsFetch) {
         const settings = await fetchSettings();
         if (!settings) {
+          console.warn('[Cart.js] Settings not available, aborting cart open');
           return;
         }
       } else if (needsCartFetch) {
@@ -2244,21 +2253,38 @@
       
       // Check if cart is active (in case settings were just fetched)
       if (state.settings?.cart_active === false) {
+        console.warn('[Cart.js] Cart is disabled in settings');
         return;
       }
+      
+      console.log('[Cart.js] About to auto-add protection...');
       
       // OPTIMIZATION: Auto-add protection when cart opens (if enabled)
       // Variant ID is already prefetched, so this is instant (no delay)
       await maybeAutoAddProtection();
+      
+      console.log('[Cart.js] Opening cart UI...');
       
       // Open the cart UI
       state.isOpen = true;
       overlay.classList.add('sp-open');
       document.body.style.overflow = 'hidden';
       
+      console.log('[Cart.js] Overlay class added, overflow hidden, state.isOpen:', state.isOpen);
+      console.log('[Cart.js] Overlay classes:', overlay.className);
+      console.log('[Cart.js] Overlay computed styles:', {
+        display: window.getComputedStyle(overlay).display,
+        visibility: window.getComputedStyle(overlay).visibility,
+        opacity: window.getComputedStyle(overlay).opacity,
+        zIndex: window.getComputedStyle(overlay).zIndex
+      });
+      
       // Render cart (Optimization #1: cart data already available, no refetch needed)
+      console.log('[Cart.js] Rendering cart...');
       renderCart();
+      console.log('[Cart.js] Cart render complete');
     } catch (error) {
+      console.error('[Cart.js] Error in openCart():', error);
       // Make sure we don't leave the page in a broken state
       if (overlay.classList.contains('sp-open')) {
         closeCart();
