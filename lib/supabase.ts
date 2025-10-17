@@ -72,6 +72,16 @@ export interface Settings {
   cart_image_desktop_size?: number;
   cart_image_position?: string;
   
+  // Payment icons settings
+  show_payment_icons?: boolean;
+  payment_icon_amex?: boolean;
+  payment_icon_applepay?: boolean;
+  payment_icon_googlepay?: boolean;
+  payment_icon_mastercard?: boolean;
+  payment_icon_paypal?: boolean;
+  payment_icon_shoppay?: boolean;
+  payment_icon_visa?: boolean;
+  
   // Announcement settings
   announcement_enabled?: boolean;
   announcement_text?: string;
@@ -84,6 +94,10 @@ export interface Settings {
   announcement_countdown_duration?: number;
   announcement_font_size?: number;
   announcement_show_border?: boolean;
+  announcement_countdown_bold?: boolean;
+  announcement_countdown_italic?: boolean;
+  announcement_countdown_underline?: boolean;
+  announcement_countdown_time_format?: string;
   
   // Add-ons settings
   addons_enabled?: boolean;
