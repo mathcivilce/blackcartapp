@@ -16,6 +16,10 @@ export default function AnnouncementPage() {
     countdownDuration: 300,
     fontSize: 14,
     showBorder: true,
+    countdownBold: false,
+    countdownItalic: false,
+    countdownUnderline: false,
+    countdownTimeFormat: 'text',
   });
 
   const [design, setDesign] = useState({
@@ -376,6 +380,91 @@ export default function AnnouncementPage() {
                     </p>
                   </div>
                 )}
+              </>
+            )}
+
+            {announcement.countdownEnabled && (
+              <>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Countdown Time Format</label>
+                  <div style={styles.buttonGroup}>
+                    <button
+                      type="button"
+                      onClick={() => setAnnouncement(prev => ({ ...prev, countdownTimeFormat: 'text' }))}
+                      style={{
+                        ...styles.alignButton,
+                        ...(announcement.countdownTimeFormat === 'text' ? styles.alignButtonActive : {}),
+                        opacity: announcement.enabled ? 1 : 0.5,
+                        cursor: announcement.enabled ? 'pointer' : 'not-allowed'
+                      }}
+                      disabled={!announcement.enabled}
+                    >
+                      13m 9s
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAnnouncement(prev => ({ ...prev, countdownTimeFormat: 'numeric' }))}
+                      style={{
+                        ...styles.alignButton,
+                        ...(announcement.countdownTimeFormat === 'numeric' ? styles.alignButtonActive : {}),
+                        opacity: announcement.enabled ? 1 : 0.5,
+                        cursor: announcement.enabled ? 'pointer' : 'not-allowed'
+                      }}
+                      disabled={!announcement.enabled}
+                    >
+                      13:09
+                    </button>
+                  </div>
+                  <p style={styles.helpText}>
+                    Choose how the countdown time should be displayed
+                  </p>
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Countdown Text Formatting</label>
+                  <div style={styles.checkboxGroup}>
+                    <label style={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        name="countdownBold"
+                        checked={announcement.countdownBold}
+                        onChange={handleInputChange}
+                        style={styles.checkbox}
+                        disabled={!announcement.enabled}
+                      />
+                      <span><strong>Bold</strong></span>
+                    </label>
+                  </div>
+                  <div style={styles.checkboxGroup}>
+                    <label style={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        name="countdownItalic"
+                        checked={announcement.countdownItalic}
+                        onChange={handleInputChange}
+                        style={styles.checkbox}
+                        disabled={!announcement.enabled}
+                      />
+                      <span><em>Italic</em></span>
+                    </label>
+                  </div>
+                  <div style={styles.checkboxGroup}>
+                    <label style={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        name="countdownUnderline"
+                        checked={announcement.countdownUnderline}
+                        onChange={handleInputChange}
+                        style={styles.checkbox}
+                        disabled={!announcement.enabled}
+                      />
+                      <span style={{ textDecoration: 'underline' }}>Underline</span>
+                    </label>
+                  </div>
+                  <p style={styles.helpText}>
+                    Apply text formatting to the countdown timer
+                  </p>
+                </div>
               </>
             )}
           </div>

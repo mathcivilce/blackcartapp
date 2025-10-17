@@ -48,6 +48,10 @@ interface CartPreviewProps {
     countdownDuration?: number;
     fontSize?: number;
     showBorder?: boolean;
+    countdownBold?: boolean;
+    countdownItalic?: boolean;
+    countdownUnderline?: boolean;
+    countdownTimeFormat?: string;
   };
   freeGifts?: {
     enabled: boolean;
@@ -89,8 +93,8 @@ interface CartPreviewProps {
 }
 
 // Countdown formatter
-function formatCountdown(endTime: string): string {
-  if (!endTime) return '00:00:00';
+function formatCountdown(endTime: string, timeFormat: string = 'text'): string {
+  if (!endTime) return timeFormat === 'numeric' ? '00:00' : '0m 0s';
   
   const end = new Date(endTime).getTime();
   const now = new Date().getTime();
@@ -103,12 +107,23 @@ function formatCountdown(endTime: string): string {
   const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-  if (days > 0) {
-    return `${days}d ${hours}h ${minutes}m`;
-  } else if (hours > 0) {
-    return `${hours}h ${minutes}m ${seconds}s`;
+  if (timeFormat === 'numeric') {
+    // Numeric format: HH:MM:SS or MM:SS
+    if (days > 0 || hours > 0) {
+      const totalHours = days * 24 + hours;
+      return `${String(totalHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    } else {
+      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
   } else {
-    return `${minutes}m ${seconds}s`;
+    // Text format: 13m 9s
+    if (days > 0) {
+      return `${days}d ${hours}h ${minutes}m`;
+    } else if (hours > 0) {
+      return `${hours}h ${minutes}m ${seconds}s`;
+    } else {
+      return `${minutes}m ${seconds}s`;
+    }
   }
 }
 
@@ -126,10 +141,12 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
   // Update countdown every second if countdown is enabled
   React.useEffect(() => {
     if (announcement?.countdownEnabled) {
+      const timeFormat = announcement.countdownTimeFormat || 'text';
+      
       if (announcement.countdownType === 'fixed' && announcement.countdownEnd) {
         // Fixed countdown: show time until specific date
         const updateCountdown = () => {
-          setCountdown(formatCountdown(announcement.countdownEnd!));
+          setCountdown(formatCountdown(announcement.countdownEnd!, timeFormat));
         };
         
         updateCountdown(); // Initial update
@@ -150,7 +167,11 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
           const secs = seconds % 60;
           
           if (remaining > 0) {
-            setCountdown(`${mins}m ${secs}s`);
+            if (timeFormat === 'numeric') {
+              setCountdown(`${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`);
+            } else {
+              setCountdown(`${mins}m ${secs}s`);
+            }
           } else {
             setCountdown('EXPIRED');
           }
@@ -162,13 +183,26 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
         return () => clearInterval(interval);
       }
     }
-  }, [announcement?.countdownEnabled, announcement?.countdownType, announcement?.countdownEnd, announcement?.countdownDuration]);
+  }, [announcement?.countdownEnabled, announcement?.countdownType, announcement?.countdownEnd, announcement?.countdownDuration, announcement?.countdownTimeFormat]);
 
   const renderAnnouncementText = () => {
-    if (!announcement?.text) return '';
+    if (!announcement?.text) return announcement?.text || '';
     
     if (announcement.countdownEnabled && announcement.text.includes('{{ countdown }}')) {
-      return announcement.text.replace('{{ countdown }}', countdown || '00:00:00');
+      const parts = announcement.text.split('{{ countdown }}');
+      const countdownStyle: React.CSSProperties = {
+        fontWeight: announcement.countdownBold ? 'bold' : 'normal',
+        fontStyle: announcement.countdownItalic ? 'italic' : 'normal',
+        textDecoration: announcement.countdownUnderline ? 'underline' : 'none',
+      };
+      
+      return (
+        <>
+          {parts[0]}
+          <span style={countdownStyle}>{countdown || '00:00'}</span>
+          {parts[1]}
+        </>
+      );
     }
     
     return announcement.text;

@@ -908,8 +908,9 @@
 
   let countdownInterval = null;
 
-  function formatCountdown(endTime) {
-    if (!endTime) return '00:00:00';
+  function formatCountdown(endTime, timeFormat) {
+    timeFormat = timeFormat || 'text';
+    if (!endTime) return timeFormat === 'numeric' ? '00:00' : '0m 0s';
     
     const end = new Date(endTime).getTime();
     const now = new Date().getTime();
@@ -922,12 +923,23 @@
     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-    if (days > 0) {
-      return days + 'd ' + hours + 'h ' + minutes + 'm';
-    } else if (hours > 0) {
-      return hours + 'h ' + minutes + 'm ' + seconds + 's';
+    if (timeFormat === 'numeric') {
+      // Numeric format: HH:MM:SS or MM:SS
+      if (days > 0 || hours > 0) {
+        const totalHours = days * 24 + hours;
+        return String(totalHours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+      } else {
+        return String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+      }
     } else {
-      return minutes + 'm ' + seconds + 's';
+      // Text format: 13m 9s
+      if (days > 0) {
+        return days + 'd ' + hours + 'h ' + minutes + 'm';
+      } else if (hours > 0) {
+        return hours + 'h ' + minutes + 'm ' + seconds + 's';
+      } else {
+        return minutes + 'm ' + seconds + 's';
+      }
     }
   }
 
@@ -936,15 +948,20 @@
     
     if (announcement.countdownEnabled && announcement.text.includes('{{ countdown }}')) {
       let countdown = '';
+      const timeFormat = announcement.countdownTimeFormat || 'text';
       
       if (announcement.countdownType === 'fresh' && announcement.countdownDuration) {
         // Fresh timer: Show full duration initially
         const mins = Math.floor(announcement.countdownDuration / 60);
         const secs = announcement.countdownDuration % 60;
-        countdown = mins + 'm ' + secs + 's';
+        if (timeFormat === 'numeric') {
+          countdown = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+        } else {
+          countdown = mins + 'm ' + secs + 's';
+        }
       } else if (announcement.countdownType === 'fixed' && announcement.countdownEnd) {
         // Fixed timer: Calculate from end date
-        countdown = formatCountdown(announcement.countdownEnd);
+        countdown = formatCountdown(announcement.countdownEnd, timeFormat);
       }
       
       return announcement.text.replace('{{ countdown }}', countdown);
@@ -965,6 +982,7 @@
 
     if (activeBanner && activeBanner.style.display !== 'none') {
       let countdown = '';
+      const timeFormat = announcement.countdownTimeFormat || 'text';
       
       if (announcement.countdownType === 'fresh' && announcement.countdownDuration) {
         // Fresh timer: Calculate countdown from duration
@@ -979,18 +997,36 @@
         const secs = seconds % 60;
         
         if (remaining > 0) {
-          countdown = mins + 'm ' + secs + 's';
+          if (timeFormat === 'numeric') {
+            countdown = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+          } else {
+            countdown = mins + 'm ' + secs + 's';
+          }
         } else {
           countdown = 'EXPIRED';
         }
       } else if (announcement.countdownType === 'fixed' && announcement.countdownEnd) {
         // Fixed timer: Use existing formatCountdown function
-        countdown = formatCountdown(announcement.countdownEnd);
+        countdown = formatCountdown(announcement.countdownEnd, timeFormat);
       }
       
-      // Replace {{ countdown }} placeholder with actual countdown
-      const text = announcement.text.replace('{{ countdown }}', countdown);
-      activeBanner.textContent = text;
+      // Apply formatting styles to countdown
+      const countdownBold = announcement.countdownBold || false;
+      const countdownItalic = announcement.countdownItalic || false;
+      const countdownUnderline = announcement.countdownUnderline || false;
+      
+      let formattedCountdown = countdown;
+      if (countdownBold || countdownItalic || countdownUnderline) {
+        const styles = [];
+        if (countdownBold) styles.push('font-weight: bold');
+        if (countdownItalic) styles.push('font-style: italic');
+        if (countdownUnderline) styles.push('text-decoration: underline');
+        formattedCountdown = '<span style="' + styles.join('; ') + '">' + countdown + '</span>';
+      }
+      
+      // Replace {{ countdown }} placeholder with formatted countdown
+      const text = announcement.text.replace('{{ countdown }}', formattedCountdown);
+      activeBanner.innerHTML = text;
     }
   }
 
@@ -1197,8 +1233,28 @@
         
         if (activeBanner) {
           // Apply text (with countdown replacement if enabled)
-          const text = formatAnnouncementText(announcement);
-          activeBanner.textContent = text;
+          let text = formatAnnouncementText(announcement);
+          
+          // Apply formatting to countdown if present
+          if (announcement.countdownEnabled && announcement.text.includes('{{ countdown }}')) {
+            const countdownBold = announcement.countdownBold || false;
+            const countdownItalic = announcement.countdownItalic || false;
+            const countdownUnderline = announcement.countdownUnderline || false;
+            
+            if (countdownBold || countdownItalic || countdownUnderline) {
+              // Find the countdown in the text and wrap it with styled span
+              const placeholder = text.match(/\d+[mhds:\s]+\d*[mhds]?/);
+              if (placeholder) {
+                const styles = [];
+                if (countdownBold) styles.push('font-weight: bold');
+                if (countdownItalic) styles.push('font-style: italic');
+                if (countdownUnderline) styles.push('text-decoration: underline');
+                text = text.replace(placeholder[0], '<span style="' + styles.join('; ') + '">' + placeholder[0] + '</span>');
+              }
+            }
+          }
+          
+          activeBanner.innerHTML = text;
           
           // Apply styling
           activeBanner.style.backgroundColor = announcement.backgroundColor || '#000000';
