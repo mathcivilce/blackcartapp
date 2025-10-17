@@ -1080,19 +1080,17 @@
         countdown = formatCountdown(announcement.countdownEnd, timeFormat);
       }
       
-      // Apply formatting styles to countdown
+      // Apply formatting styles to countdown (always wrap in span to isolate from parent styles)
       const countdownBold = announcement.countdownBold || false;
       const countdownItalic = announcement.countdownItalic || false;
       const countdownUnderline = announcement.countdownUnderline || false;
       
-      let formattedCountdown = countdown;
-      if (countdownBold || countdownItalic || countdownUnderline) {
-        const styles = [];
-        if (countdownBold) styles.push('font-weight: bold');
-        if (countdownItalic) styles.push('font-style: italic');
-        if (countdownUnderline) styles.push('text-decoration: underline');
-        formattedCountdown = '<span style="' + styles.join('; ') + '">' + countdown + '</span>';
-      }
+      // Always wrap countdown with explicit styles to prevent inheritance from parent
+      const styles = [];
+      styles.push('font-weight: ' + (countdownBold ? 'bold' : 'normal'));
+      styles.push('font-style: ' + (countdownItalic ? 'italic' : 'normal'));
+      styles.push('text-decoration: ' + (countdownUnderline ? 'underline' : 'none'));
+      const formattedCountdown = '<span style="' + styles.join('; ') + '">' + countdown + '</span>';
       
       // Replace {{ countdown }} placeholder with formatted countdown
       const text = announcement.text.replace('{{ countdown }}', formattedCountdown);
@@ -1345,22 +1343,21 @@
           // Apply text (with countdown replacement if enabled)
           let text = formatAnnouncementText(announcement);
           
-          // Apply formatting to countdown if present
+          // Apply formatting to countdown if present (always wrap in span to isolate from parent styles)
           if (announcement.countdownEnabled && announcement.text.includes('{{ countdown }}')) {
             const countdownBold = announcement.countdownBold || false;
             const countdownItalic = announcement.countdownItalic || false;
             const countdownUnderline = announcement.countdownUnderline || false;
             
-            if (countdownBold || countdownItalic || countdownUnderline) {
-              // Find the countdown in the text and wrap it with styled span
-              const placeholder = text.match(/\d+[mhds:\s]+\d*[mhds]?/);
-              if (placeholder) {
-                const styles = [];
-                if (countdownBold) styles.push('font-weight: bold');
-                if (countdownItalic) styles.push('font-style: italic');
-                if (countdownUnderline) styles.push('text-decoration: underline');
-                text = text.replace(placeholder[0], '<span style="' + styles.join('; ') + '">' + placeholder[0] + '</span>');
-              }
+            // Find the countdown in the text and wrap it with styled span (always, to prevent inheritance)
+            const placeholder = text.match(/\d+[mhds:\s]+\d*[mhds]?/);
+            if (placeholder) {
+              const styles = [];
+              // Always set explicit styles to prevent inheritance from parent
+              styles.push('font-weight: ' + (countdownBold ? 'bold' : 'normal'));
+              styles.push('font-style: ' + (countdownItalic ? 'italic' : 'normal'));
+              styles.push('text-decoration: ' + (countdownUnderline ? 'underline' : 'none'));
+              text = text.replace(placeholder[0], '<span style="' + styles.join('; ') + '">' + placeholder[0] + '</span>');
             }
           }
           
@@ -1370,7 +1367,7 @@
           activeBanner.style.backgroundColor = announcement.backgroundColor || '#000000';
           activeBanner.style.color = announcement.textColor || '#FFFFFF';
           activeBanner.style.fontSize = (announcement.fontSize || 14) + 'px';
-          activeBanner.style.fontWeight = announcement.textBold ? 'bold' : '600';
+          activeBanner.style.fontWeight = announcement.textBold ? 'bold' : 'normal';
           activeBanner.style.fontStyle = announcement.textItalic ? 'italic' : 'normal';
           activeBanner.style.textDecoration = announcement.textUnderline ? 'underline' : 'none';
           
@@ -2026,11 +2023,25 @@
       let compareAtPriceHTML = '';
       let savingsHTML = '';
       
+      // Debug: Log item price data
+      console.log('[Cart.js] Item pricing data for:', item.product_title, {
+        compare_at_price: item.compare_at_price,
+        final_price: item.final_price,
+        price: item.price,
+        final_line_price: item.final_line_price,
+        original_line_price: item.original_line_price,
+        quantity: item.quantity,
+        showSavings: showSavings,
+        displayCompareAtPrice: displayCompareAtPrice
+      });
+      
       // Check for compare_at_price (compare per-item prices)
       // item.compare_at_price = compare-at price per item
       // item.final_price = actual price per item after discounts
       // item.price = original price per item before discounts
       const itemFinalPrice = item.final_price || item.price || 0;
+      
+      console.log('[Cart.js] Comparing:', item.compare_at_price, '>', itemFinalPrice, '=', (item.compare_at_price && item.compare_at_price > itemFinalPrice));
       
       if (item.compare_at_price && item.compare_at_price > itemFinalPrice) {
         // Calculate line-level prices for display
@@ -2038,14 +2049,25 @@
         const savingsPerItem = item.compare_at_price - itemFinalPrice;
         const savingsLineTotal = savingsPerItem * item.quantity;
         
+        console.log('[Cart.js] Generating price displays:', {
+          compareAtLinePrice: compareAtLinePrice,
+          savingsLineTotal: savingsLineTotal,
+          displayCompareAtPrice: displayCompareAtPrice,
+          showSavings: showSavings
+        });
+        
         if (displayCompareAtPrice) {
           compareAtPriceHTML = `<span style="font-size: 13px; color: #999; text-decoration: line-through; margin-right: 8px;">${formatMoney(compareAtLinePrice)}</span>`;
+          console.log('[Cart.js] compareAtPriceHTML generated:', compareAtPriceHTML);
         }
         if (showSavings) {
           const savingsColor = state.settings?.design?.savingsTextColor || '#2ea818';
           const savingsText = state.settings?.design?.savingsText || 'Save';
           savingsHTML = `<p class="sp-cart-item-savings" style="color: ${savingsColor};">${savingsText} ${formatMoney(savingsLineTotal)}</p>`;
+          console.log('[Cart.js] savingsHTML generated:', savingsHTML);
         }
+      } else {
+        console.log('[Cart.js] No compare-at-price display - condition not met');
       }
       
       return `
