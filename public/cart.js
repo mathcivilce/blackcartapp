@@ -1116,7 +1116,7 @@
   // SHOPIFY CART API FUNCTIONS
   // ============================================
 
-  async function fetchCart(retries = 2) {
+  async function fetchCart(retries = 2, shouldEnrich = true) {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         // Create abort controller for timeout (3 seconds per attempt)
@@ -1139,8 +1139,16 @@
         const cart = await response.json();
         console.log('[Cart.js] Cart data fetched successfully' + (attempt > 1 ? ` (attempt ${attempt})` : ''), `(${cart.item_count} items)`);
         
-        // Enrich cart items with compare_at_price from variant data
-        await enrichCartItemsWithComparePrice(cart);
+        // Conditionally enrich cart items with compare_at_price from variant data
+        // Only if feature is enabled (optimization)
+        if (shouldEnrich && shouldEnrichWithComparePrice()) {
+          console.log('[Cart.js] Enriching cart with compare prices...');
+          await enrichCartItemsWithComparePrice(cart);
+        } else if (!shouldEnrich) {
+          console.log('[Cart.js] Skipping enrichment (will be done lazily)');
+        } else {
+          console.log('[Cart.js] Compare price feature disabled - skipping enrichment');
+        }
         
         state.cart = cart;
         checkProtectionInCart();
@@ -1166,6 +1174,37 @@
     }
     
     return null;
+  }
+  
+  // Helper function: Check if we should enrich with compare prices
+  function shouldEnrichWithComparePrice() {
+    // Check if either compare price display or savings display is enabled
+    const displayCompareAtPrice = state.settings?.design?.displayCompareAtPrice !== false;
+    const showSavings = state.settings?.design?.showSavings !== false;
+    
+    return displayCompareAtPrice || showSavings;
+  }
+  
+  // Helper function: Enrich cart lazily in background (non-blocking)
+  async function enrichCartLazily() {
+    if (!state.cart || !shouldEnrichWithComparePrice()) {
+      return;
+    }
+    
+    console.log('[Cart.js] Starting lazy enrichment in background...');
+    
+    try {
+      await enrichCartItemsWithComparePrice(state.cart);
+      
+      // Re-render cart with compare prices if cart is still open
+      if (state.isOpen) {
+        console.log('[Cart.js] Lazy enrichment complete - updating cart display');
+        renderCart();
+      }
+    } catch (error) {
+      console.warn('[Cart.js] Lazy enrichment failed:', error);
+      // Silently fail - cart still works without compare prices
+    }
   }
   
   // Fetch compare_at_price for all cart items (Shopify cart API doesn't include it)
@@ -2139,11 +2178,16 @@
       });
       const cart = await response.json();
       
-      // Enrich cart items with compare_at_price after update
-      await enrichCartItemsWithComparePrice(cart);
-      
       state.cart = cart;
       state.isLoading = false;
+      
+      // ⚡ OPTIMIZATION: Enrich in background if feature is enabled (non-blocking)
+      if (shouldEnrichWithComparePrice()) {
+        enrichCartItemsWithComparePrice(cart).then(() => {
+          if (state.isOpen) renderCart();
+        });
+      }
+      
       return cart;
     } catch (error) {
       state.isLoading = false;
@@ -2799,8 +2843,8 @@
         // Add protection BEFORE fetching cart (so it's included in the cart)
         await maybeAutoAddProtection();
         
-        // Fetch cart to get updated data with protection item
-        await fetchCart();
+        // ⚡ OPTIMIZATION: Fetch cart WITHOUT enrichment for speed
+        await fetchCart(2, false);
         
         checkProtectionInCart();
         
@@ -2820,6 +2864,9 @@
           realFooter.classList.remove('sp-hidden');
         }
         
+        // ⚡ OPTIMIZATION: Enrich with compare prices in background (non-blocking)
+        enrichCartLazily();
+        
         console.log('[Cart.js] Fast path complete - instant render');
         return;
       }
@@ -2837,8 +2884,8 @@
       // Add protection BEFORE fetching cart (so it's included in the cart)
       await maybeAutoAddProtection();
       
-      // Fetch cart to get updated data with protection item
-      await fetchCart();
+      // ⚡ OPTIMIZATION: Fetch cart WITHOUT enrichment for speed
+      await fetchCart(2, false);
       
       // Check protection in cart AFTER refetch
       checkProtectionInCart();
@@ -2862,6 +2909,9 @@
           if (realFooter) {
             realFooter.classList.remove('sp-hidden');
           }
+          
+          // ⚡ OPTIMIZATION: Enrich with compare prices in background (non-blocking)
+          enrichCartLazily();
         }, 75); // ⚡ OPTIMIZATION: Reduced from 150ms to 75ms for faster transition
       } else {
         renderCart();
@@ -2871,6 +2921,9 @@
         if (skeletonFooter) {
           skeletonFooter.remove();
         }
+        
+        // ⚡ OPTIMIZATION: Enrich with compare prices in background (non-blocking)
+        enrichCartLazily();
         
         const realFooter = document.querySelector('.sp-cart-footer');
         if (realFooter) {
@@ -3032,10 +3085,10 @@
         // Show skeleton immediately (feels instant!)
         renderSkeleton();
         
-        // Fetch settings and cart in parallel (background)
+        // ⚡ OPTIMIZATION: Fetch settings and cart in parallel WITHOUT enrichment (faster!)
         const [settings, cart] = await Promise.all([
           fetchSettings(false), // Fetch fresh from API
-          fetchCart()
+          fetchCart(2, false)   // Skip enrichment for speed
         ]);
         
         if (!settings) {
@@ -3063,8 +3116,8 @@
         // This ensures toggle is already ON when cart appears
         await maybeAutoAddProtection();
         
-        // ✅ CRITICAL: Refetch cart to get updated data with protection item
-        await fetchCart();
+        // ✅ CRITICAL: Refetch cart to get updated data with protection item (skip enrichment)
+        await fetchCart(2, false);
         
         // ✅ Check protection in cart AFTER refetch (to set state.protectionVariantId)
         checkProtectionInCart();
@@ -3088,6 +3141,9 @@
             if (realFooter) {
               realFooter.classList.remove('sp-hidden');
             }
+            
+            // ⚡ OPTIMIZATION: Enrich with compare prices in background (non-blocking)
+            enrichCartLazily();
           }, 150); // Small delay for smooth transition
         } else {
           renderCart();
@@ -3102,6 +3158,9 @@
           if (realFooter) {
             realFooter.classList.remove('sp-hidden');
           }
+          
+          // ⚡ OPTIMIZATION: Enrich with compare prices in background (non-blocking)
+          enrichCartLazily();
         }
         
       } else {
@@ -3114,22 +3173,25 @@
           footer.classList.remove('sp-hidden');
         }
         
-        // Just fetch cart (fast)
+        // ⚡ OPTIMIZATION: Just fetch cart (fast) - skip enrichment
         if (!state.cart) {
-          await fetchCart();
+          await fetchCart(2, false);
         }
         
         // ✅ Auto-add protection BEFORE rendering (prevents toggle flicker)
         await maybeAutoAddProtection();
         
-        // ✅ CRITICAL: Refetch cart to get updated data with protection item
-        await fetchCart();
+        // ✅ CRITICAL: Refetch cart to get updated data with protection item (skip enrichment)
+        await fetchCart(2, false);
         
         // ✅ Check protection in cart AFTER refetch (to filter it out correctly)
         checkProtectionInCart();
         
         // Render immediately (no skeleton needed)
         renderCart();
+        
+        // ⚡ OPTIMIZATION: Enrich with compare prices in background (non-blocking)
+        enrichCartLazily();
       }
       
       console.log('[Cart.js] Cart opened successfully');
