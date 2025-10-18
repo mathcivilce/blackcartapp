@@ -970,14 +970,20 @@
         position: relative !important;
         background: linear-gradient(
           90deg,
-          var(--sp-skel-base) 25%,
-          var(--sp-skel-mid) 37%,
-          var(--sp-skel-base) 63%
+          #e9ecef 25%,
+          #f3f4f6 37%,
+          #e9ecef 63%
         ) !important;
         background-size: 200% 100% !important;
-        animation: sp-skeleton-shimmer 1.2s linear infinite !important;
+        background-repeat: no-repeat !important;
+        background-position: -100% 0 !important;
+        animation-name: sp-skeleton-shimmer !important;
+        animation-duration: 1.2s !important;
+        animation-timing-function: linear !important;
+        animation-iteration-count: infinite !important;
+        animation-fill-mode: forwards !important;
         border-radius: 8px !important;
-        will-change: background-position;
+        will-change: background-position !important;
       }
 
       /* Tighter, continuous sweep */
