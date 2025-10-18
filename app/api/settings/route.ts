@@ -21,6 +21,11 @@ export async function GET(request: NextRequest) {
   // Token-based authentication (preferred method)
   if (token) {
     try {
+      // Debug logging
+      console.log('🔍 [Settings API] Received token:', token?.substring(0, 8) + '...');
+      console.log('🔍 [Settings API] Received shop:', shop);
+      console.log('🔍 [Settings API] Using service role key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'FROM ENV' : 'FALLBACK');
+      
       // First get the store
       const { data: store, error: storeError } = await supabase
         .from('stores')
@@ -28,8 +33,25 @@ export async function GET(request: NextRequest) {
         .eq('access_token', token)
         .single();
 
+      console.log('🔍 [Settings API] Query result:', {
+        storeFound: !!store,
+        storeId: store?.id,
+        storeDomain: store?.shop_domain,
+        errorCode: storeError?.code,
+        errorMessage: storeError?.message,
+        errorDetails: storeError?.details,
+        errorHint: storeError?.hint
+      });
+
       if (storeError || !store) {
-        const response = NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        console.error('❌ [Settings API] Store lookup failed:', storeError);
+        const response = NextResponse.json({ 
+          error: 'Invalid token',
+          debug: {
+            errorCode: storeError?.code,
+            errorMessage: storeError?.message
+          }
+        }, { status: 401 });
         // Add CORS headers
         response.headers.set('Access-Control-Allow-Origin', '*');
         response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
