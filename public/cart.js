@@ -956,7 +956,7 @@
         visibility: visible !important;
       }
 
-      /* Animated shimmer effect - Visible sweep with correct positioning */
+      /* Animated shimmer effect - Sweep from left to right */
       .sp-skeleton-image,
       .sp-skeleton-line,
       .sp-skeleton-button,
@@ -964,26 +964,27 @@
         background: linear-gradient(
           90deg,
           #e8e8e8 0%,
-          #e8e8e8 40%,
-          #f5f5f5 48%,
+          #e8e8e8 30%,
+          #f0f0f0 45%,
           #ffffff 50%,
-          #ffffff 52%,
-          #f5f5f5 56%,
-          #e8e8e8 60%,
+          #f0f0f0 55%,
+          #e8e8e8 70%,
           #e8e8e8 100%
         ) !important;
-        background-size: 200% 100% !important;
-        animation: sp-skeleton-shimmer 1.5s linear infinite !important;
-        animation-fill-mode: forwards !important;
-        animation-play-state: running !important;
+        background-size: 300% 100% !important;
+        background-position: -150% 0 !important;
+        animation: sp-skeleton-shimmer 2s ease-in-out infinite !important;
       }
 
       @keyframes sp-skeleton-shimmer {
         0% { 
-          background-position: -100% 0 !important;
+          background-position: -150% 0 !important;
+        }
+        50% {
+          background-position: 50% 0 !important;
         }
         100% { 
-          background-position: 100% 0 !important;
+          background-position: 150% 0 !important;
         }
       }
 
