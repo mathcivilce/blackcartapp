@@ -2740,21 +2740,15 @@
     overlay.classList.add('sp-open');
     document.body.style.overflow = 'hidden';
     
-    // Show skeleton ONLY on first cart interaction (before settings are loaded)
-    if (!state.settingsLoaded) {
-      console.log('[Cart.js] First Add to Cart - showing skeleton UI');
+    // Show skeleton ONLY if we don't have data to show yet
+    // (settings not loaded OR no cart data)
+    if (!state.settingsLoaded || !state.cart) {
+      console.log('[Cart.js] Showing skeleton UI (settingsLoaded:', state.settingsLoaded, ', hasCart:', !!state.cart, ')');
       renderSkeleton();
     } else {
-      console.log('[Cart.js] Subsequent Add to Cart - skipping skeleton (settings cached)');
-      // Show loading indicator in existing cart content
-      const contentArea = document.getElementById('sp-cart-content');
-      if (contentArea && state.cart) {
-        // Keep showing current cart while new item is being added
-        renderCart();
-      } else {
-        // Fallback: show skeleton if no cart data yet
-        renderSkeleton();
-      }
+      console.log('[Cart.js] Skipping skeleton - showing current cart while updating');
+      // Keep showing current cart while new item is being added
+      renderCart();
     }
     
     console.log('[Cart.js] Cart opened instantly (Add to Cart optimistic UI)');
@@ -2778,7 +2772,14 @@
         // Instant render (no skeleton transition needed)
         renderCart();
         
-        // Ensure footer is visible
+        // ✅ FIX: Clean up skeleton footer (in case it was shown)
+        const skeletonFooter = document.querySelector('.sp-skeleton-footer');
+        if (skeletonFooter) {
+          console.log('[Cart.js] Removing skeleton footer (fast path)');
+          skeletonFooter.remove();
+        }
+        
+        // Ensure real footer is visible
         const realFooter = document.querySelector('.sp-cart-footer');
         if (realFooter) {
           realFooter.classList.remove('sp-hidden');
