@@ -4,11 +4,28 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ezzpivxxdxcdnmerrcbt.supabase.co';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6enBpdnh4ZHhjZG5tZXJyY2J0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDIwNzE0NiwiZXhwIjoyMDc1NzgzMTQ2fQ.KbKQ0SKyqXYFqylxtUPCr07DiyCdcvwat_YV9tjQoMg';
 
+// Log which key is being used (only log first/last 8 chars for security)
+if (typeof window === 'undefined') { // Server-side only
+  const keySource = process.env.SUPABASE_SERVICE_ROLE_KEY ? 'ENVIRONMENT' : 'FALLBACK';
+  const keyPreview = supabaseServiceKey.substring(0, 8) + '...' + supabaseServiceKey.substring(supabaseServiceKey.length - 8);
+  console.log(`🔑 [Supabase] Using service role key from: ${keySource}`);
+  console.log(`🔑 [Supabase] Key preview: ${keyPreview}`);
+}
+
 // Create Supabase client with service role key (for server-side only)
+// The service role key should bypass ALL RLS policies automatically
 export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false
+  },
+  db: {
+    schema: 'public'
+  },
+  global: {
+    headers: {
+      'apikey': supabaseServiceKey // Explicitly set API key header
+    }
   }
 });
 

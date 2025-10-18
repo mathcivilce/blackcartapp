@@ -26,12 +26,12 @@ export async function GET(request: NextRequest) {
       console.log('🔍 [Settings API] Received shop:', shop);
       console.log('🔍 [Settings API] Using service role key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'FROM ENV' : 'FALLBACK');
       
-      // First get the store
+      // First get the store - using maybeSingle() instead of single() to avoid errors on no results
       const { data: store, error: storeError } = await supabase
         .from('stores')
         .select('*')
         .eq('access_token', token)
-        .single();
+        .maybeSingle();
 
       console.log('🔍 [Settings API] Query result:', {
         storeFound: !!store,
@@ -43,14 +43,33 @@ export async function GET(request: NextRequest) {
         errorHint: storeError?.hint
       });
 
-      if (storeError || !store) {
-        console.error('❌ [Settings API] Store lookup failed:', storeError);
+      if (storeError) {
+        console.error('❌ [Settings API] Database error:', {
+          code: storeError.code,
+          message: storeError.message,
+          details: storeError.details,
+          hint: storeError.hint
+        });
+        
         const response = NextResponse.json({ 
-          error: 'Invalid token',
+          error: 'Database error',
           debug: {
             errorCode: storeError?.code,
-            errorMessage: storeError?.message
+            errorMessage: storeError?.message,
+            errorHint: storeError?.hint
           }
+        }, { status: 500 });
+        response.headers.set('Access-Control-Allow-Origin', '*');
+        response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+        return response;
+      }
+
+      if (!store) {
+        console.error('❌ [Settings API] No store found with token:', token?.substring(0, 8) + '...');
+        const response = NextResponse.json({ 
+          error: 'Invalid token',
+          message: 'No store found with this access token'
         }, { status: 401 });
         // Add CORS headers
         response.headers.set('Access-Control-Allow-Origin', '*');
