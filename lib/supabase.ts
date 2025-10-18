@@ -29,6 +29,43 @@ export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   }
 });
 
+// Helper function to execute queries with retry logic for intermittent connection issues
+export async function supabaseQueryWithRetry<T>(
+  queryFn: () => Promise<{ data: T | null; error: any }>,
+  maxRetries = 3,
+  retryDelay = 100
+): Promise<{ data: T | null; error: any }> {
+  let lastError: any;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await queryFn();
+      
+      // If we got data or a real error (not a connection issue), return immediately
+      if (result.data || (result.error && result.error.code)) {
+        return result;
+      }
+      
+      // If no data and no error, might be a connection issue - retry
+      if (attempt < maxRetries) {
+        console.log(`⚠️ [Supabase] Empty result on attempt ${attempt}/${maxRetries}, retrying...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+        continue;
+      }
+      
+      return result;
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxRetries) {
+        console.log(`⚠️ [Supabase] Query failed on attempt ${attempt}/${maxRetries}:`, error);
+        await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+      }
+    }
+  }
+  
+  return { data: null, error: lastError };
+}
+
 // Database types
 export interface Store {
   id: string;

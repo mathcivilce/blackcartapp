@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStoreSettings } from '@/lib/db';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseQueryWithRetry } from '@/lib/supabase';
 
 // Handle CORS preflight requests
 export async function OPTIONS(request: NextRequest) {
@@ -26,12 +26,14 @@ export async function GET(request: NextRequest) {
       console.log('🔍 [Settings API] Received shop:', shop);
       console.log('🔍 [Settings API] Using service role key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'FROM ENV' : 'FALLBACK');
       
-      // First get the store - using maybeSingle() instead of single() to avoid errors on no results
-      const { data: store, error: storeError } = await supabase
-        .from('stores')
-        .select('*')
-        .eq('access_token', token)
-        .maybeSingle();
+      // First get the store - using retry logic to handle intermittent connection issues
+      const { data: store, error: storeError } = await supabaseQueryWithRetry(() =>
+        supabase
+          .from('stores')
+          .select('*')
+          .eq('access_token', token)
+          .maybeSingle()
+      );
 
       console.log('🔍 [Settings API] Query result:', {
         storeFound: !!store,
@@ -125,12 +127,14 @@ export async function GET(request: NextRequest) {
         return response;
       }
 
-      // Then get settings for this store
-      const { data: settings, error: settingsError } = await supabase
-        .from('settings')
-        .select('*')
-        .eq('store_id', store.id)
-        .single();
+      // Then get settings for this store - also with retry logic
+      const { data: settings, error: settingsError } = await supabaseQueryWithRetry(() =>
+        supabase
+          .from('settings')
+          .select('*')
+          .eq('store_id', store.id)
+          .maybeSingle()
+      );
       
       // Debug logging
       console.log('🔍 Store found:', store.id, store.shop_domain);
