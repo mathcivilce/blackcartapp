@@ -1933,6 +1933,12 @@
   function checkProtectionInCart() {
     if (!state.cart || !state.settings) return;
     
+    // ⚡ FIX: Only run protection logic if the add-on feature is enabled
+    // This prevents unnecessary checks and API calls when protection is disabled
+    if (!state.settings?.addons?.enabled) {
+      return;
+    }
+    
     let protectionItem;
     
     // First try: Check using cached variant ID (fastest)

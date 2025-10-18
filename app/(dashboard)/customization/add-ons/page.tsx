@@ -233,7 +233,13 @@ export default function AddOnsPage() {
     if (name === 'featureEnabled') {
       setAddons(prev => ({
         ...prev,
-        featureEnabled: checked
+        featureEnabled: checked,
+        // ⚡ FIX: When disabling the add-on feature, also disable "Accept by default"
+        // This prevents checkProtectionInCart() from running when feature is disabled
+        shippingProtection: {
+          ...prev.shippingProtection,
+          acceptByDefault: checked ? prev.shippingProtection.acceptByDefault : false
+        }
       }));
     } else {
       setAddons(prev => ({
