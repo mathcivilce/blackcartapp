@@ -956,7 +956,7 @@
         visibility: visible !important;
       }
 
-      /* Animated shimmer effect */
+      /* Animated shimmer effect - Facebook/LinkedIn style */
       .sp-skeleton-image,
       .sp-skeleton-line,
       .sp-skeleton-button,
@@ -964,16 +964,20 @@
         background: linear-gradient(
           90deg,
           #f0f0f0 0%,
-          #e0e0e0 50%,
+          #f0f0f0 40%,
+          #fafafa 50%,
+          #ffffff 55%,
+          #fafafa 60%,
+          #f0f0f0 70%,
           #f0f0f0 100%
         ) !important;
         background-size: 200% 100% !important;
-        animation: sp-skeleton-shimmer 1.5s ease-in-out infinite !important;
+        animation: sp-skeleton-shimmer 1.8s ease-in-out infinite !important;
       }
 
       @keyframes sp-skeleton-shimmer {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
       }
 
       /* Smooth fade transition when skeleton is replaced */
