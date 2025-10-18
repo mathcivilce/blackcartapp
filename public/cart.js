@@ -956,29 +956,33 @@
         visibility: visible !important;
       }
 
-      /* Animated shimmer effect - Enhanced prominent sweep */
+      /* Animated shimmer effect - VERY prominent sweep with high contrast */
       .sp-skeleton-image,
       .sp-skeleton-line,
       .sp-skeleton-button,
       .sp-skeleton-text {
         background: linear-gradient(
           90deg,
-          #e8e8e8 0%,
-          #e8e8e8 30%,
-          #f5f5f5 45%,
+          #d0d0d0 0%,
+          #d0d0d0 35%,
+          #e5e5e5 45%,
           #ffffff 50%,
-          #ffffff 55%,
-          #f5f5f5 60%,
-          #e8e8e8 75%,
-          #e8e8e8 100%
+          #ffffff 60%,
+          #e5e5e5 70%,
+          #d0d0d0 80%,
+          #d0d0d0 100%
         ) !important;
-        background-size: 300% 100% !important;
-        animation: sp-skeleton-shimmer 1.2s ease-in-out infinite !important;
+        background-size: 400% 100% !important;
+        animation: sp-skeleton-shimmer 1s linear infinite !important;
       }
 
       @keyframes sp-skeleton-shimmer {
-        0% { background-position: -300% 0; }
-        100% { background-position: 300% 0; }
+        0% { 
+          background-position: -400% 0; 
+        }
+        100% { 
+          background-position: 400% 0; 
+        }
       }
 
       /* Smooth fade transition when skeleton is replaced */
