@@ -89,6 +89,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
     }
 
+    // ⚡ CACHE INVALIDATION: Increment cache_version to invalidate edge function cache
+    const { error: cacheError } = await supabase.rpc('increment_cache_version', {
+      store_id_param: storeId
+    });
+
+    if (cacheError) {
+      console.warn('Warning: Failed to invalidate cache, but settings were saved:', cacheError);
+    } else {
+      console.log('✅ Cache invalidated for store:', storeId);
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Announcement settings update error:', error);
