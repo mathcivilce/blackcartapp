@@ -2704,6 +2704,129 @@
     });
   }
 
+  // Helper function: Open cart immediately with skeleton (for Add to Cart flows)
+  function openCartWithSkeleton() {
+    console.log('[Cart.js] openCartWithSkeleton() called');
+    
+    const overlay = document.getElementById('sp-cart-overlay');
+    if (!overlay) {
+      console.error('[Cart.js] Cannot open cart - overlay not found!');
+      return;
+    }
+    
+    // ✨ INSTANT: Open cart immediately with skeleton
+    state.isOpen = true;
+    overlay.classList.add('sp-open');
+    document.body.style.overflow = 'hidden';
+    
+    // Show skeleton immediately
+    renderSkeleton();
+    
+    console.log('[Cart.js] Cart opened instantly with skeleton (Add to Cart optimistic UI)');
+  }
+  
+  // Helper function: Transition from skeleton to real cart content
+  async function transitionToRealCart() {
+    console.log('[Cart.js] transitionToRealCart() called');
+    
+    try {
+      // Fetch settings if not loaded yet
+      if (!state.settingsLoaded) {
+        const settings = await fetchSettings(false);
+        if (settings) {
+          state.settingsLoaded = true;
+          applySettings();
+        }
+      }
+      
+      // Auto-add protection BEFORE rendering
+      await maybeAutoAddProtection();
+      
+      // Refetch cart to get updated data with protection item
+      await fetchCart();
+      
+      // Check protection in cart AFTER refetch
+      checkProtectionInCart();
+      
+      // Smooth transition: fade out skeleton, fade in real content
+      const contentArea = document.getElementById('sp-cart-content');
+      if (contentArea) {
+        contentArea.classList.add('sp-transitioning');
+        
+        setTimeout(() => {
+          renderCart();
+          contentArea.classList.remove('sp-transitioning');
+          
+          // Remove skeleton footer and show real footer
+          const skeletonFooter = document.querySelector('.sp-skeleton-footer');
+          if (skeletonFooter) {
+            skeletonFooter.remove();
+          }
+          
+          const realFooter = document.querySelector('.sp-cart-footer');
+          if (realFooter) {
+            realFooter.classList.remove('sp-hidden');
+          }
+        }, 150);
+      } else {
+        renderCart();
+        
+        // Remove skeleton footer and show real footer immediately
+        const skeletonFooter = document.querySelector('.sp-skeleton-footer');
+        if (skeletonFooter) {
+          skeletonFooter.remove();
+        }
+        
+        const realFooter = document.querySelector('.sp-cart-footer');
+        if (realFooter) {
+          realFooter.classList.remove('sp-hidden');
+        }
+      }
+      
+      console.log('[Cart.js] Transition to real cart complete');
+    } catch (error) {
+      console.error('[Cart.js] Error in transitionToRealCart():', error);
+      
+      // Show error in cart UI
+      showCartError('Failed to load cart. Please try again.');
+    }
+  }
+  
+  // Helper function: Show error message in cart
+  function showCartError(message) {
+    const contentArea = document.getElementById('sp-cart-content');
+    if (contentArea) {
+      contentArea.innerHTML = `
+        <div class="sp-cart-empty">
+          <div class="sp-cart-empty-icon">⚠️</div>
+          <h3>Oops!</h3>
+          <p>${message}</p>
+          <button onclick="window.location.reload()" style="
+            background: #1c8cd9;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 12px;
+          ">Refresh Page</button>
+        </div>
+      `;
+    }
+    
+    // Remove skeleton footer and show real footer
+    const skeletonFooter = document.querySelector('.sp-skeleton-footer');
+    if (skeletonFooter) {
+      skeletonFooter.remove();
+    }
+    
+    const realFooter = document.querySelector('.sp-cart-footer');
+    if (realFooter) {
+      realFooter.classList.remove('sp-hidden');
+    }
+  }
+  
   async function openCart() {
     console.log('[Cart.js] openCart() called');
     
@@ -2974,23 +3097,32 @@
         e.preventDefault();
         e.stopPropagation();
         
+        // ✨ OPTIMISTIC UI: Open cart IMMEDIATELY with skeleton
+        openCartWithSkeleton();
+        
         const formData = new FormData(form);
         
+        // Background: Add to cart + fetch
         fetch('/cart/add.js', {
           method: 'POST',
           body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to add product to cart');
+          }
+          return response.json();
+        })
         .then(async (data) => {
           console.log('[Cart.js] Product added to cart successfully');
-          // Successfully added to cart
-          // OPTIMIZATION: Use fetch-once strategy for better performance
-          await maybeAutoAddProtectionWithoutFetch(); // Add protection without fetching
-          await fetchCart(); // Single fetch after all cart modifications
-          openCart();
+          
+          // Smooth transition from skeleton to real content
+          await transitionToRealCart();
         })
         .catch(error => {
           console.error('[Cart.js] Error adding to cart:', error);
+          // Show error in cart UI (no page reload)
+          showCartError('Failed to add product to cart. Please try again.');
         });
       }
     }, true); // Use capture phase
@@ -3008,23 +3140,32 @@
           e.preventDefault();
           e.stopPropagation();
           
+          // ✨ OPTIMISTIC UI: Open cart IMMEDIATELY with skeleton
+          openCartWithSkeleton();
+          
           const formData = new FormData(form);
           
+          // Background: Add to cart + fetch
           fetch('/cart/add.js', {
             method: 'POST',
             body: formData
           })
-          .then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Failed to add product to cart');
+            }
+            return response.json();
+          })
           .then(async (data) => {
             console.log('[Cart.js] Product added via button click');
-            // Successfully added to cart
-            // OPTIMIZATION: Use fetch-once strategy for better performance
-            await maybeAutoAddProtectionWithoutFetch(); // Add protection without fetching
-            await fetchCart(); // Single fetch after all cart modifications
-            openCart();
+            
+            // Smooth transition from skeleton to real content
+            await transitionToRealCart();
           })
           .catch(error => {
             console.error('[Cart.js] Error adding to cart via button:', error);
+            // Show error in cart UI (no page reload)
+            showCartError('Failed to add product to cart. Please try again.');
           });
         } else {
           console.log('[Cart.js] Button clicked but no cart form found');
@@ -3032,19 +3173,25 @@
       }
     }, true); // Use capture phase
 
-    // Listen for Shopify's cart events
+    // Listen for Shopify's cart events (for themes with custom Add to Cart implementations)
     document.addEventListener('cart:updated', async () => {
-      // OPTIMIZATION: Use fetch-once strategy for better performance
-      await maybeAutoAddProtectionWithoutFetch(); // Add protection without fetching
-      await fetchCart(); // Single fetch after all cart modifications
-      openCart();
+      console.log('[Cart.js] cart:updated event detected');
+      
+      // ✨ OPTIMISTIC UI: Open cart IMMEDIATELY with skeleton
+      openCartWithSkeleton();
+      
+      // Smooth transition from skeleton to real content
+      await transitionToRealCart();
     });
 
     document.addEventListener('product:added-to-cart', async () => {
-      // OPTIMIZATION: Use fetch-once strategy for better performance
-      await maybeAutoAddProtectionWithoutFetch(); // Add protection without fetching
-      await fetchCart(); // Single fetch after all cart modifications
-      openCart();
+      console.log('[Cart.js] product:added-to-cart event detected');
+      
+      // ✨ OPTIMISTIC UI: Open cart IMMEDIATELY with skeleton
+      openCartWithSkeleton();
+      
+      // Smooth transition from skeleton to real content
+      await transitionToRealCart();
     });
   }
 
