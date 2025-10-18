@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getStoreSettings } from '@/lib/db';
 import { supabase, supabaseQueryWithRetry, Store, Settings } from '@/lib/supabase';
 
+// ⚡ EDGE RUNTIME - Runs on Deno at CDN edge (faster cold starts, global distribution)
+export const runtime = 'edge';
+
 // Handle CORS preflight requests
 export async function OPTIONS(request: NextRequest) {
   const response = new NextResponse(null, { status: 200 });
