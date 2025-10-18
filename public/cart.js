@@ -2735,15 +2735,29 @@
       return;
     }
     
-    // ✨ INSTANT: Open cart immediately with skeleton
+    // ✨ INSTANT: Open cart immediately
     state.isOpen = true;
     overlay.classList.add('sp-open');
     document.body.style.overflow = 'hidden';
     
-    // Show skeleton immediately
-    renderSkeleton();
+    // Show skeleton ONLY on first cart interaction (before settings are loaded)
+    if (!state.settingsLoaded) {
+      console.log('[Cart.js] First Add to Cart - showing skeleton UI');
+      renderSkeleton();
+    } else {
+      console.log('[Cart.js] Subsequent Add to Cart - skipping skeleton (settings cached)');
+      // Show loading indicator in existing cart content
+      const contentArea = document.getElementById('sp-cart-content');
+      if (contentArea && state.cart) {
+        // Keep showing current cart while new item is being added
+        renderCart();
+      } else {
+        // Fallback: show skeleton if no cart data yet
+        renderSkeleton();
+      }
+    }
     
-    console.log('[Cart.js] Cart opened instantly with skeleton (Add to Cart optimistic UI)');
+    console.log('[Cart.js] Cart opened instantly (Add to Cart optimistic UI)');
   }
   
   // Helper function: Transition from skeleton to real cart content
@@ -2751,13 +2765,36 @@
     console.log('[Cart.js] transitionToRealCart() called');
     
     try {
-      // Fetch settings if not loaded yet
-      if (!state.settingsLoaded) {
-        const settings = await fetchSettings(false);
-        if (settings) {
-          state.settingsLoaded = true;
-          applySettings();
+      // ⚡ OPTIMIZATION: Fast path for subsequent Add to Cart (settings already loaded)
+      if (state.settingsLoaded) {
+        console.log('[Cart.js] Fast path - settings already loaded, skipping fetch');
+        
+        // Only need to: add protection (if needed) + fetch cart + render
+        // Skip: settings fetch, applySettings, transition animations
+        await maybeAutoAddProtection();
+        await fetchCart();
+        checkProtectionInCart();
+        
+        // Instant render (no skeleton transition needed)
+        renderCart();
+        
+        // Ensure footer is visible
+        const realFooter = document.querySelector('.sp-cart-footer');
+        if (realFooter) {
+          realFooter.classList.remove('sp-hidden');
         }
+        
+        console.log('[Cart.js] Fast path complete - instant render');
+        return;
+      }
+      
+      // 🐌 SLOW PATH: First cart interaction (need to fetch settings)
+      console.log('[Cart.js] Slow path - fetching settings for first time');
+      
+      const settings = await fetchSettings(false);
+      if (settings) {
+        state.settingsLoaded = true;
+        applySettings();
       }
       
       // Auto-add protection BEFORE rendering
@@ -2804,7 +2841,7 @@
         }
       }
       
-      console.log('[Cart.js] Transition to real cart complete');
+      console.log('[Cart.js] Slow path complete - skeleton transition done');
     } catch (error) {
       console.error('[Cart.js] Error in transitionToRealCart():', error);
       
