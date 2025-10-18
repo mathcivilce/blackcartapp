@@ -2134,6 +2134,16 @@
       // Silently fail, will fetch on-demand if needed
     }
   }
+  
+  // Wrapper function: Pre-fetch protection variant ID from current settings
+  async function prefetchProtectionVariantId() {
+    const productHandle = state.settings?.addons?.productHandle || state.settings?.protectionProductHandle;
+    if (!productHandle) {
+      throw new Error('No protection product handle configured');
+    }
+    
+    return await prefetchProtectionVariant(productHandle);
+  }
 
   // Helper to check if protection will be auto-added (for optimization)
   function willAutoAddProtection() {
@@ -2146,9 +2156,12 @@
   async function maybeAutoAddProtection() {
     // Only auto-add if acceptByDefault is enabled and protection is not already in cart
     if (willAutoAddProtection()) {
+      console.log('[Cart.js] Auto-adding protection product...');
       // ⚡ OPTIMIZATION: Skip internal fetch since caller will fetch cart after
       // This prevents redundant fetchCart() call and duplicate checkProtectionInCart()
       await addProtectionToCart(true, true, true); // silent mode + skip render + skip fetch
+    } else if (state.protectionInCart) {
+      console.log('[Cart.js] ✅ Skipping protection add - already in cart (likely batch added)');
     }
   }
 
@@ -2978,6 +2991,8 @@
         console.log('[Cart.js] Fast path - settings already loaded, skipping fetch');
         
         // Add protection BEFORE fetching cart (so it's included in the cart)
+        // Note: If protection was batch added with user's product, this will be skipped
+        // automatically (state.protectionInCart is already true from batch add)
         await maybeAutoAddProtection();
         
         // ⚡ OPTIMIZATION: Fetch cart WITHOUT enrichment for speed
@@ -3020,6 +3035,8 @@
       }
       
       // Add protection BEFORE fetching cart (so it's included in the cart)
+      // Note: If protection was batch added with user's product, this will be skipped
+      // automatically (state.protectionInCart is already true from batch add)
       await maybeAutoAddProtection();
       
       // ⚡ OPTIMIZATION: Fetch cart WITHOUT enrichment for speed
@@ -3124,15 +3141,69 @@
     
     console.log('[Cart.js] Adding variant to cart:', variantId);
     
+    // ⚡ OPTIMIZATION: Check if we should batch add protection with user's product
+    const shouldBatchAddProtection = 
+      state.settingsLoaded &&
+      state.settings?.addons?.enabled &&
+      state.settings?.addons?.acceptByDefault &&
+      !state.protectionInCart &&
+      state.protectionVariantId;
+    
+    if (shouldBatchAddProtection) {
+      console.log('[Cart.js] ✅ BATCH ADD: Adding product + protection in single API call!');
+    }
+    
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         console.log(`[Cart.js] Add to cart attempt ${attempt}/${maxRetries}`);
         
-        // Attempt to add product to cart
-        const response = await fetch('/cart/add.js', {
-          method: 'POST',
-          body: formData
-        });
+        let response;
+        
+        if (shouldBatchAddProtection) {
+          // ⚡ BATCH ADD: Add both product and protection in one call
+          const quantity = parseInt(formData.get('quantity') || '1');
+          const properties = {};
+          
+          // Extract any properties from formData
+          for (const [key, value] of formData.entries()) {
+            if (key.startsWith('properties[')) {
+              const propName = key.match(/properties\[(.+)\]/)?.[1];
+              if (propName) {
+                properties[propName] = value;
+              }
+            }
+          }
+          
+          const items = [
+            {
+              id: variantId,
+              quantity: quantity,
+              ...(Object.keys(properties).length > 0 && { properties })
+            },
+            {
+              id: state.protectionVariantId,
+              quantity: 1
+            }
+          ];
+          
+          response = await fetch('/cart/add.js', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items })
+          });
+          
+          // Mark protection as added (optimistic - will be confirmed on cart fetch)
+          if (response.ok) {
+            state.protectionInCart = true;
+            console.log('[Cart.js] ✅ Batch add successful - protection marked as in cart');
+          }
+        } else {
+          // Normal single product add
+          response = await fetch('/cart/add.js', {
+            method: 'POST',
+            body: formData
+          });
+        }
         
         if (!response.ok) {
           const errorText = await response.text();
@@ -3640,6 +3711,18 @@
       console.log('[Cart.js] Settings cached but no cart cache - cart will be fetched quickly (minimal skeleton)');
     } else {
       console.log('[Cart.js] Both settings and cart cached - instant cart opening on all pages! 🚀');
+    }
+    
+    // ⚡ OPTIMIZATION: Pre-cache protection variant ID for batch add (non-blocking)
+    // This runs in background and enables instant batch add when user clicks "Add to Cart"
+    if (cachedSettings && cachedSettings.addons?.enabled && cachedSettings.addons?.productHandle) {
+      console.log('[Cart.js] Pre-fetching protection variant ID for batch add optimization...');
+      prefetchProtectionVariantId().then(() => {
+        console.log('[Cart.js] ✅ Protection variant ID cached:', state.protectionVariantId);
+      }).catch(error => {
+        console.warn('[Cart.js] Failed to pre-fetch protection variant ID:', error);
+        // Non-critical: will fetch on-demand if needed
+      });
     }
 
     // STEP 1: Inject CSS with default/cached settings
