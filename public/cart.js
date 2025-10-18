@@ -29,11 +29,96 @@
     return window.Shopify?.shop || '';
   }
 
+  // Default settings (used before API fetch for lazy loading)
+  const DEFAULT_SETTINGS = {
+    enabled: true,
+    cart_active: true,  // Assume active by default
+    design: {
+      backgroundColor: '#FFFFFF',
+      cartAccentColor: '#f6f6f7',
+      cartTextColor: '#000000',
+      savingsTextColor: '#2ea818',
+      cornerRadius: 21,
+      buttonText: 'Proceed to Checkout',
+      buttonColor: '#1c8cd9',
+      buttonTextColor: '#FFFFFF',
+      buttonTextHoverColor: '#e9e9e9',
+      showSavings: true,
+      showContinueShopping: true,
+      showTotalOnButton: true,
+      cartTitle: 'Cart',
+      cartTitleAlignment: 'left',
+      emptyCartText: 'Your cart is empty',
+      savingsText: 'Save',
+      displayCompareAtPrice: true,
+      closeButtonSize: 'medium',
+      closeButtonColor: '#637381',
+      closeButtonBorder: 'none',
+      closeButtonBorderColor: '#000000',
+      useCartImage: false,
+      cartImageUrl: '',
+      cartImageMobileSize: 100,
+      cartImageDesktopSize: 120,
+      cartImagePosition: 'left',
+      showPaymentIcons: false,
+      paymentIconAmex: false,
+      paymentIconApplePay: false,
+      paymentIconGooglePay: false,
+      paymentIconMastercard: false,
+      paymentIconPaypal: false,
+      paymentIconShopPay: false,
+      paymentIconVisa: false,
+    },
+    announcement: {
+      enabled: false,
+      text: '',
+      textColor: '#FFFFFF',
+      backgroundColor: '#000000',
+      position: 'top',
+      countdownEnabled: false,
+      countdownType: 'fixed',
+      countdownEnd: null,
+      countdownDuration: 300,
+      fontSize: 14,
+      showBorder: true,
+      textBold: false,
+      textItalic: false,
+      textUnderline: false,
+      countdownBold: false,
+      countdownItalic: false,
+      countdownUnderline: false,
+      countdownTimeFormat: 'text',
+    },
+    addons: {
+      enabled: false,
+      title: 'Shipping Protection',
+      description: 'Protect your order from damage, loss, or theft during shipping.',
+      price: 4.90,
+      productHandle: null,
+      acceptByDefault: false,
+      adjustTotalPrice: true,
+      useCustomImage: false,
+      customImageUrl: '',
+      customImageSize: 48,
+    },
+    freeGifts: {
+      enabled: false,
+      conditionType: 'quantity',
+      headline: 'Unlock Your Free Gifts!',
+      progressColor: '#4CAF50',
+      position: 'bottom',
+      tier1: { enabled: false, threshold: 1, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁' },
+      tier2: { enabled: false, threshold: 2, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁' },
+      tier3: { enabled: false, threshold: 3, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁' },
+    }
+  };
+
   // State management
   const state = {
     isOpen: false,
     cart: null,
     settings: null,
+    settingsLoaded: false,  // Track if settings have been fetched from API (for lazy loading)
     isLoading: false,
     protectionEnabled: false,
     protectionInCart: false,
@@ -2462,38 +2547,40 @@
     state.countdownStartTime = null;
     
     try {
-      // Optimization #3: Fetch settings and cart in parallel (only fetch cart if not already loaded)
-      // Optimization #1: Skip cart fetch if cart was already fetched before calling openCart
-      const needsCartFetch = !state.cart;
-      const needsSettingsFetch = !state.settings;
-      
-      console.log('[Cart.js] Needs cart fetch:', needsCartFetch, 'Needs settings fetch:', needsSettingsFetch);
-      
-      // Fetch in parallel if both are needed (Optimization #3)
-      if (needsCartFetch && needsSettingsFetch) {
+      // LAZY LOADING: Fetch settings from API on FIRST cart open only
+      if (!state.settingsLoaded) {
+        console.log('[Cart.js] First cart open - fetching settings from API...');
+        
+        // Fetch settings and cart in parallel for better performance
         const [settings, cart] = await Promise.all([
-          fetchSettings(),
+          fetchSettings(false), // Don't use cache, fetch fresh from API
           fetchCart()
         ]);
         
         if (!settings) {
-          console.warn('[Cart.js] Settings not available, aborting cart open');
-          return;
+          console.error('[Cart.js] Failed to fetch settings from API');
+          // Fallback: continue with default/cached settings
+        } else {
+          state.settingsLoaded = true;
+          console.log('[Cart.js] Settings fetched successfully from API');
+          
+          // Check if cart is actually active
+          if (settings.cart_active === false) {
+            console.warn('[Cart.js] Cart is disabled (cart_active = false). Closing and redirecting to native cart...');
+            // Optionally redirect to native Shopify cart
+            // window.location.href = '/cart';
+            return;
+          }
+          
+          // Apply fresh settings (will update CSS and HTML with custom design)
+          applySettings();
         }
-      } else if (needsSettingsFetch) {
-        const settings = await fetchSettings();
-        if (!settings) {
-          console.warn('[Cart.js] Settings not available, aborting cart open');
-          return;
+      } else {
+        // Subsequent opens: only fetch cart data (settings already loaded)
+        console.log('[Cart.js] Subsequent cart open - using cached settings');
+        if (!state.cart) {
+          await fetchCart();
         }
-      } else if (needsCartFetch) {
-        await fetchCart();
-      }
-      
-      // Check if cart is active (in case settings were just fetched)
-      if (state.settings?.cart_active === false) {
-        console.warn('[Cart.js] Cart is disabled in settings');
-        return;
       }
       
       console.log('[Cart.js] About to auto-add protection...');
@@ -2794,24 +2881,20 @@
       });
     }
 
-    console.log('[Cart.js] Initializing cart...');
+    console.log('[Cart.js] Initializing cart with lazy loading...');
 
-    // STEP 1: Fetch settings FIRST before any DOM manipulation
-    console.log('[Cart.js] Fetching settings to check cart_active status...');
-    const settings = await fetchSettings(true); // Use cache if available
+    // LAZY LOADING: Use cached or default settings (no API call on page load!)
+    const cachedSettings = getCachedSettings();
+    state.settings = cachedSettings || DEFAULT_SETTINGS;
+    state.settingsLoaded = false; // Mark as not fetched from API yet
     
-    // STEP 2: Check if cart is active
-    if (settings === null) {
-      console.warn('[Cart.js] Cart is disabled (cart_active = false). Exiting without interfering with native cart.');
-      return; // Exit gracefully - don't inject CSS, HTML, or event listeners
-    }
-    
-    console.log('[Cart.js] Cart is active (cart_active = true). Proceeding with initialization...');
+    console.log('[Cart.js] Using', cachedSettings ? 'cached' : 'default', 'settings for initialization');
+    console.log('[Cart.js] Settings will be fetched from API when cart opens');
 
-    // STEP 3: Inject CSS (only if cart is active)
+    // STEP 1: Inject CSS with default/cached settings
     injectCSS();
 
-    // STEP 4: Create cart HTML (only if cart is active)
+    // STEP 2: Create cart HTML with default/cached settings
     try {
       const cartContainer = document.createElement('div');
       cartContainer.innerHTML = createCartHTML();
@@ -2888,30 +2971,16 @@
       console.log('[Cart.js] Removal protection enabled');
     }
 
-    // STEP 5: Expose global function to open cart
+    // STEP 3: Expose global function to open cart
     window.openShippingProtectionCart = openCart;
     
-    // STEP 6: Attach event listeners (only if cart is active)
+    // STEP 4: Attach event listeners
     attachEventListeners();
 
-    // STEP 7: Apply settings that were already fetched
+    // STEP 5: Apply default/cached settings (static only - dynamic settings applied on cart open)
     applySettings();
     
-    // STEP 8: Pre-fetch cart data in background for instant opening
-    fetchCart().then(cart => {
-      console.log('[Cart.js] Cart data pre-loaded in background');
-      
-      // OPTIMIZATION: Pre-fetch protection variant ID if auto-add is enabled
-      // This caches the variant ID for instant adding later (no cart modification)
-      if (settings.addons?.acceptByDefault && settings.addons?.productHandle) {
-        prefetchProtectionVariant(settings.addons.productHandle).catch(() => {
-          // Silently fail, will fetch on-demand if needed
-        });
-      }
-    }).catch(() => {
-      // Silently fail if cart can't load
-      console.warn('[Cart.js] Failed to pre-load cart data');
-    });
+    console.log('[Cart.js] Cart initialized with lazy loading! Settings and cart data will be fetched when user opens cart.');
   }
 
   // Wait for DOM to be readyyyyyyyy
