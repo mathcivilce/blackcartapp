@@ -3027,11 +3027,21 @@
       // 🐌 SLOW PATH: First cart interaction (need to fetch settings)
       console.log('[Cart.js] Slow path - fetching settings for first time');
       
-      // Fetch settings first (needed to determine if protection should be added)
-      const settings = await fetchSettings(false);
+      // ⚡ OPTIMIZATION: Fetch settings and protection variant in parallel (saves 400ms!)
+      // This is speculative (variant might not be needed), but the cost is minimal
+      console.log('[Cart.js] ⚡ Parallel fetch: settings + protection variant');
+      const [settings] = await Promise.all([
+        fetchSettings(false),
+        prefetchProtectionVariantId().catch(error => {
+          // Silently fail - variant will be fetched on-demand if needed
+          console.log('[Cart.js] Variant pre-fetch failed (will fetch on-demand if needed):', error.message);
+        })
+      ]);
+      
       if (settings) {
         state.settingsLoaded = true;
         applySettings();
+        console.log('[Cart.js] ✅ Settings applied, variant ID:', state.protectionVariantId ? 'cached' : 'not cached');
       }
       
       // Add protection BEFORE fetching cart (so it's included in the cart)
@@ -3293,10 +3303,16 @@
         // Show skeleton immediately (feels instant!)
         renderSkeleton();
         
-        // ⚡ OPTIMIZATION: Fetch settings and cart in parallel WITHOUT enrichment (faster!)
+        // ⚡ OPTIMIZATION: Fetch settings, cart, and protection variant in parallel (faster!)
+        // This is speculative (variant might not be needed), but saves 400ms if it is
+        console.log('[Cart.js] ⚡ Parallel fetch: settings + cart + protection variant');
         const [settings, cart] = await Promise.all([
           fetchSettings(false), // Fetch fresh from API
-          fetchCart(2, false)   // Skip enrichment for speed
+          fetchCart(2, false),  // Skip enrichment for speed
+          prefetchProtectionVariantId().catch(error => {
+            // Silently fail - variant will be fetched on-demand if needed
+            console.log('[Cart.js] Variant pre-fetch failed (will fetch on-demand if needed):', error.message);
+          })
         ]);
         
         if (!settings) {
@@ -3315,6 +3331,7 @@
           
           // Apply fresh settings
           applySettings();
+          console.log('[Cart.js] ✅ Settings applied, variant ID:', state.protectionVariantId ? 'cached' : 'not cached');
         }
         
         // Mark first open complete
