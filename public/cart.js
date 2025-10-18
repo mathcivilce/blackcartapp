@@ -3397,10 +3397,18 @@
     // LAZY LOADING: Use cached or default settings (no API call on page load!)
     const cachedSettings = getCachedSettings();
     state.settings = cachedSettings || DEFAULT_SETTINGS;
-    state.settingsLoaded = false; // Mark as not fetched from API yet
+    
+    // ✅ FIX: If we have cached settings, mark as loaded (no skeleton needed!)
+    state.settingsLoaded = !!cachedSettings; // true if cached, false if using defaults
     
     console.log('[Cart.js] Using', cachedSettings ? 'cached' : 'default', 'settings for initialization');
-    console.log('[Cart.js] Settings will be fetched from API when cart opens');
+    console.log('[Cart.js] settingsLoaded:', state.settingsLoaded, '(cached settings exist:', !!cachedSettings, ')');
+    
+    if (!cachedSettings) {
+      console.log('[Cart.js] No cache - settings will be fetched from API when cart opens (skeleton will show)');
+    } else {
+      console.log('[Cart.js] Cache found - no skeleton needed, instant cart opening on all pages!');
+    }
 
     // STEP 1: Inject CSS with default/cached settings
     injectCSS();
