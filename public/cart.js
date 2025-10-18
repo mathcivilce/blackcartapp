@@ -2914,7 +2914,7 @@
     });
   }
 
-  // Wait for DOM to be ready
+  // Wait for DOM to be readyy
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
