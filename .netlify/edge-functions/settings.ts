@@ -55,6 +55,13 @@ interface Settings {
 // - Version-based invalidation ensures instant updates
 // - Cache expires after 5 minutes as safety fallback
 //
+// GRACEFUL FAILURE HANDLING:
+// - All cache operations (read/write/delete) are protected with try-catch
+// - Cache read fails → Treats as cache miss, fetches from DB
+// - Cache write fails → Returns data to user anyway, just not cached
+// - Cache delete fails → Continues, stale entry will be overwritten
+// - User ALWAYS gets their data, even if cache completely fails
+//
 interface CacheEntry {
   data: any;
   version: number;
@@ -66,7 +73,7 @@ const settingsCache = new Map<string, CacheEntry>();
 // Cache configuration
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes safety fallback
 
-console.log('💾 [Edge Function] Settings cache initialized');
+console.log('💾 [Edge Function] Settings cache initialized with graceful failure handling');
 
 // Helper: Retry logic for transient failures
 // ⚡ OPTIMIZATION: Reduced retries (3 instead of 5) and delay (100ms instead of 200ms) for faster response
@@ -150,32 +157,47 @@ export default async (request: Request, context: Context) => {
   try {
     const cacheKey = token;
     const startTime = Date.now();
+    let cached: CacheEntry | undefined = undefined;
     
-    // ⚡ STEP 1: Check cache first
-    const cached = settingsCache.get(cacheKey);
-    if (cached) {
-      const age = Date.now() - cached.timestamp;
-      const isFresh = age < CACHE_TTL;
+    // ⚡ STEP 1: Check cache first (protected)
+    try {
+      cached = settingsCache.get(cacheKey);
       
-      if (isFresh) {
-        const cacheTime = Date.now() - startTime;
-        console.log(`✅ [Edge] CACHE HIT! Returning cached settings (${cacheTime}ms, age: ${Math.round(age/1000)}s, version: ${cached.version})`);
+      if (cached) {
+        const age = Date.now() - cached.timestamp;
+        const isFresh = age < CACHE_TTL;
         
-        return new Response(JSON.stringify(cached.data), {
-          status: 200,
-          headers: corsHeaders(new Headers({ 
-            'Content-Type': 'application/json',
-            'X-Cache': 'HIT',
-            'X-Cache-Age': Math.round(age/1000).toString(),
-            'X-Cache-Version': cached.version.toString()
-          }))
-        });
+        if (isFresh) {
+          const cacheTime = Date.now() - startTime;
+          console.log(`✅ [Edge] CACHE HIT! Returning cached settings (${cacheTime}ms, age: ${Math.round(age/1000)}s, version: ${cached.version})`);
+          
+          return new Response(JSON.stringify(cached.data), {
+            status: 200,
+            headers: corsHeaders(new Headers({ 
+              'Content-Type': 'application/json',
+              'X-Cache': 'HIT',
+              'X-Cache-Age': Math.round(age/1000).toString(),
+              'X-Cache-Version': cached.version.toString()
+            }))
+          });
+        } else {
+          console.log(`⏰ [Edge] Cache expired (age: ${Math.round(age/1000)}s), fetching fresh...`);
+          
+          // Protected cache delete
+          try {
+            settingsCache.delete(cacheKey);
+          } catch (deleteError) {
+            console.warn('⚠️ [Edge] Cache delete failed (non-critical):', deleteError);
+            // Continue anyway - stale cache will be overwritten
+          }
+        }
       } else {
-        console.log(`⏰ [Edge] Cache expired (age: ${Math.round(age/1000)}s), fetching fresh...`);
-        settingsCache.delete(cacheKey); // Clean up expired entry
+        console.log('❌ [Edge] CACHE MISS - fetching from database...');
       }
-    } else {
-      console.log('❌ [Edge] CACHE MISS - fetching from database...');
+    } catch (cacheReadError) {
+      console.warn('⚠️ [Edge] Cache read failed (treating as miss):', cacheReadError);
+      console.log('❌ [Edge] CACHE READ ERROR - fetching from database...');
+      // ✅ GRACEFUL: Treat as cache miss and continue to database
     }
     
     // ⚡ STEP 2: Cache miss or expired - fetch from database
@@ -391,17 +413,23 @@ export default async (request: Request, context: Context) => {
       }
     };
     
-    // ⚡ STEP 3: Store in cache for future requests
+    // ⚡ STEP 3: Store in cache for future requests (protected)
     const cacheVersion = storeWithSettings.cache_version || 1;
-    settingsCache.set(cacheKey, {
-      data: responseData,
-      version: cacheVersion,
-      timestamp: Date.now()
-    });
-    
     const totalTime = Date.now() - startTime;
-    console.log(`✅ [Edge] Fetched from DB and cached (${totalTime}ms, version: ${cacheVersion})`);
-    console.log(`💾 [Edge] Cache size: ${settingsCache.size} entries`);
+    
+    try {
+      settingsCache.set(cacheKey, {
+        data: responseData,
+        version: cacheVersion,
+        timestamp: Date.now()
+      });
+      console.log(`✅ [Edge] Fetched from DB and cached (${totalTime}ms, version: ${cacheVersion})`);
+      console.log(`💾 [Edge] Cache size: ${settingsCache.size} entries`);
+    } catch (cacheWriteError) {
+      console.warn('⚠️ [Edge] Cache write failed (non-critical):', cacheWriteError);
+      console.log(`✅ [Edge] Fetched from DB but NOT cached (${totalTime}ms) - returning data anyway`);
+      // ✅ GRACEFUL: Continue and return data to user even if caching failed
+    }
     
     const headers = corsHeaders(new Headers({ 'Content-Type': 'application/json' }));
     
