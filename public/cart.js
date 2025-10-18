@@ -956,28 +956,29 @@
         visibility: visible !important;
       }
 
-      /* Animated shimmer effect - Facebook/LinkedIn style */
+      /* Animated shimmer effect - Enhanced prominent sweep */
       .sp-skeleton-image,
       .sp-skeleton-line,
       .sp-skeleton-button,
       .sp-skeleton-text {
         background: linear-gradient(
           90deg,
-          #f0f0f0 0%,
-          #f0f0f0 40%,
-          #fafafa 50%,
+          #e8e8e8 0%,
+          #e8e8e8 30%,
+          #f5f5f5 45%,
+          #ffffff 50%,
           #ffffff 55%,
-          #fafafa 60%,
-          #f0f0f0 70%,
-          #f0f0f0 100%
+          #f5f5f5 60%,
+          #e8e8e8 75%,
+          #e8e8e8 100%
         ) !important;
-        background-size: 200% 100% !important;
-        animation: sp-skeleton-shimmer 1.8s ease-in-out infinite !important;
+        background-size: 300% 100% !important;
+        animation: sp-skeleton-shimmer 1.2s ease-in-out infinite !important;
       }
 
       @keyframes sp-skeleton-shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
+        0% { background-position: -300% 0; }
+        100% { background-position: 300% 0; }
       }
 
       /* Smooth fade transition when skeleton is replaced */
