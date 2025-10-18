@@ -2323,6 +2323,11 @@
       const cart = await response.json();
       
       state.cart = cart;
+      
+      // ✅ FIX: Update cart cache to prevent stale data on page navigation
+      // This ensures removed items, quantity changes, etc. are cached immediately
+      setCachedCart(cart);
+      
       state.isLoading = false;
       
       // ⚡ OPTIMIZATION: Enrich in background if feature is enabled (non-blocking)
