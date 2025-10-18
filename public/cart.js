@@ -956,35 +956,48 @@
         visibility: visible !important;
       }
 
-      /* Animated shimmer effect - Sweep from left to right */
+      /* Base tone used across skeletons */
+      :root {
+        --sp-skel-base: #e9ecef;
+        --sp-skel-mid: #f3f4f6;
+      }
+
+      /* Animated shimmer effect - Production-style sweep */
       .sp-skeleton-image,
       .sp-skeleton-line,
       .sp-skeleton-button,
       .sp-skeleton-text {
+        position: relative !important;
         background: linear-gradient(
           90deg,
-          #e8e8e8 0%,
-          #e8e8e8 30%,
-          #f0f0f0 45%,
-          #ffffff 50%,
-          #f0f0f0 55%,
-          #e8e8e8 70%,
-          #e8e8e8 100%
+          var(--sp-skel-base) 25%,
+          var(--sp-skel-mid) 37%,
+          var(--sp-skel-base) 63%
         ) !important;
-        background-size: 300% 100% !important;
-        background-position: -150% 0 !important;
-        animation: sp-skeleton-shimmer 2s ease-in-out infinite !important;
+        background-size: 200% 100% !important;
+        animation: sp-skeleton-shimmer 1.2s linear infinite !important;
+        border-radius: 8px !important;
+        will-change: background-position;
       }
 
+      /* Tighter, continuous sweep */
       @keyframes sp-skeleton-shimmer {
         0% { 
-          background-position: -150% 0 !important;
-        }
-        50% {
-          background-position: 50% 0 !important;
+          background-position: -100% 0 !important;
         }
         100% { 
-          background-position: 150% 0 !important;
+          background-position: 100% 0 !important;
+        }
+      }
+
+      /* Optional: respect reduced motion */
+      @media (prefers-reduced-motion: reduce) {
+        .sp-skeleton-image,
+        .sp-skeleton-line,
+        .sp-skeleton-button,
+        .sp-skeleton-text {
+          animation: none !important;
+          background: var(--sp-skel-base) !important;
         }
       }
 
