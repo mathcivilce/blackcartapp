@@ -2709,6 +2709,9 @@
         // Mark first open complete
         state.isFirstCartOpen = false;
         
+        // ✅ FIX: Check protection in cart BEFORE rendering (to set state.protectionVariantId)
+        checkProtectionInCart();
+        
         // Smooth transition: fade out skeleton, fade in real content
         const contentArea = document.getElementById('sp-cart-content');
         if (contentArea) {
@@ -2730,6 +2733,9 @@
         if (!state.cart) {
           await fetchCart();
         }
+        
+        // ✅ Check protection in cart BEFORE rendering (to filter it out correctly)
+        checkProtectionInCart();
         
         // Render immediately (no skeleton needed)
         renderCart();
