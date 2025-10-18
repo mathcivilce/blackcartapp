@@ -12,7 +12,11 @@ const isServer = typeof window === 'undefined';
 if (isServer) {
   const keySource = process.env.SUPABASE_SERVICE_ROLE_KEY ? 'ENVIRONMENT' : 'FALLBACK';
   const keyPreview = supabaseServiceKey.substring(0, 8) + '...' + supabaseServiceKey.substring(supabaseServiceKey.length - 8);
-  const runtime = typeof Deno !== 'undefined' ? 'EDGE (Deno)' : 'SERVERLESS (Node.js)';
+  
+  // Type-safe runtime detection: check if Deno exists in global scope
+  // @ts-ignore - Deno only exists in Edge runtime, not during build
+  const isEdgeRuntime = typeof globalThis.Deno !== 'undefined';
+  const runtime = isEdgeRuntime ? 'EDGE (Deno)' : 'SERVERLESS (Node.js)';
   
   console.log(`⚡ [Supabase] Runtime: ${runtime}`);
   console.log(`🔑 [Supabase] Using service role key from: ${keySource}`);
