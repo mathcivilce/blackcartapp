@@ -2814,6 +2814,12 @@
     if (state.settings?.freeGifts?.enabled) {
       manageFreeGifts();
     }
+    
+    // ✅ FIX: Sync protection checkbox with state (ensures correct toggle state when rendering cached cart)
+    const protectionCheckbox = document.getElementById('sp-protection-checkbox');
+    if (protectionCheckbox) {
+      protectionCheckbox.checked = state.protectionInCart;
+    }
   }
 
   function updateSubtotal(cents) {
@@ -3618,6 +3624,10 @@
     if (cachedCart) {
       state.cart = cachedCart;
       console.log('[Cart.js] ✅ Cart data loaded from cache:', cachedCart.item_count, 'items');
+      
+      // ✅ FIX: Immediately check protection status so it's filtered correctly on first render
+      // This sets state.protectionVariantId and state.protectionInCart
+      checkProtectionInCart();
     }
     
     console.log('[Cart.js] Using', cachedSettings ? 'cached' : 'default', 'settings for initialization');
