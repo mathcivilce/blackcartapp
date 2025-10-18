@@ -19,9 +19,9 @@
       return null;
     })(),
     // Cache settings
-    enableCache: false,  // 🔧 TEMPORARY: Set to false to disable caching (always fetch fresh)
+    enableCache: true,  // ✅ ENABLED: Cache settings for better performance
     cacheKey: 'sp_cart_settings',
-    cacheTTL: 1000 * 60 * 60 * 6  // 6 hours
+    cacheTTL: 1000 * 60 * 10  // 10 minutes (optimal balance between freshness and performance)
   };
 
   // Helper function get shop domain (may need to wait for Shopify object)
@@ -119,6 +119,7 @@
     cart: null,
     settings: null,
     settingsLoaded: false,  // Track if settings have been fetched from API (for lazy loading)
+    isFirstCartOpen: true,  // Track if this is the first cart open in session (for skeleton UI)
     isLoading: false,
     protectionEnabled: false,
     protectionInCart: false,
@@ -851,6 +852,93 @@
       .sp-updating {
         opacity: 0.6;
         pointer-events: none;
+      }
+
+      /* ============================================ */
+      /* SKELETON UI (First Load Only) */
+      /* ============================================ */
+      
+      .sp-cart-skeleton {
+        padding: 20px;
+        animation: sp-skeleton-fadein 0.3s ease-in;
+      }
+
+      @keyframes sp-skeleton-fadein {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      .sp-skeleton-item {
+        display: flex;
+        gap: 12px;
+        padding: 16px 0;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .sp-skeleton-item:last-child {
+        border-bottom: none;
+      }
+
+      .sp-skeleton-image {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        flex-shrink: 0;
+      }
+
+      .sp-skeleton-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .sp-skeleton-line {
+        height: 16px;
+        border-radius: 4px;
+      }
+
+      .sp-skeleton-title {
+        width: 70%;
+        height: 18px;
+      }
+
+      .sp-skeleton-price {
+        width: 40%;
+        height: 16px;
+      }
+
+      .sp-skeleton-quantity {
+        width: 30%;
+        height: 14px;
+      }
+
+      /* Animated shimmer effect */
+      .sp-skeleton-image,
+      .sp-skeleton-line {
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 0%,
+          #e0e0e0 50%,
+          #f0f0f0 100%
+        );
+        background-size: 200% 100%;
+        animation: sp-skeleton-shimmer 1.5s ease-in-out infinite;
+      }
+
+      @keyframes sp-skeleton-shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+
+      /* Smooth fade transition when skeleton is replaced */
+      .sp-cart-content {
+        transition: opacity 0.3s ease-in-out;
+      }
+
+      .sp-cart-content.sp-transitioning {
+        opacity: 0;
       }
     `;
 
@@ -2273,6 +2361,39 @@
   // RENDER FUNCTIONS
   // ============================================
 
+  // Render skeleton UI for first cart open (optimistic UI pattern)
+  function renderSkeleton() {
+    console.log('[Cart.js] Rendering skeleton UI...');
+    
+    const contentArea = document.getElementById('sp-cart-content');
+    if (!contentArea) {
+      console.error('[Cart.js] Cart content area not found');
+      return;
+    }
+    
+    // Create skeleton with 2 items
+    contentArea.innerHTML = `
+      <div class="sp-cart-skeleton">
+        <div class="sp-skeleton-item">
+          <div class="sp-skeleton-image"></div>
+          <div class="sp-skeleton-details">
+            <div class="sp-skeleton-line sp-skeleton-title"></div>
+            <div class="sp-skeleton-line sp-skeleton-price"></div>
+            <div class="sp-skeleton-line sp-skeleton-quantity"></div>
+          </div>
+        </div>
+        <div class="sp-skeleton-item">
+          <div class="sp-skeleton-image"></div>
+          <div class="sp-skeleton-details">
+            <div class="sp-skeleton-line sp-skeleton-title"></div>
+            <div class="sp-skeleton-line sp-skeleton-price"></div>
+            <div class="sp-skeleton-line sp-skeleton-quantity"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   function renderCart() {
     const contentEl = document.getElementById('sp-cart-content');
     if (!contentEl) return;
@@ -2546,76 +2667,85 @@
     // Reset countdown start time for fresh timer (so it restarts fresh each time)
     state.countdownStartTime = null;
     
+    // ✨ OPTIMISTIC UI: Open cart IMMEDIATELY (0ms perceived delay)
+    state.isOpen = true;
+    overlay.classList.add('sp-open');
+    document.body.style.overflow = 'hidden';
+    
+    console.log('[Cart.js] Cart opened instantly (optimistic UI)');
+    
     try {
-      // LAZY LOADING: Fetch settings from API on FIRST cart open only
-      if (!state.settingsLoaded) {
-        console.log('[Cart.js] First cart open - fetching settings from API...');
+      // Check if this is the first cart open (show skeleton)
+      if (state.isFirstCartOpen && !state.settingsLoaded) {
+        console.log('[Cart.js] First cart open - showing skeleton UI');
         
-        // Fetch settings and cart in parallel for better performance
+        // Show skeleton immediately (feels instant!)
+        renderSkeleton();
+        
+        // Fetch settings and cart in parallel (background)
         const [settings, cart] = await Promise.all([
-          fetchSettings(false), // Don't use cache, fetch fresh from API
+          fetchSettings(false), // Fetch fresh from API
           fetchCart()
         ]);
         
         if (!settings) {
           console.error('[Cart.js] Failed to fetch settings from API');
-          // Fallback: continue with default/cached settings
+          // Continue with defaults
         } else {
           state.settingsLoaded = true;
           console.log('[Cart.js] Settings fetched successfully from API');
           
           // Check if cart is actually active
           if (settings.cart_active === false) {
-            console.warn('[Cart.js] Cart is disabled (cart_active = false). Closing and redirecting to native cart...');
-            // Optionally redirect to native Shopify cart
-            // window.location.href = '/cart';
+            console.warn('[Cart.js] Cart is disabled (cart_active = false)');
+            closeCart();
             return;
           }
           
-          // Apply fresh settings (will update CSS and HTML with custom design)
+          // Apply fresh settings
           applySettings();
         }
+        
+        // Mark first open complete
+        state.isFirstCartOpen = false;
+        
+        // Smooth transition: fade out skeleton, fade in real content
+        const contentArea = document.getElementById('sp-cart-content');
+        if (contentArea) {
+          contentArea.classList.add('sp-transitioning');
+          
+          setTimeout(() => {
+            renderCart();
+            contentArea.classList.remove('sp-transitioning');
+          }, 150); // Small delay for smooth transition
+        } else {
+          renderCart();
+        }
+        
       } else {
-        // Subsequent opens: only fetch cart data (settings already loaded)
+        // Subsequent opens: settings already in memory
         console.log('[Cart.js] Subsequent cart open - using cached settings');
+        
+        // Just fetch cart (fast)
         if (!state.cart) {
           await fetchCart();
         }
+        
+        // Render immediately (no skeleton needed)
+        renderCart();
       }
       
-      console.log('[Cart.js] About to auto-add protection...');
-      
-      // OPTIMIZATION: Auto-add protection when cart opens (if enabled)
-      // Variant ID is already prefetched, so this is instant (no delay)
+      // Auto-add protection (if enabled)
       await maybeAutoAddProtection();
       
-      console.log('[Cart.js] Opening cart UI...');
+      console.log('[Cart.js] Cart opened successfully');
       
-      // Open the cart UI
-      state.isOpen = true;
-      overlay.classList.add('sp-open');
-      document.body.style.overflow = 'hidden';
-      
-      console.log('[Cart.js] Overlay class added, overflow hidden, state.isOpen:', state.isOpen);
-      console.log('[Cart.js] Overlay classes:', overlay.className);
-      console.log('[Cart.js] Overlay computed styles:', {
-        display: window.getComputedStyle(overlay).display,
-        visibility: window.getComputedStyle(overlay).visibility,
-        opacity: window.getComputedStyle(overlay).opacity,
-        zIndex: window.getComputedStyle(overlay).zIndex
-      });
-      
-      // Render cart (Optimization #1: cart data already available, no refetch needed)
-      console.log('[Cart.js] Rendering cart...');
-      renderCart();
-      console.log('[Cart.js] Cart render complete');
     } catch (error) {
       console.error('[Cart.js] Error in openCart():', error);
       // Make sure we don't leave the page in a broken state
       if (overlay.classList.contains('sp-open')) {
         closeCart();
       }
-      // Also restore scroll if body overflow was set
       document.body.style.overflow = '';
     }
   }
