@@ -660,6 +660,7 @@
         padding: 20px;
         border-top: 1px solid #e5e5e5;
         background: #fafafa;
+        transition: opacity 0.3s ease-in-out; /* Smooth fade for skeleton->content transition */
       }
 
       .sp-cart-subtotal {
@@ -2709,6 +2710,13 @@
         // Mark first open complete
         state.isFirstCartOpen = false;
         
+        // ✅ Hide footer during skeleton phase (prevents toggle flicker)
+        const footer = document.querySelector('.sp-cart-footer');
+        if (footer) {
+          footer.style.opacity = '0';
+          footer.style.pointerEvents = 'none';
+        }
+        
         // ✅ Auto-add protection BEFORE rendering (prevents toggle flicker)
         // This ensures toggle is already ON when cart appears
         await maybeAutoAddProtection();
@@ -2727,14 +2735,33 @@
           setTimeout(() => {
             renderCart();
             contentArea.classList.remove('sp-transitioning');
+            
+            // ✅ Show footer after content is ready (with correct toggle state)
+            if (footer) {
+              footer.style.opacity = '1';
+              footer.style.pointerEvents = 'auto';
+            }
           }, 150); // Small delay for smooth transition
         } else {
           renderCart();
+          
+          // Show footer immediately if no transition
+          if (footer) {
+            footer.style.opacity = '1';
+            footer.style.pointerEvents = 'auto';
+          }
         }
         
       } else {
         // Subsequent opens: settings already in memory
         console.log('[Cart.js] Subsequent cart open - using cached settings');
+        
+        // Ensure footer is visible for subsequent opens
+        const footer = document.querySelector('.sp-cart-footer');
+        if (footer) {
+          footer.style.opacity = '1';
+          footer.style.pointerEvents = 'auto';
+        }
         
         // Just fetch cart (fast)
         if (!state.cart) {
