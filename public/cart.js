@@ -128,7 +128,8 @@
     countdownStartTime: null,  // Track when fresh countdown started
     freeGiftsVariants: {},  // Track which free gifts are in cart: { tier1: variantId, tier2: variantId, tier3: variantId }
     freeGiftsUnlocked: { tier1: false, tier2: false, tier3: false },  // Track which tiers are unlocked
-    processingFreeGifts: false  // Prevent concurrent free gift operations
+    processingFreeGifts: false,  // Prevent concurrent free gift operations
+    fixingProtectionQuantity: false  // ⚡ Prevent concurrent protection quantity fixes
   };
 
   // ============================================
@@ -1975,10 +1976,20 @@
       console.log('[Cart.js] Protection found in cart, cached variant ID:', state.protectionVariantId);
     }
     
-    // Ensure protection product quantity is always 1 (fix if > 1)
-    if (protectionItem && protectionItem.quantity > 1) {
+    // ⚡ OPTIMIZATION: Ensure protection product quantity is always 1 (fix if > 1)
+    // Guard flag prevents concurrent fixes if this function is called multiple times
+    if (protectionItem && 
+        protectionItem.quantity > 1 && 
+        !state.fixingProtectionQuantity) {
+      
+      state.fixingProtectionQuantity = true;
+      console.log('[Cart.js] Protection quantity > 1, fixing to 1...');
+      
       const lineNumber = state.cart.items.indexOf(protectionItem) + 1;
-      updateCartItem(lineNumber, 1);
+      updateCartItem(lineNumber, 1).finally(() => {
+        state.fixingProtectionQuantity = false;
+        console.log('[Cart.js] Protection quantity fix complete');
+      });
     }
     
     // Update checkbox state to match cart contents
@@ -2022,8 +2033,9 @@
   async function maybeAutoAddProtection() {
     // Only auto-add if acceptByDefault is enabled and protection is not already in cart
     if (willAutoAddProtection()) {
-      // Optimization: Skip render since openCart() will render immediately after
-      await addProtectionToCart(true, true); // silent mode + skip render
+      // ⚡ OPTIMIZATION: Skip internal fetch since caller will fetch cart after
+      // This prevents redundant fetchCart() call and duplicate checkProtectionInCart()
+      await addProtectionToCart(true, true, true); // silent mode + skip render + skip fetch
     }
   }
 
@@ -2891,10 +2903,9 @@
       await maybeAutoAddProtection();
       
       // ⚡ OPTIMIZATION: Fetch cart WITHOUT enrichment for speed
+      // Note: fetchCart() internally calls checkProtectionInCart() at line 1154,
+      // so no need to call it again here (avoids redundant check)
       await fetchCart(2, false);
-      
-      // Check protection in cart AFTER refetch
-      checkProtectionInCart();
       
       // Smooth transition: fade out skeleton, fade in real content
       const contentArea = document.getElementById('sp-cart-content');
