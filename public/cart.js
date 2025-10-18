@@ -968,20 +968,22 @@
       .sp-skeleton-button,
       .sp-skeleton-text {
         position: relative !important;
-        background: linear-gradient(
+        overflow: hidden !important;
+        background-color: #e9ecef !important;
+        background-image: linear-gradient(
           90deg,
-          #e9ecef 25%,
-          #f3f4f6 37%,
-          #e9ecef 63%
+          transparent 0%,
+          transparent 25%,
+          rgba(255, 255, 255, 0.3) 50%,
+          transparent 75%,
+          transparent 100%
         ) !important;
         background-size: 200% 100% !important;
         background-repeat: no-repeat !important;
-        background-position: -100% 0 !important;
         animation-name: sp-skeleton-shimmer !important;
         animation-duration: 1.2s !important;
         animation-timing-function: linear !important;
         animation-iteration-count: infinite !important;
-        animation-fill-mode: forwards !important;
         border-radius: 8px !important;
         will-change: background-position !important;
       }
