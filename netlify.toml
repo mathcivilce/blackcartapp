@@ -1,0 +1,25 @@
+# Netlify Configuration
+# Hybrid Architecture: Edge Functions for public API, Next.js for dashboard
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+# Edge Functions Configuration
+[[edge_functions]]
+  path = "/api/settings"
+  function = "settings"
+
+# ROLLBACK INSTRUCTIONS:
+# To rollback to Next.js serverless API route:
+# 1. Comment out the [[edge_functions]] block above
+# 2. Redeploy
+# 3. Next.js route at app/api/settings/route.ts will take over automatically
+
+# Environment Variables (set in Netlify UI)
+# - NEXT_PUBLIC_SUPABASE_URL
+# - SUPABASE_SERVICE_ROLE_KEY
+# - NEXT_PUBLIC_SUPABASE_ANON_KEY
+# - STRIPE_SECRET_KEY
+# - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+

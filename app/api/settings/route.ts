@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getStoreSettings } from '@/lib/db';
 import { supabase, supabaseQueryWithRetry, Store, Settings } from '@/lib/supabase';
 
-// ⚡ EDGE RUNTIME - Runs on Deno at CDN edge (faster cold starts, global distribution)
-export const runtime = 'edge';
+/**
+ * Settings API - Next.js Serverless Fallback
+ * 
+ * PRIMARY: Netlify Edge Function at .netlify/edge-functions/settings.ts
+ * FALLBACK: This route (used if Edge Function is disabled in netlify.toml)
+ * 
+ * ROLLBACK: To switch back to this route, comment out [[edge_functions]]
+ * block in netlify.toml and redeploy.
+ */
 
 // Handle CORS preflight requests
 export async function OPTIONS(request: NextRequest) {
