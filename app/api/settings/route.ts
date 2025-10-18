@@ -27,13 +27,13 @@ export async function GET(request: NextRequest) {
       console.log('🔍 [Settings API] Using service role key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'FROM ENV' : 'FALLBACK');
       
       // First get the store - using retry logic to handle intermittent connection issues
-      const { data: store, error: storeError } = await supabaseQueryWithRetry(() =>
-        supabase
+      const { data: store, error: storeError } = await supabaseQueryWithRetry(async () => {
+        return await supabase
           .from('stores')
           .select('*')
           .eq('access_token', token)
-          .maybeSingle()
-      );
+          .maybeSingle();
+      });
 
       console.log('🔍 [Settings API] Query result:', {
         storeFound: !!store,
@@ -128,13 +128,13 @@ export async function GET(request: NextRequest) {
       }
 
       // Then get settings for this store - also with retry logic
-      const { data: settings, error: settingsError } = await supabaseQueryWithRetry(() =>
-        supabase
+      const { data: settings, error: settingsError } = await supabaseQueryWithRetry(async () => {
+        return await supabase
           .from('settings')
           .select('*')
           .eq('store_id', store.id)
-          .maybeSingle()
-      );
+          .maybeSingle();
+      });
       
       // Debug logging
       console.log('🔍 Store found:', store.id, store.shop_domain);
