@@ -21,6 +21,7 @@
     // Cache settings
     enableCache: true,  // ✅ ENABLED: Cache settings for better performance
     cacheKey: 'sp_cart_settings',
+    cartCacheKey: 'sp_cart_data',  // ✅ NEW: Cache cart data for instant opening
     cacheTTL: 1000 * 60 * 10  // 10 minutes (optimal balance between freshness and performance)
   };
 
@@ -1114,6 +1115,114 @@
   }
 
   // ============================================
+  // CART DATA CACHING (for instant cart opening)
+  // ============================================
+  // 
+  // BEHAVIOR:
+  // - Cart data is cached in localStorage (5-minute TTL)
+  // - On page load, cached cart is loaded into state.cart
+  // - When cart opens, if cache exists, show instantly (no skeleton!)
+  // - Fresh data is fetched in background and updates cache
+  // - Cache is validated by shop domain (security)
+  // - Cache auto-expires after 5 minutes (prevents stale data)
+  //
+  // RESULT: Instant cart opening across ALL pages! 🚀
+
+  function getCachedCart() {
+    // Check if caching is enabled
+    if (!CONFIG.enableCache) {
+      return null;
+    }
+    
+    // Skip localStorage if not available
+    if (!isLocalStorageAvailable()) {
+      return null;
+    }
+    
+    try {
+      const cached = localStorage.getItem(CONFIG.cartCacheKey);
+      if (!cached) {
+        return null;
+      }
+      
+      const parsed = JSON.parse(cached);
+      
+      // Validate structure
+      if (!parsed || typeof parsed !== 'object' || !parsed.data || !parsed.timestamp || !parsed.shop) {
+        console.warn('[Cart.js] Invalid cart cache structure, removing...');
+        localStorage.removeItem(CONFIG.cartCacheKey);
+        return null;
+      }
+      
+      const { data, timestamp, shop } = parsed;
+      
+      // Validate shop domain (security - don't show cart from different shop)
+      const currentShop = getShopDomain();
+      if (shop !== currentShop) {
+        console.log('[Cart.js] Cart cache invalid: different shop (cached:', shop, ', current:', currentShop, ')');
+        localStorage.removeItem(CONFIG.cartCacheKey);
+        return null;
+      }
+      
+      // Check if expired (5 minutes for cart data - shorter than settings)
+      const CART_CACHE_TTL = 1000 * 60 * 5; // 5 minutes
+      if (Date.now() - timestamp > CART_CACHE_TTL) {
+        console.log('[Cart.js] Cart cache expired');
+        localStorage.removeItem(CONFIG.cartCacheKey);
+        return null;
+      }
+      
+      console.log('[Cart.js] ✅ Cart loaded from cache:', data.item_count, 'items');
+      return data;
+    } catch (error) {
+      console.warn('[Cart.js] Cart cache read failed:', error.message);
+      // If localStorage fails or cache is corrupted, remove and fail gracefully
+      try {
+        localStorage.removeItem(CONFIG.cartCacheKey);
+      } catch (e) {
+        // Can't even remove, localStorage fully blocked
+      }
+      return null;
+    }
+  }
+
+  function setCachedCart(cart) {
+    // Check if caching is enabled
+    if (!CONFIG.enableCache) {
+      return; // Skip caching when disabled
+    }
+    
+    // Skip localStorage if not available
+    if (!isLocalStorageAvailable()) {
+      return; // Silently skip caching
+    }
+    
+    try {
+      const currentShop = getShopDomain();
+      localStorage.setItem(CONFIG.cartCacheKey, JSON.stringify({
+        data: cart,
+        timestamp: Date.now(),
+        shop: currentShop // Store shop domain for validation
+      }));
+      console.log('[Cart.js] ✅ Cart cached successfully:', cart.item_count, 'items');
+    } catch (error) {
+      console.warn('[Cart.js] Cart cache write failed:', error.message);
+      // If localStorage fails (quota exceeded, etc.), silently fail
+      // Cart still works without caching
+    }
+  }
+
+  function clearCartCache() {
+    // Clear cart cache (useful when user logs out or cart is cleared)
+    try {
+      localStorage.removeItem(CONFIG.cartCacheKey);
+      console.log('[Cart.js] Cart cache cleared');
+    } catch (error) {
+      console.warn('[Cart.js] Failed to clear cart cache:', error.message);
+    }
+  }
+
+  // ============================================
   // SHOPIFY CART API FUNCTIONS
   // ============================================
 
@@ -1152,6 +1261,10 @@
         }
         
         state.cart = cart;
+        
+        // ✅ NEW: Cache cart data for instant opening on next page
+        setCachedCart(cart);
+        
         checkProtectionInCart();
         return cart;
         
@@ -2835,14 +2948,14 @@
     overlay.classList.add('sp-open');
     document.body.style.overflow = 'hidden';
     
-    // Show skeleton ONLY if we don't have data to show yet
-    // (settings not loaded OR no cart data)
+    // ✅ OPTIMIZED: Show skeleton ONLY if we don't have cached data
+    // With cart caching, we can show cart instantly even on first load on new pages!
     if (!state.settingsLoaded || !state.cart) {
       console.log('[Cart.js] Showing skeleton UI (settingsLoaded:', state.settingsLoaded, ', hasCart:', !!state.cart, ')');
       renderSkeleton();
     } else {
-      console.log('[Cart.js] Skipping skeleton - showing current cart while updating');
-      // Keep showing current cart while new item is being added
+      console.log('[Cart.js] ✅ Instant cart open - using cached data (settings + cart) 🚀');
+      // Show cached cart immediately (will update in background if needed)
       renderCart();
     }
     
@@ -2862,6 +2975,7 @@
         await maybeAutoAddProtection();
         
         // ⚡ OPTIMIZATION: Fetch cart WITHOUT enrichment for speed
+        // Note: This will update the cache with fresh data (setCachedCart called in fetchCart)
         await fetchCart(2, false);
         
         checkProtectionInCart();
@@ -3499,13 +3613,23 @@
     // ✅ FIX: If we have cached settings, mark as loaded (no skeleton needed!)
     state.settingsLoaded = !!cachedSettings; // true if cached, false if using defaults
     
+    // ✅ NEW: Load cached cart data for instant cart opening
+    const cachedCart = getCachedCart();
+    if (cachedCart) {
+      state.cart = cachedCart;
+      console.log('[Cart.js] ✅ Cart data loaded from cache:', cachedCart.item_count, 'items');
+    }
+    
     console.log('[Cart.js] Using', cachedSettings ? 'cached' : 'default', 'settings for initialization');
     console.log('[Cart.js] settingsLoaded:', state.settingsLoaded, '(cached settings exist:', !!cachedSettings, ')');
+    console.log('[Cart.js] Cart cached:', !!cachedCart, '(cart items in cache:', cachedCart?.item_count || 0, ')');
     
     if (!cachedSettings) {
-      console.log('[Cart.js] No cache - settings will be fetched from API when cart opens (skeleton will show)');
+      console.log('[Cart.js] No settings cache - settings will be fetched from API when cart opens (skeleton will show)');
+    } else if (!cachedCart) {
+      console.log('[Cart.js] Settings cached but no cart cache - cart will be fetched quickly (minimal skeleton)');
     } else {
-      console.log('[Cart.js] Cache found - no skeleton needed, instant cart opening on all pages!');
+      console.log('[Cart.js] Both settings and cart cached - instant cart opening on all pages! 🚀');
     }
 
     // STEP 1: Inject CSS with default/cached settings
