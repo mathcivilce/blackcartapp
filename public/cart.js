@@ -2709,7 +2709,11 @@
         // Mark first open complete
         state.isFirstCartOpen = false;
         
-        // ✅ FIX: Check protection in cart BEFORE rendering (to set state.protectionVariantId)
+        // ✅ Auto-add protection BEFORE rendering (prevents toggle flicker)
+        // This ensures toggle is already ON when cart appears
+        await maybeAutoAddProtection();
+        
+        // ✅ Check protection in cart AFTER auto-add (to set state.protectionVariantId)
         checkProtectionInCart();
         
         // Smooth transition: fade out skeleton, fade in real content
@@ -2734,15 +2738,15 @@
           await fetchCart();
         }
         
-        // ✅ Check protection in cart BEFORE rendering (to filter it out correctly)
+        // ✅ Auto-add protection BEFORE rendering (prevents toggle flicker)
+        await maybeAutoAddProtection();
+        
+        // ✅ Check protection in cart AFTER auto-add (to filter it out correctly)
         checkProtectionInCart();
         
         // Render immediately (no skeleton needed)
         renderCart();
       }
-      
-      // Auto-add protection (if enabled)
-      await maybeAutoAddProtection();
       
       console.log('[Cart.js] Cart opened successfully');
       
