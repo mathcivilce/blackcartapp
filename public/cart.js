@@ -2713,7 +2713,10 @@
         // This ensures toggle is already ON when cart appears
         await maybeAutoAddProtection();
         
-        // ✅ Check protection in cart AFTER auto-add (to set state.protectionVariantId)
+        // ✅ CRITICAL: Refetch cart to get updated data with protection item
+        await fetchCart();
+        
+        // ✅ Check protection in cart AFTER refetch (to set state.protectionVariantId)
         checkProtectionInCart();
         
         // Smooth transition: fade out skeleton, fade in real content
@@ -2741,7 +2744,10 @@
         // ✅ Auto-add protection BEFORE rendering (prevents toggle flicker)
         await maybeAutoAddProtection();
         
-        // ✅ Check protection in cart AFTER auto-add (to filter it out correctly)
+        // ✅ CRITICAL: Refetch cart to get updated data with protection item
+        await fetchCart();
+        
+        // ✅ Check protection in cart AFTER refetch (to filter it out correctly)
         checkProtectionInCart();
         
         // Render immediately (no skeleton needed)
