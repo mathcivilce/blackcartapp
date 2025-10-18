@@ -34,5 +34,6 @@ yarn-error.log*
 next-env.d.ts
 
 
-# Local Netlify folder
+# Local Netlify folder (but allow edge-functions to be committed)
 .netlify
+!.netlify/edge-functions/
