@@ -915,9 +915,31 @@
         height: 14px;
       }
 
+      /* Footer skeleton */
+      .sp-skeleton-footer {
+        padding: 20px;
+        border-top: 1px solid #e5e5e5;
+        background: #fafafa;
+        animation: sp-skeleton-fadein 0.3s ease-in;
+      }
+
+      .sp-skeleton-button {
+        height: 52px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+      }
+
+      .sp-skeleton-text {
+        height: 14px;
+        width: 50%;
+        margin: 0 auto;
+      }
+
       /* Animated shimmer effect */
       .sp-skeleton-image,
-      .sp-skeleton-line {
+      .sp-skeleton-line,
+      .sp-skeleton-button,
+      .sp-skeleton-text {
         background: linear-gradient(
           90deg,
           #f0f0f0 0%,
@@ -940,6 +962,11 @@
 
       .sp-cart-content.sp-transitioning {
         opacity: 0;
+      }
+      
+      /* Hide real footer when skeleton footer is shown */
+      .sp-cart-footer.sp-hidden {
+        display: none !important;
       }
     `;
 
@@ -2372,7 +2399,7 @@
       return;
     }
     
-    // Create skeleton with 2 items
+    // Create skeleton with 2 items in content area
     contentArea.innerHTML = `
       <div class="sp-cart-skeleton">
         <div class="sp-skeleton-item">
@@ -2393,6 +2420,29 @@
         </div>
       </div>
     `;
+    
+    // Hide real footer and show skeleton footer
+    const realFooter = document.querySelector('.sp-cart-footer');
+    if (realFooter) {
+      realFooter.classList.add('sp-hidden');
+    }
+    
+    // Create skeleton footer and insert it
+    const sidebar = document.getElementById('sp-cart-sidebar');
+    if (sidebar) {
+      // Check if skeleton footer already exists
+      let skeletonFooter = sidebar.querySelector('.sp-skeleton-footer');
+      
+      if (!skeletonFooter) {
+        skeletonFooter = document.createElement('div');
+        skeletonFooter.className = 'sp-skeleton-footer';
+        skeletonFooter.innerHTML = `
+          <div class="sp-skeleton-button"></div>
+          <div class="sp-skeleton-text"></div>
+        `;
+        sidebar.appendChild(skeletonFooter);
+      }
+    }
   }
 
   function renderCart() {
@@ -2710,13 +2760,6 @@
         // Mark first open complete
         state.isFirstCartOpen = false;
         
-        // ✅ Hide footer during skeleton phase (prevents toggle flicker)
-        const footer = document.querySelector('.sp-cart-footer');
-        if (footer) {
-          footer.style.opacity = '0';
-          footer.style.pointerEvents = 'none';
-        }
-        
         // ✅ Auto-add protection BEFORE rendering (prevents toggle flicker)
         // This ensures toggle is already ON when cart appears
         await maybeAutoAddProtection();
@@ -2736,19 +2779,29 @@
             renderCart();
             contentArea.classList.remove('sp-transitioning');
             
-            // ✅ Show footer after content is ready (with correct toggle state)
-            if (footer) {
-              footer.style.opacity = '1';
-              footer.style.pointerEvents = 'auto';
+            // ✅ Remove skeleton footer and show real footer (with correct toggle state)
+            const skeletonFooter = document.querySelector('.sp-skeleton-footer');
+            if (skeletonFooter) {
+              skeletonFooter.remove();
+            }
+            
+            const realFooter = document.querySelector('.sp-cart-footer');
+            if (realFooter) {
+              realFooter.classList.remove('sp-hidden');
             }
           }, 150); // Small delay for smooth transition
         } else {
           renderCart();
           
-          // Show footer immediately if no transition
-          if (footer) {
-            footer.style.opacity = '1';
-            footer.style.pointerEvents = 'auto';
+          // Remove skeleton footer and show real footer immediately if no transition
+          const skeletonFooter = document.querySelector('.sp-skeleton-footer');
+          if (skeletonFooter) {
+            skeletonFooter.remove();
+          }
+          
+          const realFooter = document.querySelector('.sp-cart-footer');
+          if (realFooter) {
+            realFooter.classList.remove('sp-hidden');
           }
         }
         
@@ -2756,11 +2809,10 @@
         // Subsequent opens: settings already in memory
         console.log('[Cart.js] Subsequent cart open - using cached settings');
         
-        // Ensure footer is visible for subsequent opens
+        // Ensure footer is visible for subsequent opens (remove any sp-hidden class)
         const footer = document.querySelector('.sp-cart-footer');
         if (footer) {
-          footer.style.opacity = '1';
-          footer.style.pointerEvents = 'auto';
+          footer.classList.remove('sp-hidden');
         }
         
         // Just fetch cart (fast)
