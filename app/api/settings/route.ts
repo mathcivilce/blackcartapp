@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStoreSettings } from '@/lib/db';
-import { supabase, supabaseQueryWithRetry } from '@/lib/supabase';
+import { supabase, supabaseQueryWithRetry, Store, Settings } from '@/lib/supabase';
 
 // Handle CORS preflight requests
 export async function OPTIONS(request: NextRequest) {
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       console.log('🔍 [Settings API] Using service role key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'FROM ENV' : 'FALLBACK');
       
       // First get the store - using retry logic to handle intermittent connection issues
-      const { data: store, error: storeError } = await supabaseQueryWithRetry(async () => {
+      const { data: store, error: storeError } = await supabaseQueryWithRetry<Store>(async () => {
         return await supabase
           .from('stores')
           .select('*')
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Then get settings for this store - also with retry logic
-      const { data: settings, error: settingsError } = await supabaseQueryWithRetry(async () => {
+      const { data: settings, error: settingsError } = await supabaseQueryWithRetry<Settings>(async () => {
         return await supabase
           .from('settings')
           .select('*')

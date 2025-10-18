@@ -30,7 +30,7 @@ export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 // Helper function to execute queries with retry logic for intermittent connection issues
-export async function supabaseQueryWithRetry<T>(
+export async function supabaseQueryWithRetry<T = any>(
   queryFn: () => Promise<{ data: T | null; error: any }>,
   maxRetries = 3,
   retryDelay = 100
