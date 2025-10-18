@@ -860,8 +860,13 @@
       /* ============================================ */
       
       .sp-cart-skeleton {
-        padding: 20px;
-        animation: sp-skeleton-fadein 0.3s ease-in;
+        padding: 20px !important;
+        animation: sp-skeleton-fadein 0.3s ease-in !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 1 !important;
       }
 
       @keyframes sp-skeleton-fadein {
@@ -870,69 +875,85 @@
       }
 
       .sp-skeleton-item {
-        display: flex;
-        gap: 12px;
-        padding: 16px 0;
-        border-bottom: 1px solid #f0f0f0;
+        display: flex !important;
+        gap: 12px !important;
+        padding: 16px 0 !important;
+        border-bottom: 1px solid #f0f0f0 !important;
+        visibility: visible !important;
+        opacity: 1 !important;
       }
 
       .sp-skeleton-item:last-child {
-        border-bottom: none;
+        border-bottom: none !important;
       }
 
       .sp-skeleton-image {
-        width: 80px;
-        height: 80px;
-        border-radius: 8px;
-        flex-shrink: 0;
+        width: 80px !important;
+        height: 80px !important;
+        border-radius: 8px !important;
+        flex-shrink: 0 !important;
+        display: block !important;
+        visibility: visible !important;
       }
 
       .sp-skeleton-details {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        justify-content: center;
+        flex: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        justify-content: center !important;
+        visibility: visible !important;
       }
 
       .sp-skeleton-line {
-        height: 16px;
-        border-radius: 4px;
+        height: 16px !important;
+        border-radius: 4px !important;
+        display: block !important;
+        visibility: visible !important;
       }
 
       .sp-skeleton-title {
-        width: 70%;
-        height: 18px;
+        width: 70% !important;
+        height: 18px !important;
       }
 
       .sp-skeleton-price {
-        width: 40%;
-        height: 16px;
+        width: 40% !important;
+        height: 16px !important;
       }
 
       .sp-skeleton-quantity {
-        width: 30%;
-        height: 14px;
+        width: 30% !important;
+        height: 14px !important;
       }
 
       /* Footer skeleton */
       .sp-skeleton-footer {
-        padding: 20px;
-        border-top: 1px solid #e5e5e5;
-        background: #fafafa;
-        animation: sp-skeleton-fadein 0.3s ease-in;
+        padding: 20px !important;
+        border-top: 1px solid #e5e5e5 !important;
+        background: #fafafa !important;
+        animation: sp-skeleton-fadein 0.3s ease-in !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 1 !important;
       }
 
       .sp-skeleton-button {
-        height: 52px;
-        border-radius: 8px;
-        margin-bottom: 12px;
+        height: 52px !important;
+        border-radius: 8px !important;
+        margin-bottom: 12px !important;
+        display: block !important;
+        visibility: visible !important;
       }
 
       .sp-skeleton-text {
-        height: 14px;
-        width: 50%;
-        margin: 0 auto;
+        height: 14px !important;
+        width: 50% !important;
+        margin: 0 auto !important;
+        display: block !important;
+        visibility: visible !important;
       }
 
       /* Animated shimmer effect */
@@ -945,9 +966,9 @@
           #f0f0f0 0%,
           #e0e0e0 50%,
           #f0f0f0 100%
-        );
-        background-size: 200% 100%;
-        animation: sp-skeleton-shimmer 1.5s ease-in-out infinite;
+        ) !important;
+        background-size: 200% 100% !important;
+        animation: sp-skeleton-shimmer 1.5s ease-in-out infinite !important;
       }
 
       @keyframes sp-skeleton-shimmer {
@@ -2827,6 +2848,105 @@
     }
   }
   
+  // Helper function: Safely add product to cart with verification and retry
+  async function safelyAddToCart(formData, maxRetries = 2) {
+    console.log('[Cart.js] safelyAddToCart() called with retry limit:', maxRetries);
+    
+    // Extract variant ID from form data for verification
+    const variantId = formData.get('id');
+    if (!variantId) {
+      throw new Error('No variant ID found in form data');
+    }
+    
+    console.log('[Cart.js] Adding variant to cart:', variantId);
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[Cart.js] Add to cart attempt ${attempt}/${maxRetries}`);
+        
+        // Attempt to add product to cart
+        const response = await fetch('/cart/add.js', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[Cart.js] Add to cart failed:', response.status, errorText);
+          
+          // If it's a 422 error, check if item is already in cart
+          if (response.status === 422) {
+            console.log('[Cart.js] 422 error - checking if item already in cart...');
+            
+            // Fetch current cart to see if item is already there
+            await fetchCart();
+            
+            const itemInCart = state.cart?.items?.find(item => 
+              String(item.id) === String(variantId) || 
+              String(item.variant_id) === String(variantId)
+            );
+            
+            if (itemInCart) {
+              console.log('[Cart.js] Item already in cart, treating as success');
+              return { success: true, alreadyInCart: true, item: itemInCart };
+            }
+          }
+          
+          // If not last attempt, retry
+          if (attempt < maxRetries) {
+            console.log('[Cart.js] Retrying in 500ms...');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            continue;
+          }
+          
+          throw new Error(`Failed to add product to cart (${response.status})`);
+        }
+        
+        // Success! Parse response
+        const data = await response.json();
+        console.log('[Cart.js] Product added successfully:', data);
+        
+        // Verify the product was actually added by fetching cart
+        await fetchCart();
+        
+        const addedItem = state.cart?.items?.find(item => 
+          String(item.id) === String(variantId) || 
+          String(item.variant_id) === String(variantId)
+        );
+        
+        if (!addedItem) {
+          console.warn('[Cart.js] Product not found in cart after adding, retrying...');
+          
+          // If not last attempt, retry
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            continue;
+          }
+          
+          throw new Error('Product was not added to cart');
+        }
+        
+        console.log('[Cart.js] Product verified in cart:', addedItem);
+        return { success: true, alreadyInCart: false, item: addedItem };
+        
+      } catch (error) {
+        console.error(`[Cart.js] Attempt ${attempt}/${maxRetries} failed:`, error);
+        
+        // If not last attempt, retry
+        if (attempt < maxRetries) {
+          console.log('[Cart.js] Retrying in 500ms...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          continue;
+        }
+        
+        // Last attempt failed
+        throw error;
+      }
+    }
+    
+    throw new Error('Failed to add product to cart after all retries');
+  }
+  
   async function openCart() {
     console.log('[Cart.js] openCart() called');
     
@@ -3102,28 +3222,19 @@
         
         const formData = new FormData(form);
         
-        // Background: Add to cart + fetch
-        fetch('/cart/add.js', {
-          method: 'POST',
-          body: formData
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Failed to add product to cart');
-          }
-          return response.json();
-        })
-        .then(async (data) => {
-          console.log('[Cart.js] Product added to cart successfully');
-          
-          // Smooth transition from skeleton to real content
-          await transitionToRealCart();
-        })
-        .catch(error => {
-          console.error('[Cart.js] Error adding to cart:', error);
-          // Show error in cart UI (no page reload)
-          showCartError('Failed to add product to cart. Please try again.');
-        });
+        // Background: Safely add to cart with verification and retry
+        safelyAddToCart(formData)
+          .then(async (result) => {
+            console.log('[Cart.js] Product added to cart successfully:', result);
+            
+            // Smooth transition from skeleton to real content
+            await transitionToRealCart();
+          })
+          .catch(error => {
+            console.error('[Cart.js] Error adding to cart:', error);
+            // Show error in cart UI (no page reload)
+            showCartError('Failed to add product to cart. Please try again.');
+          });
       }
     }, true); // Use capture phase
 
@@ -3145,28 +3256,19 @@
           
           const formData = new FormData(form);
           
-          // Background: Add to cart + fetch
-          fetch('/cart/add.js', {
-            method: 'POST',
-            body: formData
-          })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Failed to add product to cart');
-            }
-            return response.json();
-          })
-          .then(async (data) => {
-            console.log('[Cart.js] Product added via button click');
-            
-            // Smooth transition from skeleton to real content
-            await transitionToRealCart();
-          })
-          .catch(error => {
-            console.error('[Cart.js] Error adding to cart via button:', error);
-            // Show error in cart UI (no page reload)
-            showCartError('Failed to add product to cart. Please try again.');
-          });
+          // Background: Safely add to cart with verification and retry
+          safelyAddToCart(formData)
+            .then(async (result) => {
+              console.log('[Cart.js] Product added via button click:', result);
+              
+              // Smooth transition from skeleton to real content
+              await transitionToRealCart();
+            })
+            .catch(error => {
+              console.error('[Cart.js] Error adding to cart via button:', error);
+              // Show error in cart UI (no page reload)
+              showCartError('Failed to add product to cart. Please try again.');
+            });
         } else {
           console.log('[Cart.js] Button clicked but no cart form found');
         }
