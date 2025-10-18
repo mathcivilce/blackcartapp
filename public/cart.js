@@ -2763,11 +2763,11 @@
       if (state.settingsLoaded) {
         console.log('[Cart.js] Fast path - settings already loaded, skipping fetch');
         
-        // ⚡ OPTIMIZATION: Add protection and fetch cart in PARALLEL (saves ~100-150ms)
-        await Promise.all([
-          maybeAutoAddProtection(),
-          fetchCart()
-        ]);
+        // Add protection BEFORE fetching cart (so it's included in the cart)
+        await maybeAutoAddProtection();
+        
+        // Fetch cart to get updated data with protection item
+        await fetchCart();
         
         checkProtectionInCart();
         
@@ -2794,16 +2794,15 @@
       // 🐌 SLOW PATH: First cart interaction (need to fetch settings)
       console.log('[Cart.js] Slow path - fetching settings for first time');
       
-      // ⚡ OPTIMIZATION: Fetch settings and add protection in PARALLEL (saves ~150-250ms)
-      const [settings] = await Promise.all([
-        fetchSettings(false),
-        maybeAutoAddProtection() // Runs in parallel with settings fetch!
-      ]);
-      
+      // Fetch settings first (needed to determine if protection should be added)
+      const settings = await fetchSettings(false);
       if (settings) {
         state.settingsLoaded = true;
         applySettings();
       }
+      
+      // Add protection BEFORE fetching cart (so it's included in the cart)
+      await maybeAutoAddProtection();
       
       // Fetch cart to get updated data with protection item
       await fetchCart();
