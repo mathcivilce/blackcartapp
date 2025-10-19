@@ -430,22 +430,23 @@ export default function UpsellPage() {
                 </>
               )}
             </div>
-
-            <div style={styles.card}>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                style={{
-                  ...styles.saveButton,
-                  opacity: saving ? 0.6 : 1,
-                  cursor: saving ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {saving ? 'Saving...' : 'Save Settings'}
-              </button>
-            </div>
           </>
           )}
+
+          {/* Save Button - Always Visible */}
+          <div style={styles.card}>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              style={{
+                ...styles.saveButton,
+                opacity: saving ? 0.6 : 1,
+                cursor: saving ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {saving ? 'Saving...' : 'Save Settings'}
+            </button>
+          </div>
         </div>
 
         <div style={styles.rightColumn}>
