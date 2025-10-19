@@ -215,6 +215,25 @@ export interface Settings {
   free_gifts_tier3_unlocked_message?: string;
   free_gifts_tier3_show_unlocked_message?: boolean;
   free_gifts_tier3_icon?: string;
+  
+  // Free gifts additional settings
+  free_gifts_show_border?: boolean;
+  free_gifts_headline_color?: string;
+  free_gifts_headline_bold?: boolean;
+  
+  // Upsell settings
+  upsell_enabled?: boolean;
+  upsell_button_color?: string;
+  upsell_button_corner_radius?: number;
+  upsell_item1_enabled?: boolean;
+  upsell_item1_product_handle?: string;
+  upsell_item1_variant_id?: string;
+  upsell_item2_enabled?: boolean;
+  upsell_item2_product_handle?: string;
+  upsell_item2_variant_id?: string;
+  upsell_item3_enabled?: boolean;
+  upsell_item3_product_handle?: string;
+  upsell_item3_variant_id?: string;
 }
 
 export interface Sale {
