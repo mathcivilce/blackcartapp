@@ -3,7 +3,7 @@
 
   // Configuration - will be fetched from API in production
   // VERSION CHECK - If you see this log, you have the latest code
-  console.log('[Cart.js] VERSION: 2.5.0-upsell-debug');
+  console.log('[Cart.js] VERSION: 2.5.1-upsell-render-debug');
   
   const CONFIG = {
     appUrl: (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
@@ -2918,15 +2918,19 @@
 
   // Render upsell products
   function renderUpsellProducts() {
+    console.log('[Upsell] renderUpsellProducts called');
+    
     const container = document.getElementById('sp-upsell-container');
     if (!container) {
-      console.log('[Upsell] Container not found');
+      console.error('[Upsell] Container not found - this should not happen!');
       return;
     }
+    
+    console.log('[Upsell] Container found:', container);
 
     // Hide if upsell not enabled
     if (!state.settings?.upsell?.enabled) {
-      console.log('[Upsell] Feature not enabled');
+      console.log('[Upsell] Feature not enabled, hiding container');
       container.style.display = 'none';
       return;
     }
@@ -2937,16 +2941,16 @@
     // Check if any items are enabled
     const hasEnabledItems = items.some(key => upsell[key]?.enabled);
     if (!hasEnabledItems) {
-      console.log('[Upsell] No items enabled');
+      console.log('[Upsell] No items enabled, hiding container');
       container.style.display = 'none';
       return;
     }
 
     console.log('[Upsell] Rendering upsell products', {
       enabled: upsell.enabled,
-      item1: { enabled: upsell.item1?.enabled, hasProduct: !!state.upsellProducts.item1 },
-      item2: { enabled: upsell.item2?.enabled, hasProduct: !!state.upsellProducts.item2 },
-      item3: { enabled: upsell.item3?.enabled, hasProduct: !!state.upsellProducts.item3 }
+      item1: { enabled: upsell.item1?.enabled, hasProduct: !!state.upsellProducts.item1, data: state.upsellProducts.item1 },
+      item2: { enabled: upsell.item2?.enabled, hasProduct: !!state.upsellProducts.item2, data: state.upsellProducts.item2 },
+      item3: { enabled: upsell.item3?.enabled, hasProduct: !!state.upsellProducts.item3, data: state.upsellProducts.item3 }
     });
 
     // Get button styling from settings
@@ -2991,6 +2995,8 @@
     }).filter(html => html).join('');
 
     if (upsellHTML) {
+      console.log('[Upsell] HTML generated, displaying upsells');
+      
       const headlineEnabled = upsell.headlineEnabled ?? true;
       const headlineText = upsell.headlineText || 'Help Save More Animals';
       
@@ -3007,10 +3013,13 @@
         </div>
       `;
       container.style.display = 'block';
+      
+      console.log('[Upsell] Container visible, innerHTML set:', container.innerHTML.substring(0, 100) + '...');
 
       // Attach click handlers
       attachUpsellClickHandlers();
     } else {
+      console.log('[Upsell] No HTML generated (no enabled items with product data)');
       container.style.display = 'none';
     }
   }
