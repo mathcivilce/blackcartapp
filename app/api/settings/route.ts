@@ -284,6 +284,8 @@ export async function GET(request: NextRequest) {
         },
         upsell: {
           enabled: settings?.upsell_enabled ?? false,
+          headlineEnabled: settings?.upsell_headline_enabled ?? true,
+          headlineText: settings?.upsell_headline_text || 'Help Save More Animals',
           buttonColor: settings?.upsell_button_color || '#1a3a52',
           buttonCornerRadius: settings?.upsell_button_corner_radius || 6,
           item1: {
@@ -463,6 +465,8 @@ export async function GET(request: NextRequest) {
         },
         upsell: {
           enabled: false,
+          headlineEnabled: true,
+          headlineText: 'Help Save More Animals',
           buttonColor: '#1a3a52',
           buttonCornerRadius: 6,
           item1: { enabled: false, productHandle: '', variantId: '' },
@@ -591,6 +595,8 @@ export async function GET(request: NextRequest) {
       },
       upsell: {
         enabled: settings?.upsell_enabled ?? false,
+        headlineEnabled: settings?.upsell_headline_enabled ?? true,
+        headlineText: settings?.upsell_headline_text || 'Help Save More Animals',
         buttonColor: settings?.upsell_button_color || '#1a3a52',
         buttonCornerRadius: settings?.upsell_button_corner_radius || 6,
         item1: {
@@ -717,6 +723,8 @@ export async function GET(request: NextRequest) {
       },
       upsell: {
         enabled: false,
+        headlineEnabled: true,
+        headlineText: 'Help Save More Animals',
         buttonColor: '#1a3a52',
         buttonCornerRadius: 6,
         item1: { enabled: false, productHandle: '', variantId: '' },

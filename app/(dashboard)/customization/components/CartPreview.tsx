@@ -109,6 +109,8 @@ interface CartPreviewProps {
   };
   upsell?: {
     enabled: boolean;
+    headlineEnabled?: boolean;
+    headlineText?: string;
     buttonColor?: string;
     buttonCornerRadius?: number;
     item1: {
@@ -487,9 +489,16 @@ export default function CartPreview({ design, addons, announcement, freeGifts, u
         {/* Upsell Products */}
         {upsell?.enabled && (upsell.item1.enabled || upsell.item2.enabled || upsell.item3.enabled) && (
           <div style={{ padding: '0 20px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', margin: '20px 0 12px 0' }}>
-              Help Save More Animals
-            </h3>
+            {upsell.headlineEnabled && upsell.headlineText && (
+              <h3 style={{ 
+                fontSize: '16px', 
+                fontWeight: '600', 
+                margin: '20px 0 12px 0',
+                textAlign: 'center'
+              }}>
+                {upsell.headlineText}
+              </h3>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '12px' }}>
               {/* Upsell Item 1 */}
               {upsell.item1.enabled && upsell.item1.productHandle && (

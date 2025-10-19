@@ -22,6 +22,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       enabled: settings.upsell_enabled || false,
+      headlineEnabled: settings.upsell_headline_enabled ?? true,
+      headlineText: settings.upsell_headline_text || 'Help Save More Animals',
       buttonColor: settings.upsell_button_color || '#1a3a52',
       buttonCornerRadius: settings.upsell_button_corner_radius || 6,
       item1: {
@@ -60,6 +62,8 @@ export async function POST(request: NextRequest) {
       .from('settings')
       .update({
         upsell_enabled: upsellSettings.enabled,
+        upsell_headline_enabled: upsellSettings.headlineEnabled,
+        upsell_headline_text: upsellSettings.headlineText,
         upsell_button_color: upsellSettings.buttonColor,
         upsell_button_corner_radius: upsellSettings.buttonCornerRadius,
         upsell_item1_enabled: upsellSettings.item1.enabled,

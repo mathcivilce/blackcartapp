@@ -223,6 +223,8 @@ export interface Settings {
   
   // Upsell settings
   upsell_enabled?: boolean;
+  upsell_headline_enabled?: boolean;
+  upsell_headline_text?: string;
   upsell_button_color?: string;
   upsell_button_corner_radius?: number;
   upsell_item1_enabled?: boolean;

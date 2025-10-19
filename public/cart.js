@@ -117,6 +117,8 @@
     },
     upsell: {
       enabled: false,
+      headlineEnabled: true,
+      headlineText: 'Help Save More Animals',
       buttonColor: '#1a3a52',
       buttonCornerRadius: 6,
       item1: { enabled: false, productHandle: '', variantId: '' },
@@ -491,6 +493,7 @@
         fontWeight: 600;
         margin: 20px 0 12px 0;
         color: #000;
+        text-align: center;
       }
 
       .sp-upsell-items {
@@ -2929,9 +2932,16 @@
     }).filter(html => html).join('');
 
     if (upsellHTML) {
+      const headlineEnabled = upsell.headlineEnabled ?? true;
+      const headlineText = upsell.headlineText || 'Help Save More Animals';
+      
+      const headlineHTML = headlineEnabled && headlineText 
+        ? `<h3 class="sp-upsell-title">${headlineText}</h3>` 
+        : '';
+
       container.innerHTML = `
         <div class="sp-upsell-container">
-          <h3 class="sp-upsell-title">Help Save More Animals</h3>
+          ${headlineHTML}
           <div class="sp-upsell-items">
             ${upsellHTML}
           </div>
