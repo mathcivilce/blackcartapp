@@ -371,7 +371,7 @@
 
       .sp-free-gifts-bar-wrapper {
         position: relative;
-        height: 60px;
+        height: 75px;
         margin-bottom: 0;
       }
 
@@ -2503,7 +2503,7 @@
               productId: product.id,
               title: product.title,
               variantTitle: variant.title !== 'Default Title' ? variant.title : '',
-              price: variant.price,
+              price: Math.round(parseFloat(variant.price) * 100),  // Convert to cents
               image: product.images[0]?.src || product.image?.src
             };
           }
@@ -2526,7 +2526,7 @@
           productId: product.id,
           title: product.title,
           variantTitle: variant.title !== 'Default Title' ? variant.title : '',
-          price: variant.price,
+          price: Math.round(parseFloat(variant.price) * 100),  // Convert to cents
           image: product.images[0]?.src || product.image?.src
         };
       }
@@ -2585,14 +2585,16 @@
           const product = await getFreeGiftProduct(tier);
           
           if (product) {
-            // Add to cart
+            // Add to cart with $0 price (automatic free gift)
             const formData = {
               items: [{
                 id: product.variantId,
                 quantity: 1,
+                price: 0,  // ✅ Set price to $0 - makes it free at checkout
                 properties: {
                   '_free_gift': 'true',
-                  '_free_gift_tier': tierKey
+                  '_free_gift_tier': tierKey,
+                  '_original_price': product.price  // Store original price for display
                 }
               }]
             };
@@ -2606,6 +2608,9 @@
             if (response.ok) {
               state.freeGiftsVariants[tierKey] = String(product.variantId);
               state.freeGiftsUnlocked[tierKey] = true;
+              console.log(`[Free Gifts] ✅ ${tierKey} added as FREE (original price: $${(product.price / 100).toFixed(2)})`);
+            } else {
+              console.error(`[Free Gifts] Failed to add ${tierKey}:`, await response.text());
             }
           }
         }
@@ -2822,7 +2827,7 @@
               </div>
               <p class="sp-cart-item-price" style="margin: 0;">
                 ${isFreeGift ? 
-                  `<span class="sp-free-gift-price">${formatMoney(item.original_line_price || item.final_line_price)}</span><span style="color: #000; font-weight: 600;">FREE</span>` 
+                  `<span class="sp-free-gift-price">${formatMoney(item.properties?._original_price ? parseInt(item.properties._original_price) : (item.original_line_price || item.final_line_price))}</span><span style="color: #000; font-weight: 600;">FREE</span>` 
                   : 
                   formatMoney(item.final_line_price)
                 }

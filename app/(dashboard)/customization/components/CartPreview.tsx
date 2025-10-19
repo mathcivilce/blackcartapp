@@ -318,7 +318,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
               {/* Progress Bar with Embedded Rewards */}
               <div style={{
                 position: 'relative' as const,
-                height: '60px',
+                height: '75px',
                 marginBottom: '0px',
               }}>
                 {/* Bar segments container */}
@@ -528,7 +528,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
               {/* Progress Bar with Embedded Rewards */}
               <div style={{
                 position: 'relative' as const,
-                height: '60px',
+                height: '75px',
                 marginBottom: '0px',
               }}>
                 {/* Bar segments container */}
