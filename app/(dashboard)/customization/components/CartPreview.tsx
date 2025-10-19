@@ -72,6 +72,7 @@ interface CartPreviewProps {
     conditionType: string;
     headline: string;
     headlineColor?: string;
+    headlineBold?: boolean;
     progressColor: string;
     position: string;
     showBorder?: boolean;
