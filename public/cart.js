@@ -1586,6 +1586,11 @@
         if (response.ok) {
           const settings = await response.json();
           console.log('[Cart.js] Settings API response received successfully' + (attempt > 1 ? ` (attempt ${attempt})` : ''));
+          console.log('[Cart.js] Upsell in settings:', {
+            hasUpsell: !!settings.upsell,
+            upsellEnabled: settings.upsell?.enabled,
+            upsellData: settings.upsell
+          });
           return settings;
         }
         
@@ -2848,6 +2853,13 @@
 
   // Fetch and cache all enabled upsell products
   async function fetchUpsellProducts() {
+    console.log('[Upsell] Checking settings:', {
+      hasSettings: !!state.settings,
+      hasUpsell: !!state.settings?.upsell,
+      upsellEnabled: state.settings?.upsell?.enabled,
+      fullUpsellSettings: state.settings?.upsell
+    });
+    
     if (!state.settings?.upsell?.enabled) {
       console.log('[Upsell] Feature not enabled, skipping fetch');
       return;
