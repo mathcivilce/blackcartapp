@@ -73,6 +73,7 @@ interface CartPreviewProps {
     headline: string;
     progressColor: string;
     position: string;
+    showBorder?: boolean;
     tier1: {
       enabled: boolean;
       threshold: number;
@@ -267,6 +268,133 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
           }}>✕</button>
         </div>
 
+        {/* Free Gifts Progress Bar - Top Position */}
+        {freeGifts?.enabled && freeGifts.position === 'top' && (() => {
+          // Mock current cart value for preview (1 item, $129.99)
+          const currentValue = freeGifts.conditionType === 'quantity' ? 1 : 129.99;
+          
+          // Get all enabled tiers sorted by threshold
+          const enabledTiers = [
+            freeGifts.tier1.enabled ? { ...freeGifts.tier1, number: 1 } : null,
+            freeGifts.tier2.enabled ? { ...freeGifts.tier2, number: 2 } : null,
+            freeGifts.tier3.enabled ? { ...freeGifts.tier3, number: 3 } : null,
+          ].filter(Boolean).sort((a, b) => (a?.threshold || 0) - (b?.threshold || 0));
+          
+          if (enabledTiers.length === 0) return null;
+          
+          const maxThreshold = Math.max(...enabledTiers.map(t => t?.threshold || 0));
+          const progressPercentage = (currentValue / maxThreshold) * 100;
+          
+          // Find unlocked tiers with messages enabled
+          const unlockedMessages = enabledTiers
+            .filter(tier => currentValue >= (tier?.threshold || 0) && tier?.showUnlockedMessage)
+            .map(tier => tier?.unlockedMessage);
+          
+          // Determine headline text: show unlocked message if available, otherwise default headline
+          const headlineText = unlockedMessages.length > 0 
+            ? unlockedMessages[unlockedMessages.length - 1] 
+            : freeGifts.headline;
+          
+          return (
+            <div style={{
+              padding: '16px 20px',
+              borderTop: freeGifts.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
+              borderBottom: freeGifts.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
+            }}>
+              {/* Headline (replaced by unlocked message when available) */}
+              {headlineText && (
+                <p style={{
+                  margin: '0 0 6px 0',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: unlockedMessages.length > 0 ? freeGifts.progressColor : design.cartTextColor,
+                  textAlign: 'center' as const,
+                }}>
+                  {headlineText}
+                </p>
+              )}
+              
+              {/* Progress Bar with Embedded Rewards */}
+              <div style={{
+                position: 'relative' as const,
+                height: '60px',
+                marginBottom: '0px',
+              }}>
+                {/* Bar segments container */}
+                <div style={{
+                  position: 'relative' as const,
+                  height: '10px',
+                  display: 'flex',
+                  marginTop: '0px',
+                }}>
+                  {enabledTiers.map((tier, index) => {
+                    const segmentWidth = 100 / enabledTiers.length;
+                    const isUnlocked = currentValue >= (tier?.threshold || 0);
+                    
+                    return (
+                      <div key={tier?.number} style={{
+                        width: `${segmentWidth}%`,
+                        position: 'relative' as const,
+                      }}>
+                        {/* Segment bar */}
+                        <div style={{
+                          height: '10px',
+                          background: isUnlocked ? freeGifts.progressColor : '#E5E7EB',
+                          borderRadius: index === 0 ? '10px 0 0 10px' : index === enabledTiers.length - 1 ? '0 10px 10px 0' : '0',
+                          transition: 'all 0.3s ease',
+                        }} />
+                        
+                        {/* Milestone dot and icon */}
+                        <div style={{
+                          position: 'absolute' as const,
+                          right: '-16px',
+                          top: '-8px',
+                          display: 'flex',
+                          flexDirection: 'column' as const,
+                          alignItems: 'center',
+                          zIndex: 2,
+                        }}>
+                          {/* Icon circle */}
+                          <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            background: isUnlocked ? freeGifts.progressColor : '#E5E7EB',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '18px',
+                            transition: 'all 0.3s ease',
+                            border: '3px solid #fff',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                          }}>
+                            {isUnlocked ? '✓' : (tier?.icon || '🎁')}
+                          </div>
+                          
+                          {/* Reward text below bar */}
+                          <div style={{
+                            marginTop: '4px',
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            color: isUnlocked ? freeGifts.progressColor : '#666',
+                            textAlign: 'center' as const,
+                            maxWidth: `${(420 - 40) / enabledTiers.length - 10}px`,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap' as const,
+                          }}>
+                            {tier?.rewardText}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Announcement Banner - Top Position */}
         {announcement?.enabled && announcement.position === 'top' && (
           <div style={{
@@ -331,138 +459,6 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
           </div>
         </div>
 
-        {/* Free Gifts Progress Bar - Top Position */}
-        {freeGifts?.enabled && freeGifts.position === 'top' && (() => {
-          // Mock current cart value for preview (1 item, $129.99)
-          const currentValue = freeGifts.conditionType === 'quantity' ? 1 : 129.99;
-          
-          // Get all enabled tiers sorted by threshold
-          const enabledTiers = [
-            freeGifts.tier1.enabled ? { ...freeGifts.tier1, number: 1 } : null,
-            freeGifts.tier2.enabled ? { ...freeGifts.tier2, number: 2 } : null,
-            freeGifts.tier3.enabled ? { ...freeGifts.tier3, number: 3 } : null,
-          ].filter(Boolean).sort((a, b) => (a?.threshold || 0) - (b?.threshold || 0));
-          
-          if (enabledTiers.length === 0) return null;
-          
-          const maxThreshold = Math.max(...enabledTiers.map(t => t?.threshold || 0));
-          const progressPercentage = (currentValue / maxThreshold) * 100;
-          
-          // Find unlocked tiers with messages enabled
-          const unlockedMessages = enabledTiers
-            .filter(tier => currentValue >= (tier?.threshold || 0) && tier?.showUnlockedMessage)
-            .map(tier => tier?.unlockedMessage);
-          
-          return (
-            <div style={{
-              padding: '16px 20px',
-              borderTop: '1px solid rgba(0,0,0,0.1)',
-              borderBottom: '1px solid rgba(0,0,0,0.1)',
-            }}>
-              {freeGifts.headline && (
-                <p style={{
-                  margin: '0 0 12px 0',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: design.cartTextColor,
-                  textAlign: 'center' as const,
-                }}>
-                  {freeGifts.headline}
-                </p>
-              )}
-              
-              {/* Progress Bar with Embedded Rewards */}
-              <div style={{
-                position: 'relative' as const,
-                height: '50px',
-                marginBottom: '12px',
-              }}>
-                {/* Bar segments container */}
-                <div style={{
-                  position: 'relative' as const,
-                  height: '20px',
-                  display: 'flex',
-                  marginTop: '30px',
-                }}>
-                  {enabledTiers.map((tier, index) => {
-                    const segmentWidth = 100 / enabledTiers.length;
-                    const isUnlocked = currentValue >= (tier?.threshold || 0);
-                    
-                    return (
-                      <div key={tier?.number} style={{
-                        width: `${segmentWidth}%`,
-                        position: 'relative' as const,
-                      }}>
-                        {/* Segment bar */}
-                        <div style={{
-                          height: '8px',
-                          background: isUnlocked ? freeGifts.progressColor : '#E5E7EB',
-                          borderRadius: index === 0 ? '4px 0 0 4px' : index === enabledTiers.length - 1 ? '0 4px 4px 0' : '0',
-                          transition: 'all 0.3s ease',
-                          marginTop: '6px',
-                        }} />
-                        
-                        {/* Milestone dot and icon */}
-                        <div style={{
-                          position: 'absolute' as const,
-                          right: '-12px',
-                          top: '0px',
-                          display: 'flex',
-                          flexDirection: 'column' as const,
-                          alignItems: 'center',
-                        }}>
-                          {/* Icon circle */}
-                          <div style={{
-                            width: '24px',
-                            height: '24px',
-                            borderRadius: '50%',
-                            background: isUnlocked ? freeGifts.progressColor : '#E5E7EB',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '14px',
-                            transition: 'all 0.3s ease',
-                            border: '2px solid #fff',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                          }}>
-                            {isUnlocked ? '✓' : (tier?.icon || '🎁')}
-                          </div>
-                          
-                          {/* Reward text below bar */}
-                          <div style={{
-                            marginTop: '28px',
-                            fontSize: '10px',
-                            fontWeight: '600',
-                            color: isUnlocked ? freeGifts.progressColor : '#666',
-                            textAlign: 'center' as const,
-                            whiteSpace: 'nowrap' as const,
-                            maxWidth: '80px',
-                          }}>
-                            {tier?.rewardText}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              
-              {/* Unlocked Messages */}
-              {unlockedMessages.length > 0 && (
-                <p style={{
-                  margin: '8px 0 0 0',
-                  fontSize: '12px',
-                  color: freeGifts.progressColor,
-                  textAlign: 'center' as const,
-                  fontWeight: '600',
-                }}>
-                  {unlockedMessages[unlockedMessages.length - 1]}
-                </p>
-              )}
-            </div>
-          );
-        })()}
-
         {/* Announcement Banner - Bottom Position */}
         {announcement?.enabled && announcement.position === 'bottom' && (
           <div style={{
@@ -503,36 +499,42 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
             .filter(tier => currentValue >= (tier?.threshold || 0) && tier?.showUnlockedMessage)
             .map(tier => tier?.unlockedMessage);
           
+          // Determine headline text: show unlocked message if available, otherwise default headline
+          const headlineText = unlockedMessages.length > 0 
+            ? unlockedMessages[unlockedMessages.length - 1] 
+            : freeGifts.headline;
+          
           return (
             <div style={{
               padding: '16px 20px',
-              borderTop: '1px solid rgba(0,0,0,0.1)',
-              borderBottom: '1px solid rgba(0,0,0,0.1)',
+              borderTop: freeGifts.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
+              borderBottom: freeGifts.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
             }}>
-              {freeGifts.headline && (
+              {/* Headline (replaced by unlocked message when available) */}
+              {headlineText && (
                 <p style={{
-                  margin: '0 0 12px 0',
+                  margin: '0 0 6px 0',
                   fontSize: '14px',
                   fontWeight: '600',
-                  color: design.cartTextColor,
+                  color: unlockedMessages.length > 0 ? freeGifts.progressColor : design.cartTextColor,
                   textAlign: 'center' as const,
                 }}>
-                  {freeGifts.headline}
+                  {headlineText}
                 </p>
               )}
               
               {/* Progress Bar with Embedded Rewards */}
               <div style={{
                 position: 'relative' as const,
-                height: '50px',
-                marginBottom: '12px',
+                height: '60px',
+                marginBottom: '0px',
               }}>
                 {/* Bar segments container */}
                 <div style={{
                   position: 'relative' as const,
-                  height: '20px',
+                  height: '10px',
                   display: 'flex',
-                  marginTop: '30px',
+                  marginTop: '0px',
                 }}>
                   {enabledTiers.map((tier, index) => {
                     const segmentWidth = 100 / enabledTiers.length;
@@ -545,34 +547,34 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                       }}>
                         {/* Segment bar */}
                         <div style={{
-                          height: '8px',
+                          height: '10px',
                           background: isUnlocked ? freeGifts.progressColor : '#E5E7EB',
-                          borderRadius: index === 0 ? '4px 0 0 4px' : index === enabledTiers.length - 1 ? '0 4px 4px 0' : '0',
+                          borderRadius: index === 0 ? '10px 0 0 10px' : index === enabledTiers.length - 1 ? '0 10px 10px 0' : '0',
                           transition: 'all 0.3s ease',
-                          marginTop: '6px',
                         }} />
                         
                         {/* Milestone dot and icon */}
                         <div style={{
                           position: 'absolute' as const,
-                          right: '-12px',
-                          top: '0px',
+                          right: '-16px',
+                          top: '-8px',
                           display: 'flex',
                           flexDirection: 'column' as const,
                           alignItems: 'center',
+                          zIndex: 2,
                         }}>
                           {/* Icon circle */}
                           <div style={{
-                            width: '24px',
-                            height: '24px',
+                            width: '32px',
+                            height: '32px',
                             borderRadius: '50%',
                             background: isUnlocked ? freeGifts.progressColor : '#E5E7EB',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '14px',
+                            fontSize: '18px',
                             transition: 'all 0.3s ease',
-                            border: '2px solid #fff',
+                            border: '3px solid #fff',
                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                           }}>
                             {isUnlocked ? '✓' : (tier?.icon || '🎁')}
@@ -580,13 +582,15 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                           
                           {/* Reward text below bar */}
                           <div style={{
-                            marginTop: '28px',
+                            marginTop: '4px',
                             fontSize: '10px',
                             fontWeight: '600',
                             color: isUnlocked ? freeGifts.progressColor : '#666',
                             textAlign: 'center' as const,
+                            maxWidth: `${(420 - 40) / enabledTiers.length - 10}px`,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap' as const,
-                            maxWidth: '80px',
                           }}>
                             {tier?.rewardText}
                           </div>
@@ -596,19 +600,6 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                   })}
                 </div>
               </div>
-              
-              {/* Unlocked Messages */}
-              {unlockedMessages.length > 0 && (
-                <p style={{
-                  margin: '8px 0 0 0',
-                  fontSize: '12px',
-                  color: freeGifts.progressColor,
-                  textAlign: 'center' as const,
-                  fontWeight: '600',
-                }}>
-                  {unlockedMessages[unlockedMessages.length - 1]}
-                </p>
-              )}
             </div>
           );
         })()}

@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
       headline: settings.free_gifts_headline || 'Unlock Your Free Gifts!',
       progressColor: settings.free_gifts_progress_color || '#4CAF50',
       position: settings.free_gifts_position || 'bottom',
+      showBorder: settings.free_gifts_show_border ?? true,
       
       tier1: {
         enabled: settings.free_gifts_tier1_enabled || false,
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest) {
         free_gifts_headline: freeGiftsSettings.headline,
         free_gifts_progress_color: freeGiftsSettings.progressColor,
         free_gifts_position: freeGiftsSettings.position,
+        free_gifts_show_border: freeGiftsSettings.showBorder,
         
         // Tier 1
         free_gifts_tier1_enabled: freeGiftsSettings.tier1.enabled,

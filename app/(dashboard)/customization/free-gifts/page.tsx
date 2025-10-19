@@ -15,6 +15,7 @@ export default function FreeGiftsPage() {
     headline: 'Unlock Your Free Gifts!',
     progressColor: '#4CAF50',
     position: 'bottom',
+    showBorder: true,
     tier1: {
       enabled: false,
       threshold: 1,
@@ -234,14 +235,18 @@ export default function FreeGiftsPage() {
 
         {/* Master Switch */}
         <div style={styles.section}>
-          <label style={styles.checkboxLabel}>
-            <input
-              type="checkbox"
-              checked={freeGifts.enabled}
-              onChange={(e) => setFreeGifts({ ...freeGifts, enabled: e.target.checked })}
-            />
-            <span>Enable Free Gifts</span>
-          </label>
+          <label style={styles.label}>Free Gifts</label>
+          <div style={styles.toggleContainer}>
+            <button
+              onClick={() => setFreeGifts({ ...freeGifts, enabled: !freeGifts.enabled })}
+              style={{
+                ...styles.toggleButton,
+                ...(freeGifts.enabled ? styles.toggleButtonActive : styles.toggleButtonInactive)
+              }}
+            >
+              {freeGifts.enabled ? 'Enabled' : 'Disabled'}
+            </button>
+          </div>
         </div>
 
         {freeGifts.enabled && (
@@ -251,14 +256,20 @@ export default function FreeGiftsPage() {
               <label style={styles.label}>Condition Category</label>
               <div style={styles.buttonGroup}>
                 <button
-                  className={`${styles.alignButton} ${freeGifts.conditionType === 'quantity' ? styles.active : ''}`}
                   onClick={() => setFreeGifts({ ...freeGifts, conditionType: 'quantity' })}
+                  style={{
+                    ...styles.alignButton,
+                    ...(freeGifts.conditionType === 'quantity' ? styles.active : {})
+                  }}
                 >
                   Quantity Items
                 </button>
                 <button
-                  className={`${styles.alignButton} ${freeGifts.conditionType === 'amount' ? styles.active : ''}`}
                   onClick={() => setFreeGifts({ ...freeGifts, conditionType: 'amount' })}
+                  style={{
+                    ...styles.alignButton,
+                    ...(freeGifts.conditionType === 'amount' ? styles.active : {})
+                  }}
                 >
                   Amount Spent
                 </button>
@@ -314,6 +325,21 @@ export default function FreeGiftsPage() {
               </div>
               <p style={styles.helpText}>
                 Top: Below cart header | Bottom: Above protection product
+              </p>
+            </div>
+
+            {/* Show Border */}
+            <div style={styles.section}>
+              <label style={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={freeGifts.showBorder}
+                  onChange={(e) => setFreeGifts({ ...freeGifts, showBorder: e.target.checked })}
+                />
+                <span>Show section border</span>
+              </label>
+              <p style={styles.helpText}>
+                Display borders around the free gifts progress bar section
               </p>
             </div>
 
@@ -722,6 +748,31 @@ const styles = {
     color: '#888',
     marginTop: '6px',
     marginBottom: '0',
+  },
+  toggleContainer: {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '8px',
+  },
+  toggleButton: {
+    padding: '10px 24px',
+    fontSize: '14px',
+    fontWeight: '500',
+    border: '2px solid',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    minWidth: '100px',
+  },
+  toggleButtonActive: {
+    background: '#22c55e',
+    borderColor: '#22c55e',
+    color: '#fff',
+  },
+  toggleButtonInactive: {
+    background: '#000',
+    borderColor: '#333',
+    color: '#888',
   },
 };
 
