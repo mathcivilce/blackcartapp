@@ -107,6 +107,7 @@
       conditionType: 'quantity',
       headline: 'Unlock Your Free Gifts!',
       headlineColor: '#000000',
+      headlineBold: false,
       progressColor: '#4CAF50',
       position: 'bottom',
       showBorder: true,
@@ -364,7 +365,7 @@
       .sp-free-gifts-headline {
         margin: 0 0 6px 0;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 400;
         text-align: center;
         color: #000;
       }
@@ -487,7 +488,7 @@
       .sp-cart-content {
         flex: 1;
         overflow-y: auto;
-        padding: 20px;
+        padding: 10px 20px 20px 20px;
       }
 
       .sp-cart-loading {
@@ -512,6 +513,7 @@
         display: flex;
         flex-direction: column;
         gap: 20px;
+        border-top: none;
       }
 
       .sp-cart-item {
@@ -519,6 +521,11 @@
         gap: 16px;
         padding-bottom: 10px;
         border-bottom: 1px solid #e5e5e5;
+        border-top: none;
+      }
+
+      .sp-cart-item:first-child {
+        border-top: none;
       }
 
       .sp-cart-item:last-child {
@@ -2399,6 +2406,7 @@
     const conditionType = freeGifts.conditionType || 'quantity';
     const progressColor = freeGifts.progressColor || '#4CAF50';
     const headlineColor = freeGifts.headlineColor || '#000000';
+    const headlineBold = freeGifts.headlineBold || false;
     const showBorder = freeGifts.showBorder ?? true;  // Default to true if undefined
 
     // Show/hide based on position
@@ -2441,6 +2449,7 @@
     if (headlineEl && headlineText) {
       headlineEl.textContent = headlineText;
       headlineEl.style.color = headlineColor;
+      headlineEl.style.fontWeight = headlineBold ? '600' : '400';
       headlineEl.style.display = 'block';
     }
 

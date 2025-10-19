@@ -14,6 +14,7 @@ export default function FreeGiftsPage() {
     conditionType: 'quantity',
     headline: 'Unlock Your Free Gifts!',
     headlineColor: '#000000',
+    headlineBold: false,
     progressColor: '#4CAF50',
     position: 'bottom',
     showBorder: true,
@@ -297,6 +298,17 @@ export default function FreeGiftsPage() {
                 value={freeGifts.headlineColor}
                 onChange={(e) => setFreeGifts({ ...freeGifts, headlineColor: e.target.value })}
               />
+            </div>
+
+            <div style={styles.section}>
+              <label style={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={freeGifts.headlineBold}
+                  onChange={(e) => setFreeGifts({ ...freeGifts, headlineBold: e.target.checked })}
+                />
+                <span>Make headline text bold</span>
+              </label>
             </div>
 
             <div style={styles.section}>
