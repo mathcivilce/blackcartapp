@@ -517,7 +517,7 @@
       .sp-cart-item {
         display: flex;
         gap: 16px;
-        padding-bottom: 20px;
+        padding-bottom: 10px;
         border-bottom: 1px solid #e5e5e5;
       }
 
@@ -1408,6 +1408,8 @@
               // Only apply if cart exists
               if (document.getElementById('sp-cart-sidebar')) {
                 applySettings();
+                // Update free gifts progress bar to reflect new border setting
+                updateFreeGiftsProgress();
               }
             }
           }).catch((err) => {
@@ -2397,7 +2399,7 @@
     const conditionType = freeGifts.conditionType || 'quantity';
     const progressColor = freeGifts.progressColor || '#4CAF50';
     const headlineColor = freeGifts.headlineColor || '#000000';
-    const showBorder = freeGifts.showBorder !== false;
+    const showBorder = freeGifts.showBorder ?? true;  // Default to true if undefined
 
     // Show/hide based on position
     const progressEl = position === 'top' ? progressTopEl : progressBottomEl;
