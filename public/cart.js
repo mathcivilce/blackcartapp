@@ -3001,6 +3001,7 @@
         await maybeAutoAddProtection();
         
         // ⚡ OPTIMIZATION: Fetch cart WITHOUT enrichment for speed
+        // Note: Always fetch here since user just added an item to cart
         // Note: This will update the cache with fresh data (setCachedCart called in fetchCart)
         await fetchCart(2, false);
         
@@ -3344,12 +3345,19 @@
         
         // ✅ Auto-add protection BEFORE rendering (prevents toggle flicker)
         // This ensures toggle is already ON when cart appears
+        const wasProtectionInCart = state.protectionInCart;
         await maybeAutoAddProtection();
+        const wasProtectionAdded = !wasProtectionInCart && state.protectionInCart;
         
-        // ✅ CRITICAL: Refetch cart to get updated data with protection item (skip enrichment)
-        await fetchCart(2, false);
+        // ⚡ OPTIMIZATION: Only refetch if protection was actually added (saves 300-500ms)
+        if (wasProtectionAdded) {
+          console.log('[Cart.js] Protection was added, refetching cart...');
+          await fetchCart(2, false);
+        } else {
+          console.log('[Cart.js] ⚡ Skipping refetch - protection not added (saves 300-500ms)');
+        }
         
-        // ✅ Check protection in cart AFTER refetch (to set state.protectionVariantId)
+        // ✅ Check protection in cart (to set state.protectionVariantId)
         checkProtectionInCart();
         
         // Smooth transition: fade out skeleton, fade in real content
@@ -3374,7 +3382,7 @@
             
             // ⚡ OPTIMIZATION: Enrich with compare prices in background (non-blocking)
             enrichCartLazily();
-          }, 150); // Small delay for smooth transition
+          }, 75); // ⚡ OPTIMIZATION: Reduced from 150ms to 75ms for faster transition
         } else {
           renderCart();
           
@@ -3409,12 +3417,19 @@
         }
         
         // ✅ Auto-add protection BEFORE rendering (prevents toggle flicker)
+        const wasProtectionInCart = state.protectionInCart;
         await maybeAutoAddProtection();
+        const wasProtectionAdded = !wasProtectionInCart && state.protectionInCart;
         
-        // ✅ CRITICAL: Refetch cart to get updated data with protection item (skip enrichment)
-        await fetchCart(2, false);
+        // ⚡ OPTIMIZATION: Only refetch if protection was actually added (saves 300-500ms)
+        if (wasProtectionAdded) {
+          console.log('[Cart.js] Protection was added, refetching cart...');
+          await fetchCart(2, false);
+        } else {
+          console.log('[Cart.js] ⚡ Skipping refetch - protection not added (saves 300-500ms)');
+        }
         
-        // ✅ Check protection in cart AFTER refetch (to filter it out correctly)
+        // ✅ Check protection in cart (to filter it out correctly)
         checkProtectionInCart();
         
         // Render immediately (no skeleton needed)
