@@ -106,6 +106,7 @@
       enabled: false,
       conditionType: 'quantity',
       headline: 'Unlock Your Free Gifts!',
+      headlineColor: '#000000',
       progressColor: '#4CAF50',
       position: 'bottom',
       showBorder: true,
@@ -357,7 +358,7 @@
 
       /* Free Gifts Progress Bar */
       .sp-free-gifts-progress {
-        padding: 16px 20px;
+        padding: 16px 20px 0 20px;
       }
 
       .sp-free-gifts-headline {
@@ -371,7 +372,7 @@
       .sp-free-gifts-bar-wrapper {
         position: relative;
         height: 60px;
-        margin-bottom: 0px;
+        margin-bottom: 0;
       }
 
       .sp-free-gifts-bar-container {
@@ -427,16 +428,12 @@
       .sp-free-gifts-milestone-text {
         margin-top: 4px;
         font-size: 10px;
-        font-weight: 600;
-        color: #666;
+        font-weight: 400;
+        color: #000000;
         text-align: center;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-      }
-
-      .sp-free-gifts-milestone-text.unlocked {
-        color: #4CAF50;
       }
 
       .sp-free-gifts-message {
@@ -2386,6 +2383,7 @@
     const currentValue = calculateCartValue();
     const conditionType = freeGifts.conditionType || 'quantity';
     const progressColor = freeGifts.progressColor || '#4CAF50';
+    const headlineColor = freeGifts.headlineColor || '#000000';
     const showBorder = freeGifts.showBorder !== false;
 
     // Show/hide based on position
@@ -2427,7 +2425,7 @@
     const headlineEl = progressEl.querySelector('.sp-free-gifts-headline');
     if (headlineEl && headlineText) {
       headlineEl.textContent = headlineText;
-      headlineEl.style.color = unlockedTiers.length > 0 ? progressColor : '#000';
+      headlineEl.style.color = unlockedTiers.length > 0 ? progressColor : headlineColor;
       headlineEl.style.display = 'block';
     }
 
@@ -2451,18 +2449,23 @@
         if (isFirst) borderRadius = '10px 0 0 10px';
         if (isLast) borderRadius = '0 10px 10px 0';
         
+        // Position the last icon at the far right end
+        const markerStyle = isLast 
+          ? 'right: 0; transform: translateX(50%);' 
+          : 'right: -16px;';
+        
         return `
           <div class="sp-free-gifts-segment" style="width: ${segmentWidth}%;">
             <div class="sp-free-gifts-segment-bar ${isUnlocked ? 'unlocked' : ''}" 
                  style="border-radius: ${borderRadius}; ${isUnlocked ? `background: ${progressColor};` : ''}">
             </div>
-            <div class="sp-free-gifts-milestone-marker">
+            <div class="sp-free-gifts-milestone-marker" style="${markerStyle}">
               <div class="sp-free-gifts-milestone-icon ${isUnlocked ? 'unlocked' : ''}" 
                    style="${isUnlocked ? `background: ${progressColor};` : ''}">
                 ${isUnlocked ? '✓' : (tier.icon || '🎁')}
               </div>
-              <div class="sp-free-gifts-milestone-text ${isUnlocked ? 'unlocked' : ''}" 
-                   style="max-width: ${maxTextWidth}px; ${isUnlocked ? `color: ${progressColor};` : ''}">
+              <div class="sp-free-gifts-milestone-text" 
+                   style="max-width: ${maxTextWidth}px;">
                 ${tier.rewardText || 'Free Gift'}
               </div>
             </div>

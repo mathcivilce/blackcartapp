@@ -71,6 +71,7 @@ interface CartPreviewProps {
     enabled: boolean;
     conditionType: string;
     headline: string;
+    headlineColor?: string;
     progressColor: string;
     position: string;
     showBorder?: boolean;
@@ -297,7 +298,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
           
           return (
             <div style={{
-              padding: '16px 20px',
+              padding: '16px 20px 0 20px',
               borderTop: freeGifts.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
               borderBottom: freeGifts.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
             }}>
@@ -307,7 +308,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                   margin: '0 0 6px 0',
                   fontSize: '14px',
                   fontWeight: '600',
-                  color: unlockedMessages.length > 0 ? freeGifts.progressColor : design.cartTextColor,
+                  color: unlockedMessages.length > 0 ? freeGifts.progressColor : (freeGifts.headlineColor || '#000000'),
                   textAlign: 'center' as const,
                 }}>
                   {headlineText}
@@ -330,6 +331,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                   {enabledTiers.map((tier, index) => {
                     const segmentWidth = 100 / enabledTiers.length;
                     const isUnlocked = currentValue >= (tier?.threshold || 0);
+                    const isLast = index === enabledTiers.length - 1;
                     
                     return (
                       <div key={tier?.number} style={{
@@ -340,19 +342,20 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                         <div style={{
                           height: '10px',
                           background: isUnlocked ? freeGifts.progressColor : '#E5E7EB',
-                          borderRadius: index === 0 ? '10px 0 0 10px' : index === enabledTiers.length - 1 ? '0 10px 10px 0' : '0',
+                          borderRadius: index === 0 ? '10px 0 0 10px' : isLast ? '0 10px 10px 0' : '0',
                           transition: 'all 0.3s ease',
                         }} />
                         
                         {/* Milestone dot and icon */}
                         <div style={{
                           position: 'absolute' as const,
-                          right: '-16px',
+                          right: isLast ? '0' : '-16px',
                           top: '-8px',
                           display: 'flex',
                           flexDirection: 'column' as const,
                           alignItems: 'center',
                           zIndex: 2,
+                          transform: isLast ? 'translateX(50%)' : 'none',
                         }}>
                           {/* Icon circle */}
                           <div style={{
@@ -375,8 +378,8 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                           <div style={{
                             marginTop: '4px',
                             fontSize: '10px',
-                            fontWeight: '600',
-                            color: isUnlocked ? freeGifts.progressColor : '#666',
+                            fontWeight: '400',
+                            color: '#000000',
                             textAlign: 'center' as const,
                             maxWidth: `${(420 - 40) / enabledTiers.length - 10}px`,
                             overflow: 'hidden',
@@ -506,7 +509,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
           
           return (
             <div style={{
-              padding: '16px 20px',
+              padding: '16px 20px 0 20px',
               borderTop: freeGifts.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
               borderBottom: freeGifts.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
             }}>
@@ -516,7 +519,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                   margin: '0 0 6px 0',
                   fontSize: '14px',
                   fontWeight: '600',
-                  color: unlockedMessages.length > 0 ? freeGifts.progressColor : design.cartTextColor,
+                  color: unlockedMessages.length > 0 ? freeGifts.progressColor : (freeGifts.headlineColor || '#000000'),
                   textAlign: 'center' as const,
                 }}>
                   {headlineText}
@@ -539,6 +542,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                   {enabledTiers.map((tier, index) => {
                     const segmentWidth = 100 / enabledTiers.length;
                     const isUnlocked = currentValue >= (tier?.threshold || 0);
+                    const isLast = index === enabledTiers.length - 1;
                     
                     return (
                       <div key={tier?.number} style={{
@@ -549,19 +553,20 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                         <div style={{
                           height: '10px',
                           background: isUnlocked ? freeGifts.progressColor : '#E5E7EB',
-                          borderRadius: index === 0 ? '10px 0 0 10px' : index === enabledTiers.length - 1 ? '0 10px 10px 0' : '0',
+                          borderRadius: index === 0 ? '10px 0 0 10px' : isLast ? '0 10px 10px 0' : '0',
                           transition: 'all 0.3s ease',
                         }} />
                         
                         {/* Milestone dot and icon */}
                         <div style={{
                           position: 'absolute' as const,
-                          right: '-16px',
+                          right: isLast ? '0' : '-16px',
                           top: '-8px',
                           display: 'flex',
                           flexDirection: 'column' as const,
                           alignItems: 'center',
                           zIndex: 2,
+                          transform: isLast ? 'translateX(50%)' : 'none',
                         }}>
                           {/* Icon circle */}
                           <div style={{
@@ -584,8 +589,8 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                           <div style={{
                             marginTop: '4px',
                             fontSize: '10px',
-                            fontWeight: '600',
-                            color: isUnlocked ? freeGifts.progressColor : '#666',
+                            fontWeight: '400',
+                            color: '#000000',
                             textAlign: 'center' as const,
                             maxWidth: `${(420 - 40) / enabledTiers.length - 10}px`,
                             overflow: 'hidden',
