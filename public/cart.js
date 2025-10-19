@@ -2,6 +2,9 @@
   'use strict';
 
   // Configuration - will be fetched from API in production
+  // VERSION CHECK - If you see this log, you have the latest code
+  console.log('[Cart.js] VERSION: 2.5.0-upsell-debug');
+  
   const CONFIG = {
     appUrl: (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
       ? 'http://localhost:3001' 
