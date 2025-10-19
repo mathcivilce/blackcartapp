@@ -185,8 +185,6 @@
           <!-- Cart Content -->
           <div id="sp-cart-content" class="sp-cart-content">
             <div class="sp-cart-loading">Loading...</div>
-            <!-- Upsell Products (inside scrollable content) -->
-            <div id="sp-upsell-container" style="display: none;"></div>
           </div>
 
           <!-- Announcement Banner (Bottom) -->
@@ -3136,8 +3134,11 @@
           <h3>${emptyText}</h3>
           <p>Add some products to get started!</p>
         </div>
+        <div id="sp-upsell-container" style="display: none;"></div>
       `;
       updateSubtotal(0);
+      // Still render upsells even when cart is empty
+      renderUpsellProducts();
       return;
     }
 
@@ -3245,7 +3246,10 @@
       `;
     }).join('');
 
-    contentEl.innerHTML = `<div class="sp-cart-items">${itemsHTML}</div>`;
+    contentEl.innerHTML = `
+      <div class="sp-cart-items">${itemsHTML}</div>
+      <div id="sp-upsell-container" style="display: none;"></div>
+    `;
     
     updateSubtotal(state.cart.total_price);
     attachCartItemListeners();
