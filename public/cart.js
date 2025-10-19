@@ -582,7 +582,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: auto;
+        margin-top: 10px;
       }
 
       /* Quantity Controls */
@@ -2457,10 +2457,17 @@
         const isUnlocked = currentValue >= tier.threshold;
         const isFirst = index === 0;
         const isLast = index === enabledTiers.length - 1;
+        const isSingle = enabledTiers.length === 1;
         
+        // Handle border radius for rounded corners
         let borderRadius = '0';
-        if (isFirst) borderRadius = '10px 0 0 10px';
-        if (isLast) borderRadius = '0 10px 10px 0';
+        if (isSingle) {
+          borderRadius = '10px';  // All corners rounded if only one segment
+        } else if (isFirst) {
+          borderRadius = '10px 0 0 10px';  // Left corners rounded
+        } else if (isLast) {
+          borderRadius = '0 10px 10px 0';  // Right corners rounded
+        }
         
         // Position the last icon at the far right end
         const markerStyle = isLast 
@@ -2477,8 +2484,7 @@
                    style="${isUnlocked ? `background: ${progressColor};` : ''}">
                 ${isUnlocked ? '✓' : (tier.icon || '🎁')}
               </div>
-              <div class="sp-free-gifts-milestone-text" 
-                   style="max-width: ${maxTextWidth}px;">
+              <div class="sp-free-gifts-milestone-text">
                 ${tier.rewardText || 'Free Gift'}
               </div>
             </div>
