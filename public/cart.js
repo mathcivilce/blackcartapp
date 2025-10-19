@@ -1166,6 +1166,13 @@
         return null;
       }
       
+      // DEBUG: Log what's in the cache
+      console.log('[Cache] Loaded settings from cache:', {
+        hasUpsell: !!data?.upsell,
+        upsellEnabled: data?.upsell?.enabled,
+        upsellData: data?.upsell
+      });
+      
       return data;
     } catch (error) {
       console.warn('[Cart.js] Cache read failed:', error.message);
@@ -1497,7 +1504,10 @@
               // Debug: Log adjustTotalPrice from fresh API
               console.log('[Cart.js] Settings refreshed from API (background)', {
                 adjustTotalPrice: fresh?.addons?.adjustTotalPrice,
-                hasAddons: !!fresh?.addons
+                hasAddons: !!fresh?.addons,
+                hasUpsell: !!fresh?.upsell,
+                upsellEnabled: fresh?.upsell?.enabled,
+                upsellData: fresh?.upsell
               });
               
               // Reset static settings flag so they get re-applied
@@ -1535,7 +1545,10 @@
       console.log('[Cart.js] Settings loaded from API', {
         adjustTotalPrice: fresh?.addons?.adjustTotalPrice,
         hasAddons: !!fresh?.addons,
-        cart_active: fresh?.cart_active
+        cart_active: fresh?.cart_active,
+        hasUpsell: !!fresh?.upsell,
+        upsellEnabled: fresh?.upsell?.enabled,
+        upsellData: fresh?.upsell
       });
       
       // Fetch upsell products if enabled
@@ -3778,9 +3791,20 @@
         // ✅ Check protection in cart (to set state.protectionVariantId)
         checkProtectionInCart();
         
+        // ⚡ DEBUG: Check what settings we have
+        console.log('[Upsell] Settings before fetch:', {
+          hasSettings: !!state.settings,
+          hasUpsell: !!state.settings?.upsell,
+          upsellEnabled: state.settings?.upsell?.enabled,
+          fullUpsell: state.settings?.upsell
+        });
+        
         // ⚡ Fetch upsell products if enabled
         if (state.settings?.upsell?.enabled) {
+          console.log('[Upsell] Calling fetchUpsellProducts...');
           await fetchUpsellProducts();
+        } else {
+          console.log('[Upsell] Skipping fetch - feature not enabled in settings');
         }
         
         // Smooth transition: fade out skeleton, fade in real content
@@ -3855,9 +3879,20 @@
         // ✅ Check protection in cart (to filter it out correctly)
         checkProtectionInCart();
         
+        // ⚡ DEBUG: Check what settings we have
+        console.log('[Upsell] Settings before fetch (subsequent open):', {
+          hasSettings: !!state.settings,
+          hasUpsell: !!state.settings?.upsell,
+          upsellEnabled: state.settings?.upsell?.enabled,
+          fullUpsell: state.settings?.upsell
+        });
+        
         // ⚡ Fetch upsell products if enabled
         if (state.settings?.upsell?.enabled) {
+          console.log('[Upsell] Calling fetchUpsellProducts...');
           await fetchUpsellProducts();
+        } else {
+          console.log('[Upsell] Skipping fetch - feature not enabled in settings (subsequent)');
         }
         
         // Render immediately (no skeleton needed)
