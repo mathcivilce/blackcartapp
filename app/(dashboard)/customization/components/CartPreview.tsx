@@ -164,7 +164,7 @@ function formatCountdown(endTime: string, timeFormat: string = 'text'): string {
   }
 }
 
-export default function CartPreview({ design, addons, announcement, freeGifts }: CartPreviewProps) {
+export default function CartPreview({ design, addons, announcement, freeGifts, upsell }: CartPreviewProps) {
   const [countdown, setCountdown] = React.useState('');
 
   const calculateTotal = () => {
