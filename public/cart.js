@@ -3,7 +3,7 @@
 
   // Configuration - will be fetched from API in production
   // VERSION CHECK - If you see this log, you have the latest code
-  console.log('[Cart.js] VERSION: 2.5.1-upsell-render-debug');
+  console.log('[Cart.js] VERSION: 2.5.2-upsell-prefetch-fix');
   
   const CONFIG = {
     appUrl: (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
@@ -1163,13 +1163,6 @@
         return null;
       }
       
-      // DEBUG: Log what's in the cache
-      console.log('[Cache] Loaded settings from cache:', {
-        hasUpsell: !!data?.upsell,
-        upsellEnabled: data?.upsell?.enabled,
-        upsellData: data?.upsell
-      });
-      
       return data;
     } catch (error) {
       console.warn('[Cart.js] Cache read failed:', error.message);
@@ -1498,14 +1491,7 @@
               state.settings = fresh;
               setCachedSettings(fresh);
               
-              // Debug: Log adjustTotalPrice from fresh API
-              console.log('[Cart.js] Settings refreshed from API (background)', {
-                adjustTotalPrice: fresh?.addons?.adjustTotalPrice,
-                hasAddons: !!fresh?.addons,
-                hasUpsell: !!fresh?.upsell,
-                upsellEnabled: fresh?.upsell?.enabled,
-                upsellData: fresh?.upsell
-              });
+              console.log('[Cart.js] Settings refreshed from API (background)');
               
               // Reset static settings flag so they get re-applied
               state.staticSettingsApplied = false;
@@ -1537,16 +1523,6 @@
       }
       
       state.settings = fresh;
-      
-      // Debug: Log adjustTotalPrice from fresh API
-      console.log('[Cart.js] Settings loaded from API', {
-        adjustTotalPrice: fresh?.addons?.adjustTotalPrice,
-        hasAddons: !!fresh?.addons,
-        cart_active: fresh?.cart_active,
-        hasUpsell: !!fresh?.upsell,
-        upsellEnabled: fresh?.upsell?.enabled,
-        upsellData: fresh?.upsell
-      });
       
       // Fetch upsell products if enabled
       fetchUpsellProducts();
@@ -2872,65 +2848,47 @@
 
   // Fetch and cache all enabled upsell products
   async function fetchUpsellProducts() {
-    console.log('[Upsell] Checking settings:', {
-      hasSettings: !!state.settings,
-      hasUpsell: !!state.settings?.upsell,
-      upsellEnabled: state.settings?.upsell?.enabled,
-      fullUpsellSettings: state.settings?.upsell
-    });
-    
     if (!state.settings?.upsell?.enabled) {
-      console.log('[Upsell] Feature not enabled, skipping fetch');
       return;
     }
 
-    console.log('[Upsell] Fetching upsell products...');
     const upsell = state.settings.upsell;
     const items = ['item1', 'item2', 'item3'];
+    let fetchedCount = 0;
 
     for (const itemKey of items) {
       const item = upsell[itemKey];
       
       // Only fetch if enabled and has product handle or variant ID
       if (item?.enabled && (item.productHandle || item.variantId)) {
-        console.log(`[Upsell] Fetching ${itemKey}:`, { 
-          handle: item.productHandle, 
-          variantId: item.variantId 
-        });
-        
         // Skip if already cached
         if (state.upsellProducts[itemKey]) {
-          console.log(`[Upsell] ${itemKey} already cached`);
           continue;
         }
 
         const productData = await fetchUpsellProduct(item);
         if (productData) {
           state.upsellProducts[itemKey] = productData;
-          console.log(`[Upsell] ${itemKey} fetched successfully:`, productData.title);
-        } else {
-          console.log(`[Upsell] ${itemKey} fetch failed`);
+          fetchedCount++;
         }
       }
     }
-    console.log('[Upsell] Fetch complete. Cached products:', Object.keys(state.upsellProducts));
+    
+    if (fetchedCount > 0) {
+      console.log('[Upsell] Fetched', fetchedCount, 'product(s)');
+    }
   }
 
   // Render upsell products
   function renderUpsellProducts() {
-    console.log('[Upsell] renderUpsellProducts called');
-    
     const container = document.getElementById('sp-upsell-container');
     if (!container) {
-      console.error('[Upsell] Container not found - this should not happen!');
+      console.error('[Upsell] Container not found');
       return;
     }
-    
-    console.log('[Upsell] Container found:', container);
 
     // Hide if upsell not enabled
     if (!state.settings?.upsell?.enabled) {
-      console.log('[Upsell] Feature not enabled, hiding container');
       container.style.display = 'none';
       return;
     }
@@ -2941,17 +2899,10 @@
     // Check if any items are enabled
     const hasEnabledItems = items.some(key => upsell[key]?.enabled);
     if (!hasEnabledItems) {
-      console.log('[Upsell] No items enabled, hiding container');
+      console.log('[Upsell] No items enabled');
       container.style.display = 'none';
       return;
     }
-
-    console.log('[Upsell] Rendering upsell products', {
-      enabled: upsell.enabled,
-      item1: { enabled: upsell.item1?.enabled, hasProduct: !!state.upsellProducts.item1, data: state.upsellProducts.item1 },
-      item2: { enabled: upsell.item2?.enabled, hasProduct: !!state.upsellProducts.item2, data: state.upsellProducts.item2 },
-      item3: { enabled: upsell.item3?.enabled, hasProduct: !!state.upsellProducts.item3, data: state.upsellProducts.item3 }
-    });
 
     // Get button styling from settings
     const buttonColor = upsell.buttonColor || '#1a3a52';
@@ -2995,8 +2946,6 @@
     }).filter(html => html).join('');
 
     if (upsellHTML) {
-      console.log('[Upsell] HTML generated, displaying upsells');
-      
       const headlineEnabled = upsell.headlineEnabled ?? true;
       const headlineText = upsell.headlineText || 'Help Save More Animals';
       
@@ -3014,12 +2963,11 @@
       `;
       container.style.display = 'block';
       
-      console.log('[Upsell] Container visible, innerHTML set:', container.innerHTML.substring(0, 100) + '...');
+      console.log('[Upsell] Displayed', upsellHTML.split('sp-upsell-item').length - 1, 'upsell product(s)');
 
       // Attach click handlers
       attachUpsellClickHandlers();
     } else {
-      console.log('[Upsell] No HTML generated (no enabled items with product data)');
       container.style.display = 'none';
     }
   }
@@ -3809,20 +3757,9 @@
         // ✅ Check protection in cart (to set state.protectionVariantId)
         checkProtectionInCart();
         
-        // ⚡ DEBUG: Check what settings we have
-        console.log('[Upsell] Settings before fetch:', {
-          hasSettings: !!state.settings,
-          hasUpsell: !!state.settings?.upsell,
-          upsellEnabled: state.settings?.upsell?.enabled,
-          fullUpsell: state.settings?.upsell
-        });
-        
         // ⚡ Fetch upsell products if enabled
         if (state.settings?.upsell?.enabled) {
-          console.log('[Upsell] Calling fetchUpsellProducts...');
           await fetchUpsellProducts();
-        } else {
-          console.log('[Upsell] Skipping fetch - feature not enabled in settings');
         }
         
         // Smooth transition: fade out skeleton, fade in real content
@@ -3897,20 +3834,9 @@
         // ✅ Check protection in cart (to filter it out correctly)
         checkProtectionInCart();
         
-        // ⚡ DEBUG: Check what settings we have
-        console.log('[Upsell] Settings before fetch (subsequent open):', {
-          hasSettings: !!state.settings,
-          hasUpsell: !!state.settings?.upsell,
-          upsellEnabled: state.settings?.upsell?.enabled,
-          fullUpsell: state.settings?.upsell
-        });
-        
         // ⚡ Fetch upsell products if enabled
         if (state.settings?.upsell?.enabled) {
-          console.log('[Upsell] Calling fetchUpsellProducts...');
           await fetchUpsellProducts();
-        } else {
-          console.log('[Upsell] Skipping fetch - feature not enabled in settings (subsequent)');
         }
         
         // Render immediately (no skeleton needed)
@@ -4264,6 +4190,13 @@
       }
     } else {
       console.log('[Cart.js] ✅ Settings already cached, skipping pre-fetch');
+      
+      // ⚡ IMPORTANT: Fetch upsell products if enabled (even when using cached settings)
+      // This ensures product data is available when cart opens
+      if (cachedSettings?.upsell?.enabled) {
+        console.log('[Cart.js] ⚡ Pre-fetching upsell products from cached settings...');
+        fetchUpsellProducts();
+      }
     }
     
     // ⚡ OPTIMIZATION: Pre-cache protection variant ID for batch add (non-blocking)
@@ -4378,4 +4311,5 @@
   }
 
 })();
+
 
