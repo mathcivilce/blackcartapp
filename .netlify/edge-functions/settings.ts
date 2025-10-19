@@ -378,8 +378,11 @@ export default async (request: Request, context: Context) => {
         enabled: settings?.free_gifts_enabled ?? false,
         conditionType: settings?.free_gifts_condition_type || 'quantity',
         headline: settings?.free_gifts_headline || 'Unlock Your Free Gifts!',
+        headlineColor: settings?.free_gifts_headline_color || '#000000',
+        headlineBold: settings?.free_gifts_headline_bold ?? false,
         progressColor: settings?.free_gifts_progress_color || '#4CAF50',
         position: settings?.free_gifts_position || 'bottom',
+        showBorder: settings?.free_gifts_show_border ?? true,
         tier1: {
           enabled: settings?.free_gifts_tier1_enabled ?? false,
           threshold: settings?.free_gifts_tier1_threshold || 1,
@@ -409,6 +412,28 @@ export default async (request: Request, context: Context) => {
           unlockedMessage: settings?.free_gifts_tier3_unlocked_message || '🎉 Free Gift Unlocked!',
           showUnlockedMessage: settings?.free_gifts_tier3_show_unlocked_message ?? true,
           icon: settings?.free_gifts_tier3_icon || '🎁',
+        },
+      },
+      upsell: {
+        enabled: settings?.upsell_enabled ?? false,
+        headlineEnabled: settings?.upsell_headline_enabled ?? true,
+        headlineText: settings?.upsell_headline_text || 'Help Save More Animals',
+        buttonColor: settings?.upsell_button_color || '#1a3a52',
+        buttonCornerRadius: settings?.upsell_button_corner_radius || 6,
+        item1: {
+          enabled: settings?.upsell_item1_enabled ?? false,
+          productHandle: settings?.upsell_item1_product_handle || '',
+          variantId: settings?.upsell_item1_variant_id || '',
+        },
+        item2: {
+          enabled: settings?.upsell_item2_enabled ?? false,
+          productHandle: settings?.upsell_item2_product_handle || '',
+          variantId: settings?.upsell_item2_variant_id || '',
+        },
+        item3: {
+          enabled: settings?.upsell_item3_enabled ?? false,
+          productHandle: settings?.upsell_item3_product_handle || '',
+          variantId: settings?.upsell_item3_variant_id || '',
         },
       }
     };
