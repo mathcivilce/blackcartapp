@@ -281,6 +281,26 @@ export async function GET(request: NextRequest) {
             showUnlockedMessage: settings?.free_gifts_tier3_show_unlocked_message ?? true,
             icon: settings?.free_gifts_tier3_icon || '🎁',
           },
+        },
+        upsell: {
+          enabled: settings?.upsell_enabled ?? false,
+          buttonColor: settings?.upsell_button_color || '#1a3a52',
+          buttonCornerRadius: settings?.upsell_button_corner_radius || 6,
+          item1: {
+            enabled: settings?.upsell_item1_enabled ?? false,
+            productHandle: settings?.upsell_item1_product_handle || '',
+            variantId: settings?.upsell_item1_variant_id || '',
+          },
+          item2: {
+            enabled: settings?.upsell_item2_enabled ?? false,
+            productHandle: settings?.upsell_item2_product_handle || '',
+            variantId: settings?.upsell_item2_variant_id || '',
+          },
+          item3: {
+            enabled: settings?.upsell_item3_enabled ?? false,
+            productHandle: settings?.upsell_item3_product_handle || '',
+            variantId: settings?.upsell_item3_variant_id || '',
+          },
         }
       });
       
@@ -440,6 +460,14 @@ export async function GET(request: NextRequest) {
             showUnlockedMessage: true,
             icon: '🎁',
           },
+        },
+        upsell: {
+          enabled: false,
+          buttonColor: '#1a3a52',
+          buttonCornerRadius: 6,
+          item1: { enabled: false, productHandle: '', variantId: '' },
+          item2: { enabled: false, productHandle: '', variantId: '' },
+          item3: { enabled: false, productHandle: '', variantId: '' },
         }
       });
     }
@@ -560,6 +588,26 @@ export async function GET(request: NextRequest) {
           unlockedMessage: settings?.free_gifts_tier3_unlocked_message || '🎉 Free Gift Unlocked!',
           showUnlockedMessage: settings?.free_gifts_tier3_show_unlocked_message ?? true,
         },
+      },
+      upsell: {
+        enabled: settings?.upsell_enabled ?? false,
+        buttonColor: settings?.upsell_button_color || '#1a3a52',
+        buttonCornerRadius: settings?.upsell_button_corner_radius || 6,
+        item1: {
+          enabled: settings?.upsell_item1_enabled ?? false,
+          productHandle: settings?.upsell_item1_product_handle || '',
+          variantId: settings?.upsell_item1_variant_id || '',
+        },
+        item2: {
+          enabled: settings?.upsell_item2_enabled ?? false,
+          productHandle: settings?.upsell_item2_product_handle || '',
+          variantId: settings?.upsell_item2_variant_id || '',
+        },
+        item3: {
+          enabled: settings?.upsell_item3_enabled ?? false,
+          productHandle: settings?.upsell_item3_product_handle || '',
+          variantId: settings?.upsell_item3_variant_id || '',
+        },
       }
     });
   } catch (error) {
@@ -666,6 +714,14 @@ export async function GET(request: NextRequest) {
           variantId: '',
           rewardText: 'Free Gift',
         },
+      },
+      upsell: {
+        enabled: false,
+        buttonColor: '#1a3a52',
+        buttonCornerRadius: 6,
+        item1: { enabled: false, productHandle: '', variantId: '' },
+        item2: { enabled: false, productHandle: '', variantId: '' },
+        item3: { enabled: false, productHandle: '', variantId: '' },
       }
     });
   }

@@ -28,6 +28,7 @@ export default function DashboardLayout({
     { name: '  Add-ons', path: '/customization/add-ons', icon: '⊞' },
     { name: '  Announcement', path: '/customization/announcement', icon: '📢' },
     { name: '  Free Gifts', path: '/customization/free-gifts', icon: '🎁' },
+    { name: '  Upsell', path: '/customization/upsell', icon: '🛍️' },
   ];
 
   return (

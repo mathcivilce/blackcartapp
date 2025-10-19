@@ -107,6 +107,26 @@ interface CartPreviewProps {
       icon: string;
     };
   };
+  upsell?: {
+    enabled: boolean;
+    buttonColor?: string;
+    buttonCornerRadius?: number;
+    item1: {
+      enabled: boolean;
+      productHandle: string;
+      variantId: string;
+    };
+    item2: {
+      enabled: boolean;
+      productHandle: string;
+      variantId: string;
+    };
+    item3: {
+      enabled: boolean;
+      productHandle: string;
+      variantId: string;
+    };
+  };
 }
 
 // Countdown formatter
@@ -463,6 +483,127 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
             </div>
           </div>
         </div>
+
+        {/* Upsell Products */}
+        {upsell?.enabled && (upsell.item1.enabled || upsell.item2.enabled || upsell.item3.enabled) && (
+          <div style={{ padding: '0 20px' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', margin: '20px 0 12px 0' }}>
+              Help Save More Animals
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '12px' }}>
+              {/* Upsell Item 1 */}
+              {upsell.item1.enabled && upsell.item1.productHandle && (
+                <div style={{
+                  background: '#F6F6F7',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                }}>
+                  <img 
+                    src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=80&h=80&fit=crop" 
+                    alt="Product" 
+                    style={{ width: '60px', height: '60px', borderRadius: '6px', objectFit: 'cover' }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '13px', fontWeight: '500', margin: '0 0 4px 0' }}>
+                      Marine Life Jewelry Case
+                    </p>
+                    <p style={{ fontSize: '14px', fontWeight: '600', margin: 0 }}>$4.95</p>
+                  </div>
+                  <button style={{
+                    padding: '8px 16px',
+                    background: upsell.buttonColor || '#1a3a52',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: `${upsell.buttonCornerRadius || 6}px`,
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap' as const,
+                  }}>
+                    Add to Cart
+                  </button>
+                </div>
+              )}
+
+              {/* Upsell Item 2 */}
+              {upsell.item2.enabled && upsell.item2.productHandle && (
+                <div style={{
+                  background: '#F6F6F7',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                }}>
+                  <img 
+                    src="https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=80&h=80&fit=crop" 
+                    alt="Product" 
+                    style={{ width: '60px', height: '60px', borderRadius: '6px', objectFit: 'cover' }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '13px', fontWeight: '500', margin: '0 0 4px 0' }}>
+                      The Babies Earrings
+                    </p>
+                    <p style={{ fontSize: '14px', fontWeight: '600', margin: 0 }}>$28.90</p>
+                  </div>
+                  <button style={{
+                    padding: '8px 16px',
+                    background: upsell.buttonColor || '#1a3a52',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: `${upsell.buttonCornerRadius || 6}px`,
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap' as const,
+                  }}>
+                    Add to Cart
+                  </button>
+                </div>
+              )}
+
+              {/* Upsell Item 3 */}
+              {upsell.item3.enabled && upsell.item3.productHandle && (
+                <div style={{
+                  background: '#F6F6F7',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                }}>
+                  <img 
+                    src="https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=80&h=80&fit=crop" 
+                    alt="Product" 
+                    style={{ width: '60px', height: '60px', borderRadius: '6px', objectFit: 'cover' }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '13px', fontWeight: '500', margin: '0 0 4px 0' }}>
+                      The Deep Blue Bracelet
+                    </p>
+                    <p style={{ fontSize: '14px', fontWeight: '600', margin: 0 }}>$24.40</p>
+                  </div>
+                  <button style={{
+                    padding: '8px 16px',
+                    background: upsell.buttonColor || '#1a3a52',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: `${upsell.buttonCornerRadius || 6}px`,
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap' as const,
+                  }}>
+                    Add to Cart
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Announcement Banner - Bottom Position */}
         {announcement?.enabled && announcement.position === 'bottom' && (

@@ -114,6 +114,14 @@
       tier1: { enabled: false, threshold: 1, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁' },
       tier2: { enabled: false, threshold: 2, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁' },
       tier3: { enabled: false, threshold: 3, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁' },
+    },
+    upsell: {
+      enabled: false,
+      buttonColor: '#1a3a52',
+      buttonCornerRadius: 6,
+      item1: { enabled: false, productHandle: '', variantId: '' },
+      item2: { enabled: false, productHandle: '', variantId: '' },
+      item3: { enabled: false, productHandle: '', variantId: '' },
     }
   };
 
@@ -133,6 +141,7 @@
     freeGiftsVariants: {},  // Track which free gifts are in cart: { tier1: variantId, tier2: variantId, tier3: variantId }
     freeGiftsUnlocked: { tier1: false, tier2: false, tier3: false },  // Track which tiers are unlocked
     processingFreeGifts: false,  // Prevent concurrent free gift operations
+    upsellProducts: {}, // Cache upsell product data: { item1: {...}, item2: {...}, item3: {...} }
     fixingProtectionQuantity: false  // ⚡ Prevent concurrent protection quantity fixes
   };
 
@@ -172,6 +181,9 @@
           <div id="sp-cart-content" class="sp-cart-content">
             <div class="sp-cart-loading">Loading...</div>
           </div>
+
+          <!-- Upsell Products -->
+          <div id="sp-upsell-container" style="display: none;"></div>
 
           <!-- Announcement Banner (Bottom) -->
           <div id="sp-announcement-bottom" class="sp-announcement-banner sp-announcement-bottom" style="display: none;"></div>
@@ -467,6 +479,78 @@
         text-decoration: line-through;
         opacity: 0.5;
         margin-right: 8px;
+      }
+
+      /* Upsell Products */
+      .sp-upsell-container {
+        padding: 0 20px 20px 20px;
+      }
+
+      .sp-upsell-title {
+        font-size: 16px;
+        fontWeight: 600;
+        margin: 20px 0 12px 0;
+        color: #000;
+      }
+
+      .sp-upsell-items {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .sp-upsell-item {
+        background: #F6F6F7;
+        padding: 16px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .sp-upsell-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 6px;
+        object-fit: cover;
+      }
+
+      .sp-upsell-details {
+        flex: 1;
+      }
+
+      .sp-upsell-product-title {
+        font-size: 13px;
+        font-weight: 500;
+        margin: 0 0 4px 0;
+        color: #000;
+      }
+
+      .sp-upsell-price {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+        color: #000;
+      }
+
+      .sp-upsell-button {
+        padding: 8px 16px;
+        color: #fff;
+        border: none;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: opacity 0.2s;
+      }
+
+      .sp-upsell-button:hover {
+        opacity: 0.9;
+      }
+
+      .sp-upsell-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
       }
 
       .sp-cart-close {
@@ -1417,6 +1501,8 @@
                 applySettings();
                 // Update free gifts progress bar to reflect new border setting
                 updateFreeGiftsProgress();
+                // Fetch upsell products if enabled
+                fetchUpsellProducts();
               }
             }
           }).catch((err) => {
@@ -1445,6 +1531,9 @@
         hasAddons: !!fresh?.addons,
         cart_active: fresh?.cart_active
       });
+      
+      // Fetch upsell products if enabled
+      fetchUpsellProducts();
       
       // Check if cart is active
       if (fresh.cart_active === false) {
@@ -2696,6 +2785,215 @@
   }
 
   // ============================================
+  // UPSELL PRODUCTS
+  // ============================================
+
+  // Fetch upsell product data
+  async function fetchUpsellProduct(itemConfig) {
+    if (!itemConfig.productHandle && !itemConfig.variantId) {
+      return null;
+    }
+
+    try {
+      // If variant ID is provided, use it directly
+      if (itemConfig.variantId) {
+        const response = await fetch(`/products.json`);
+        const data = await response.json();
+        
+        for (const product of data.products) {
+          const variant = product.variants.find(v => String(v.id) === String(itemConfig.variantId));
+          if (variant) {
+            return {
+              variantId: variant.id,
+              productId: product.id,
+              title: product.title,
+              variantTitle: variant.title !== 'Default Title' ? variant.title : '',
+              price: Math.round(parseFloat(variant.price) * 100),  // Convert to cents
+              image: product.images[0]?.src || product.image?.src || ''
+            };
+          }
+        }
+      }
+
+      // Otherwise, fetch by product handle
+      if (itemConfig.productHandle) {
+        const response = await fetch(`/products/${itemConfig.productHandle}.js`);
+        if (!response.ok) {
+          console.error(`[Upsell] Product not found: ${itemConfig.productHandle}`);
+          return null;
+        }
+
+        const product = await response.json();
+        const variant = product.variants[0];  // Use first variant
+        
+        return {
+          variantId: variant.id,
+          productId: product.id,
+          title: product.title,
+          variantTitle: variant.title !== 'Default Title' ? variant.title : '',
+          price: Math.round(parseFloat(variant.price) * 100),  // Convert to cents
+          image: product.images[0]?.src || product.image?.src || ''
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error('[Upsell] Error fetching product:', error);
+      return null;
+    }
+  }
+
+  // Fetch and cache all enabled upsell products
+  async function fetchUpsellProducts() {
+    if (!state.settings?.upsell?.enabled) return;
+
+    const upsell = state.settings.upsell;
+    const items = ['item1', 'item2', 'item3'];
+
+    for (const itemKey of items) {
+      const item = upsell[itemKey];
+      
+      // Only fetch if enabled and has product handle or variant ID
+      if (item?.enabled && (item.productHandle || item.variantId)) {
+        // Skip if already cached
+        if (state.upsellProducts[itemKey]) continue;
+
+        const productData = await fetchUpsellProduct(item);
+        if (productData) {
+          state.upsellProducts[itemKey] = productData;
+        }
+      }
+    }
+  }
+
+  // Render upsell products
+  function renderUpsellProducts() {
+    const container = document.getElementById('sp-upsell-container');
+    if (!container) return;
+
+    // Hide if upsell not enabled
+    if (!state.settings?.upsell?.enabled) {
+      container.style.display = 'none';
+      return;
+    }
+
+    const upsell = state.settings.upsell;
+    const items = ['item1', 'item2', 'item3'];
+    
+    // Check if any items are enabled
+    const hasEnabledItems = items.some(key => upsell[key]?.enabled);
+    if (!hasEnabledItems) {
+      container.style.display = 'none';
+      return;
+    }
+
+    // Get button styling from settings
+    const buttonColor = upsell.buttonColor || '#1a3a52';
+    const buttonCornerRadius = upsell.buttonCornerRadius || 6;
+
+    // Build HTML for enabled upsell items
+    const upsellHTML = items.map(itemKey => {
+      const item = upsell[itemKey];
+      const product = state.upsellProducts[itemKey];
+
+      // Skip if not enabled or no product data
+      if (!item?.enabled || !product) return '';
+
+      // Check if already in cart
+      const isInCart = state.cart?.items?.some(cartItem => 
+        String(cartItem.id) === String(product.variantId) || 
+        String(cartItem.variant_id) === String(product.variantId)
+      );
+
+      return `
+        <div class="sp-upsell-item">
+          <img 
+            src="${product.image}" 
+            alt="${product.title}" 
+            class="sp-upsell-image"
+          />
+          <div class="sp-upsell-details">
+            <p class="sp-upsell-product-title">${product.title}</p>
+            <p class="sp-upsell-price">${formatMoney(product.price)}</p>
+          </div>
+          <button 
+            class="sp-upsell-button" 
+            data-variant-id="${product.variantId}"
+            style="background: ${buttonColor}; border-radius: ${buttonCornerRadius}px;"
+            ${isInCart ? 'disabled' : ''}
+          >
+            ${isInCart ? 'In Cart' : 'Add to Cart'}
+          </button>
+        </div>
+      `;
+    }).filter(html => html).join('');
+
+    if (upsellHTML) {
+      container.innerHTML = `
+        <div class="sp-upsell-container">
+          <h3 class="sp-upsell-title">Help Save More Animals</h3>
+          <div class="sp-upsell-items">
+            ${upsellHTML}
+          </div>
+        </div>
+      `;
+      container.style.display = 'block';
+
+      // Attach click handlers
+      attachUpsellClickHandlers();
+    } else {
+      container.style.display = 'none';
+    }
+  }
+
+  // Attach click handlers to upsell buttons
+  function attachUpsellClickHandlers() {
+    document.querySelectorAll('.sp-upsell-button').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const button = e.currentTarget;
+        const variantId = button.getAttribute('data-variant-id');
+        
+        if (!variantId || button.disabled) return;
+
+        // Disable button and show loading state
+        button.disabled = true;
+        button.textContent = 'Adding...';
+
+        try {
+          // Add to cart
+          const response = await fetch('/cart/add.js', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              items: [{
+                id: variantId,
+                quantity: 1
+              }]
+            })
+          });
+
+          if (response.ok) {
+            // Refresh cart
+            await fetchCart();
+            renderCart();
+            // This will also update upsell buttons
+          } else {
+            console.error('[Upsell] Failed to add product to cart');
+            button.disabled = false;
+            button.textContent = 'Add to Cart';
+            alert('Failed to add product to cart. Please try again.');
+          }
+        } catch (error) {
+          console.error('[Upsell] Error adding to cart:', error);
+          button.disabled = false;
+          button.textContent = 'Add to Cart';
+          alert('An error occurred. Please try again.');
+        }
+      });
+    });
+  }
+
+  // ============================================
   // RENDER FUNCTIONS
   // ============================================
 
@@ -2891,6 +3189,9 @@
     
     // Update free gifts progress bar
     updateFreeGiftsProgress();
+    
+    // Render upsell products
+    renderUpsellProducts();
     
     // Manage free gifts (add/remove based on cart value)
     if (state.settings?.freeGifts?.enabled) {
@@ -3828,6 +4129,9 @@
             state.settingsLoaded = true;
             setCachedSettings(fresh);
             console.log('[Cart.js] ✅ Settings pre-fetched and cached! First cart open will be instant ⚡');
+            
+            // Fetch upsell products if enabled
+            fetchUpsellProducts();
             
             // Apply settings if cart HTML already exists
             const cartSidebar = document.getElementById('sp-cart-sidebar');
