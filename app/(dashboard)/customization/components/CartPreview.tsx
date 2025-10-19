@@ -308,7 +308,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                   margin: '0 0 6px 0',
                   fontSize: '14px',
                   fontWeight: '600',
-                  color: unlockedMessages.length > 0 ? freeGifts.progressColor : (freeGifts.headlineColor || '#000000'),
+                  color: freeGifts.headlineColor || '#000000',
                   textAlign: 'center' as const,
                 }}>
                   {headlineText}
@@ -382,9 +382,8 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                             color: '#000000',
                             textAlign: 'center' as const,
                             maxWidth: `${(420 - 40) / enabledTiers.length - 10}px`,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap' as const,
+                            lineHeight: '1.2',
+                            wordBreak: 'break-word' as const,
                           }}>
                             {tier?.rewardText}
                           </div>
@@ -519,7 +518,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                   margin: '0 0 6px 0',
                   fontSize: '14px',
                   fontWeight: '600',
-                  color: unlockedMessages.length > 0 ? freeGifts.progressColor : (freeGifts.headlineColor || '#000000'),
+                  color: freeGifts.headlineColor || '#000000',
                   textAlign: 'center' as const,
                 }}>
                   {headlineText}
@@ -593,9 +592,8 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                             color: '#000000',
                             textAlign: 'center' as const,
                             maxWidth: `${(420 - 40) / enabledTiers.length - 10}px`,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap' as const,
+                            lineHeight: '1.2',
+                            wordBreak: 'break-word' as const,
                           }}>
                             {tier?.rewardText}
                           </div>

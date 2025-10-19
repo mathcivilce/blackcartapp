@@ -431,9 +431,8 @@
         font-weight: 400;
         color: #000000;
         text-align: center;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        line-height: 1.2;
+        word-break: break-word;
       }
 
       .sp-free-gifts-message {
@@ -2425,7 +2424,7 @@
     const headlineEl = progressEl.querySelector('.sp-free-gifts-headline');
     if (headlineEl && headlineText) {
       headlineEl.textContent = headlineText;
-      headlineEl.style.color = unlockedTiers.length > 0 ? progressColor : headlineColor;
+      headlineEl.style.color = headlineColor;
       headlineEl.style.display = 'block';
     }
 
@@ -2547,6 +2546,29 @@
     try {
       const freeGifts = state.settings.freeGifts;
       const currentValue = calculateCartValue();
+
+      // ✅ FIX: Sync state with actual cart items
+      // Check which free gifts are actually in the cart and update our tracking state
+      for (const tierKey of ['tier1', 'tier2', 'tier3']) {
+        const tier = freeGifts[tierKey];
+        if (!tier?.enabled) continue;
+
+        const trackedVariantId = state.freeGiftsVariants[tierKey];
+        if (trackedVariantId) {
+          // Check if this free gift is actually in the cart
+          const isActuallyInCart = state.cart?.items?.some(item => 
+            String(item.id || item.variant_id) === trackedVariantId &&
+            item.properties?._free_gift === 'true'
+          );
+          
+          // If we think it's in cart but it's not, clear the state
+          if (!isActuallyInCart) {
+            console.log(`[Free Gifts] Syncing state: ${tierKey} was removed manually`);
+            delete state.freeGiftsVariants[tierKey];
+            state.freeGiftsUnlocked[tierKey] = false;
+          }
+        }
+      }
 
       // Check each tier
       for (const tierKey of ['tier1', 'tier2', 'tier3']) {
