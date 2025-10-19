@@ -484,21 +484,20 @@ export default function CartPreview({ design, addons, announcement, freeGifts, u
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Upsell Products */}
-        {upsell?.enabled && (upsell.item1.enabled || upsell.item2.enabled || upsell.item3.enabled) && (
-          <div style={{ padding: '0 20px' }}>
-            {upsell.headlineEnabled && upsell.headlineText && (
-              <h3 style={{ 
-                fontSize: '16px', 
-                fontWeight: '600', 
-                margin: '20px 0 12px 0',
-                textAlign: 'center'
-              }}>
-                {upsell.headlineText}
-              </h3>
-            )}
+          {/* Upsell Products (inside scrollable container) */}
+          {upsell?.enabled && (upsell.item1.enabled || upsell.item2.enabled || upsell.item3.enabled) && (
+            <div style={{ padding: '0 0 20px 0' }}>
+              {upsell.headlineEnabled && upsell.headlineText && (
+                <h3 style={{ 
+                  fontSize: '16px', 
+                  fontWeight: '400', 
+                  margin: '20px 0 12px 0',
+                  textAlign: 'center'
+                }}>
+                  {upsell.headlineText}
+                </h3>
+              )}
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '12px' }}>
               {/* Upsell Item 1 */}
               {upsell.item1.enabled && upsell.item1.productHandle && (
@@ -611,8 +610,9 @@ export default function CartPreview({ design, addons, announcement, freeGifts, u
                 </div>
               )}
             </div>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         {/* Announcement Banner - Bottom Position */}
         {announcement?.enabled && announcement.position === 'bottom' && (

@@ -185,10 +185,9 @@
           <!-- Cart Content -->
           <div id="sp-cart-content" class="sp-cart-content">
             <div class="sp-cart-loading">Loading...</div>
+            <!-- Upsell Products (inside scrollable content) -->
+            <div id="sp-upsell-container" style="display: none;"></div>
           </div>
-
-          <!-- Upsell Products -->
-          <div id="sp-upsell-container" style="display: none;"></div>
 
           <!-- Announcement Banner (Bottom) -->
           <div id="sp-announcement-bottom" class="sp-announcement-banner sp-announcement-bottom" style="display: none;"></div>
@@ -493,7 +492,7 @@
 
       .sp-upsell-title {
         font-size: 16px;
-        fontWeight: 600;
+        font-weight: 400;
         margin: 20px 0 12px 0;
         color: #000;
         text-align: center;
@@ -2827,13 +2826,16 @@
         for (const product of data.products) {
           const variant = product.variants.find(v => String(v.id) === String(itemConfig.variantId));
           if (variant) {
+            // Shopify returns price in cents as a number, not dollars
+            const priceInCents = typeof variant.price === 'number' ? variant.price : Math.round(parseFloat(variant.price) * 100);
+            
             return {
               variantId: variant.id,
               productId: product.id,
               title: product.title,
               variantTitle: variant.title !== 'Default Title' ? variant.title : '',
-              price: Math.round(parseFloat(variant.price) * 100),  // Convert to cents
-              image: product.images[0]?.src || product.image?.src || ''
+              price: priceInCents,
+              image: product.images?.[0] || product.image || product.featured_image || ''
             };
           }
         }
@@ -2850,13 +2852,16 @@
         const product = await response.json();
         const variant = product.variants[0];  // Use first variant
         
+        // Shopify returns price in cents as a number, not dollars
+        const priceInCents = typeof variant.price === 'number' ? variant.price : Math.round(parseFloat(variant.price) * 100);
+        
         return {
           variantId: variant.id,
           productId: product.id,
           title: product.title,
           variantTitle: variant.title !== 'Default Title' ? variant.title : '',
-          price: Math.round(parseFloat(variant.price) * 100),  // Convert to cents
-          image: product.images[0]?.src || product.image?.src || ''
+          price: priceInCents,
+          image: product.images?.[0] || product.image || product.featured_image || ''
         };
       }
 
