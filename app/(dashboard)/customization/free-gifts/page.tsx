@@ -26,6 +26,7 @@ export default function FreeGiftsPage() {
       unlockedMessage: '🎉 Free Gift Unlocked!',
       showUnlockedMessage: true,
       icon: '🎁',
+      discountCode: '',
     },
     tier2: {
       enabled: false,
@@ -36,6 +37,7 @@ export default function FreeGiftsPage() {
       unlockedMessage: '🎉 Free Gift Unlocked!',
       showUnlockedMessage: true,
       icon: '🎁',
+      discountCode: '',
     },
     tier3: {
       enabled: false,
@@ -46,6 +48,7 @@ export default function FreeGiftsPage() {
       unlockedMessage: '🎉 Free Gift Unlocked!',
       showUnlockedMessage: true,
       icon: '🎁',
+      discountCode: '',
     },
   });
 
@@ -416,6 +419,18 @@ export default function FreeGiftsPage() {
                     placeholder="e.g., Free Wallet"
                   />
 
+                  <label style={styles.label}>Discount Code (to make free gift $0)</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={freeGifts.tier1.discountCode}
+                    onChange={(e) => handleTierChange('tier1', 'discountCode', e.target.value)}
+                    placeholder="e.g., FREEGIFT-TIER1"
+                  />
+                  <p style={styles.helpText}>
+                    Create this discount code in Shopify Admin with 100% off the free gift product
+                  </p>
+
                   <label style={styles.checkboxLabel}>
                     <input
                       type="checkbox"
@@ -503,6 +518,18 @@ export default function FreeGiftsPage() {
                     placeholder="e.g., Free Hat"
                   />
 
+                  <label style={styles.label}>Discount Code (to make free gift $0)</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={freeGifts.tier2.discountCode}
+                    onChange={(e) => handleTierChange('tier2', 'discountCode', e.target.value)}
+                    placeholder="e.g., FREEGIFT-TIER2"
+                  />
+                  <p style={styles.helpText}>
+                    Create this discount code in Shopify Admin with 100% off the free gift product
+                  </p>
+
                   <label style={styles.checkboxLabel}>
                     <input
                       type="checkbox"
@@ -589,6 +616,18 @@ export default function FreeGiftsPage() {
                     onChange={(e) => handleTierChange('tier3', 'rewardText', e.target.value)}
                     placeholder="e.g., Free Sunglasses"
                   />
+
+                  <label style={styles.label}>Discount Code (to make free gift $0)</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={freeGifts.tier3.discountCode}
+                    onChange={(e) => handleTierChange('tier3', 'discountCode', e.target.value)}
+                    placeholder="e.g., FREEGIFT-TIER3"
+                  />
+                  <p style={styles.helpText}>
+                    Create this discount code in Shopify Admin with 100% off the free gift product
+                  </p>
 
                   <label style={styles.checkboxLabel}>
                     <input

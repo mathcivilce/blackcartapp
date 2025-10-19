@@ -110,9 +110,9 @@
       progressColor: '#4CAF50',
       position: 'bottom',
       showBorder: true,
-      tier1: { enabled: false, threshold: 1, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁' },
-      tier2: { enabled: false, threshold: 2, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁' },
-      tier3: { enabled: false, threshold: 3, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁' },
+      tier1: { enabled: false, threshold: 1, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁', discountCode: '' },
+      tier2: { enabled: false, threshold: 2, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁', discountCode: '' },
+      tier3: { enabled: false, threshold: 3, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁', discountCode: '' },
     }
   };
 
@@ -131,6 +131,7 @@
     countdownStartTime: null,  // Track when fresh countdown started
     freeGiftsVariants: {},  // Track which free gifts are in cart: { tier1: variantId, tier2: variantId, tier3: variantId }
     freeGiftsUnlocked: { tier1: false, tier2: false, tier3: false },  // Track which tiers are unlocked
+    activeFreeGiftDiscount: null,  // Track currently applied free gift discount code
     processingFreeGifts: false,  // Prevent concurrent free gift operations
     fixingProtectionQuantity: false  // ⚡ Prevent concurrent protection quantity fixes
   };
@@ -2538,6 +2539,49 @@
     }
   }
 
+  // Apply discount code by redirecting to /discount/{CODE}
+  async function applyDiscountCode(code) {
+    if (!code) return false;
+    
+    try {
+      console.log(`[Free Gifts] Applying discount code: ${code}`);
+      
+      // Shopify's discount API: Navigate to /discount/{CODE} to apply
+      // This sets a cookie that will be applied at checkout
+      await fetch(`/discount/${code}`, { 
+        method: 'GET',
+        redirect: 'manual'  // Prevent actual navigation
+      });
+      
+      state.activeFreeGiftDiscount = code;
+      console.log(`[Free Gifts] ✅ Discount code applied: ${code}`);
+      return true;
+    } catch (error) {
+      console.error(`[Free Gifts] Failed to apply discount code:`, error);
+      return false;
+    }
+  }
+
+  // Remove discount code by navigating to /discount/CLEAR
+  async function removeDiscountCode() {
+    if (!state.activeFreeGiftDiscount) return;
+    
+    try {
+      console.log(`[Free Gifts] Removing discount code: ${state.activeFreeGiftDiscount}`);
+      
+      // Clear discount by going to /discount/CLEAR (or any invalid code)
+      await fetch('/discount/CLEAR', { 
+        method: 'GET',
+        redirect: 'manual'
+      });
+      
+      state.activeFreeGiftDiscount = null;
+      console.log(`[Free Gifts] ✅ Discount code removed`);
+    } catch (error) {
+      console.error(`[Free Gifts] Failed to remove discount code:`, error);
+    }
+  }
+
   async function manageFreeGifts() {
     if (!state.settings?.freeGifts?.enabled || state.processingFreeGifts) return;
 
@@ -2547,26 +2591,40 @@
       const freeGifts = state.settings.freeGifts;
       const currentValue = calculateCartValue();
 
-      // ✅ FIX: Sync state with actual cart items
+      // ✅ FIX: Sync state with actual cart items (prevents duplicate free gifts)
       // Check which free gifts are actually in the cart and update our tracking state
       for (const tierKey of ['tier1', 'tier2', 'tier3']) {
         const tier = freeGifts[tierKey];
         if (!tier?.enabled) continue;
 
+        // Find if this tier's free gift is in cart
+        const cartFreeGift = state.cart?.items?.find(item => 
+          item.properties?._free_gift === 'true' && 
+          item.properties?._free_gift_tier === tierKey
+        );
+
         const trackedVariantId = state.freeGiftsVariants[tierKey];
-        if (trackedVariantId) {
-          // Check if this free gift is actually in the cart
-          const isActuallyInCart = state.cart?.items?.some(item => 
-            String(item.id || item.variant_id) === trackedVariantId &&
-            item.properties?._free_gift === 'true'
-          );
+        
+        if (cartFreeGift) {
+          // Free gift IS in cart
+          const cartVariantId = String(cartFreeGift.id || cartFreeGift.variant_id);
           
-          // If we think it's in cart but it's not, clear the state
-          if (!isActuallyInCart) {
-            console.log(`[Free Gifts] Syncing state: ${tierKey} was removed manually`);
-            delete state.freeGiftsVariants[tierKey];
-            state.freeGiftsUnlocked[tierKey] = false;
+          if (!trackedVariantId || trackedVariantId !== cartVariantId) {
+            // Populate state if not tracked yet (fixes refresh/navigation bug)
+            console.log(`[Free Gifts] Syncing state: ${tierKey} found in cart, tracking it`);
+            state.freeGiftsVariants[tierKey] = cartVariantId;
+            state.freeGiftsUnlocked[tierKey] = true;
+            
+            // Apply discount code if configured and not already applied
+            if (tier.discountCode && tier.discountCode.trim() && !state.activeFreeGiftDiscount) {
+              await applyDiscountCode(tier.discountCode.trim());
+            }
           }
+        } else if (trackedVariantId) {
+          // Free gift NOT in cart but we think it is - clear state
+          console.log(`[Free Gifts] Syncing state: ${tierKey} was removed manually`);
+          delete state.freeGiftsVariants[tierKey];
+          state.freeGiftsUnlocked[tierKey] = false;
         }
       }
 
@@ -2585,16 +2643,14 @@
           const product = await getFreeGiftProduct(tier);
           
           if (product) {
-            // Add to cart with $0 price (automatic free gift)
+            // Add to cart (marked as free gift for display)
             const formData = {
               items: [{
                 id: product.variantId,
                 quantity: 1,
-                price: 0,  // ✅ Set price to $0 - makes it free at checkout
                 properties: {
                   '_free_gift': 'true',
-                  '_free_gift_tier': tierKey,
-                  '_original_price': product.price  // Store original price for display
+                  '_free_gift_tier': tierKey
                 }
               }]
             };
@@ -2608,7 +2664,12 @@
             if (response.ok) {
               state.freeGiftsVariants[tierKey] = String(product.variantId);
               state.freeGiftsUnlocked[tierKey] = true;
-              console.log(`[Free Gifts] ✅ ${tierKey} added as FREE (original price: $${(product.price / 100).toFixed(2)})`);
+              console.log(`[Free Gifts] ✅ ${tierKey} added (original price: $${(product.price / 100).toFixed(2)})`);
+              
+              // Apply discount code if configured
+              if (tier.discountCode && tier.discountCode.trim()) {
+                await applyDiscountCode(tier.discountCode.trim());
+              }
             } else {
               console.error(`[Free Gifts] Failed to add ${tierKey}:`, await response.text());
             }
@@ -2643,6 +2704,12 @@
             }
           }
         }
+      }
+
+      // Check if any tiers are still unlocked - if not, remove discount
+      const anyTierUnlocked = Object.values(state.freeGiftsUnlocked).some(unlocked => unlocked);
+      if (!anyTierUnlocked && state.activeFreeGiftDiscount) {
+        await removeDiscountCode();
       }
 
       // Refresh cart after changes
@@ -2827,7 +2894,7 @@
               </div>
               <p class="sp-cart-item-price" style="margin: 0;">
                 ${isFreeGift ? 
-                  `<span class="sp-free-gift-price">${formatMoney(item.properties?._original_price ? parseInt(item.properties._original_price) : (item.original_line_price || item.final_line_price))}</span><span style="color: #000; font-weight: 600;">FREE</span>` 
+                  `<span class="sp-free-gift-price">${formatMoney(item.original_line_price || item.final_line_price)}</span><span style="color: #000; font-weight: 600;">FREE</span>` 
                   : 
                   formatMoney(item.final_line_price)
                 }
