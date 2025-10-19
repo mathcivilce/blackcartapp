@@ -110,9 +110,9 @@
       progressColor: '#4CAF50',
       position: 'bottom',
       showBorder: true,
-      tier1: { enabled: false, threshold: 1, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁', discountCode: '' },
-      tier2: { enabled: false, threshold: 2, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁', discountCode: '' },
-      tier3: { enabled: false, threshold: 3, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁', discountCode: '' },
+      tier1: { enabled: false, threshold: 1, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁' },
+      tier2: { enabled: false, threshold: 2, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁' },
+      tier3: { enabled: false, threshold: 3, productHandle: '', variantId: '', rewardText: 'Free Gift', unlockedMessage: '🎉 Free Gift Unlocked!', showUnlockedMessage: true, icon: '🎁' },
     }
   };
 
@@ -131,7 +131,6 @@
     countdownStartTime: null,  // Track when fresh countdown started
     freeGiftsVariants: {},  // Track which free gifts are in cart: { tier1: variantId, tier2: variantId, tier3: variantId }
     freeGiftsUnlocked: { tier1: false, tier2: false, tier3: false },  // Track which tiers are unlocked
-    activeFreeGiftDiscount: null,  // Track currently applied free gift discount code
     processingFreeGifts: false,  // Prevent concurrent free gift operations
     fixingProtectionQuantity: false  // ⚡ Prevent concurrent protection quantity fixes
   };
@@ -359,7 +358,7 @@
 
       /* Free Gifts Progress Bar */
       .sp-free-gifts-progress {
-        padding: 16px 20px 0 20px;
+        padding: 12px 20px 0 20px;
       }
 
       .sp-free-gifts-headline {
@@ -372,7 +371,7 @@
 
       .sp-free-gifts-bar-wrapper {
         position: relative;
-        height: 75px;
+        height: 65px;
         margin-bottom: 0;
       }
 
@@ -380,7 +379,8 @@
         position: relative;
         height: 10px;
         display: flex;
-        margin-top: 0px;
+        margin: 0 auto;
+        max-width: 90%;
       }
 
       .sp-free-gifts-segment {
@@ -392,6 +392,17 @@
         height: 10px;
         background: #E5E7EB;
         transition: all 0.3s ease;
+        border-radius: 10px;
+      }
+      
+      .sp-free-gifts-segment:first-child .sp-free-gifts-segment-bar {
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+      }
+      
+      .sp-free-gifts-segment:last-child .sp-free-gifts-segment-bar {
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
       }
 
       .sp-free-gifts-segment-bar.unlocked {
@@ -434,6 +445,8 @@
         text-align: center;
         line-height: 1.2;
         word-break: break-word;
+        max-width: 80px;
+        overflow-wrap: break-word;
       }
 
       .sp-free-gifts-message {
@@ -525,7 +538,7 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 4px;
       }
 
       .sp-cart-item-title {
@@ -2539,49 +2552,6 @@
     }
   }
 
-  // Apply discount code by redirecting to /discount/{CODE}
-  async function applyDiscountCode(code) {
-    if (!code) return false;
-    
-    try {
-      console.log(`[Free Gifts] Applying discount code: ${code}`);
-      
-      // Shopify's discount API: Navigate to /discount/{CODE} to apply
-      // This sets a cookie that will be applied at checkout
-      await fetch(`/discount/${code}`, { 
-        method: 'GET',
-        redirect: 'manual'  // Prevent actual navigation
-      });
-      
-      state.activeFreeGiftDiscount = code;
-      console.log(`[Free Gifts] ✅ Discount code applied: ${code}`);
-      return true;
-    } catch (error) {
-      console.error(`[Free Gifts] Failed to apply discount code:`, error);
-      return false;
-    }
-  }
-
-  // Remove discount code by navigating to /discount/CLEAR
-  async function removeDiscountCode() {
-    if (!state.activeFreeGiftDiscount) return;
-    
-    try {
-      console.log(`[Free Gifts] Removing discount code: ${state.activeFreeGiftDiscount}`);
-      
-      // Clear discount by going to /discount/CLEAR (or any invalid code)
-      await fetch('/discount/CLEAR', { 
-        method: 'GET',
-        redirect: 'manual'
-      });
-      
-      state.activeFreeGiftDiscount = null;
-      console.log(`[Free Gifts] ✅ Discount code removed`);
-    } catch (error) {
-      console.error(`[Free Gifts] Failed to remove discount code:`, error);
-    }
-  }
-
   async function manageFreeGifts() {
     if (!state.settings?.freeGifts?.enabled || state.processingFreeGifts) return;
 
@@ -2614,11 +2584,6 @@
             console.log(`[Free Gifts] Syncing state: ${tierKey} found in cart, tracking it`);
             state.freeGiftsVariants[tierKey] = cartVariantId;
             state.freeGiftsUnlocked[tierKey] = true;
-            
-            // Apply discount code if configured and not already applied
-            if (tier.discountCode && tier.discountCode.trim() && !state.activeFreeGiftDiscount) {
-              await applyDiscountCode(tier.discountCode.trim());
-            }
           }
         } else if (trackedVariantId) {
           // Free gift NOT in cart but we think it is - clear state
@@ -2665,11 +2630,6 @@
               state.freeGiftsVariants[tierKey] = String(product.variantId);
               state.freeGiftsUnlocked[tierKey] = true;
               console.log(`[Free Gifts] ✅ ${tierKey} added (original price: $${(product.price / 100).toFixed(2)})`);
-              
-              // Apply discount code if configured
-              if (tier.discountCode && tier.discountCode.trim()) {
-                await applyDiscountCode(tier.discountCode.trim());
-              }
             } else {
               console.error(`[Free Gifts] Failed to add ${tierKey}:`, await response.text());
             }
@@ -2704,12 +2664,6 @@
             }
           }
         }
-      }
-
-      // Check if any tiers are still unlocked - if not, remove discount
-      const anyTierUnlocked = Object.values(state.freeGiftsUnlocked).some(unlocked => unlocked);
-      if (!anyTierUnlocked && state.activeFreeGiftDiscount) {
-        await removeDiscountCode();
       }
 
       // Refresh cart after changes
@@ -2864,7 +2818,7 @@
               </button>
             </div>
             ${item.variant_title ? `
-              <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 4px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
                 <p class="sp-cart-item-variant" style="margin: 0;">${item.variant_title}</p>
                 ${compareAtPriceHTML || savingsHTML ? `
                   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">

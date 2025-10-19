@@ -298,7 +298,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
           
           return (
             <div style={{
-              padding: '16px 20px 0 20px',
+              padding: '12px 20px 0 20px',
               borderTop: freeGifts.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
               borderBottom: freeGifts.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
             }}>
@@ -318,7 +318,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
               {/* Progress Bar with Embedded Rewards */}
               <div style={{
                 position: 'relative' as const,
-                height: '75px',
+                height: '65px',
                 marginBottom: '0px',
               }}>
                 {/* Bar segments container */}
@@ -326,7 +326,8 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                   position: 'relative' as const,
                   height: '10px',
                   display: 'flex',
-                  marginTop: '0px',
+                  margin: '0 auto',
+                  maxWidth: '90%',
                 }}>
                   {enabledTiers.map((tier, index) => {
                     const segmentWidth = 100 / enabledTiers.length;
@@ -381,9 +382,10 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                             fontWeight: '400',
                             color: '#000000',
                             textAlign: 'center' as const,
-                            maxWidth: `${(420 - 40) / enabledTiers.length - 10}px`,
+                            maxWidth: '80px',
                             lineHeight: '1.2',
                             wordBreak: 'break-word' as const,
+                            overflowWrap: 'break-word' as const,
                           }}>
                             {tier?.rewardText}
                           </div>
@@ -508,7 +510,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
           
           return (
             <div style={{
-              padding: '16px 20px 0 20px',
+              padding: '12px 20px 0 20px',
               borderTop: freeGifts.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
               borderBottom: freeGifts.showBorder !== false ? '1px solid rgba(0,0,0,0.1)' : 'none',
             }}>
@@ -528,7 +530,7 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
               {/* Progress Bar with Embedded Rewards */}
               <div style={{
                 position: 'relative' as const,
-                height: '75px',
+                height: '65px',
                 marginBottom: '0px',
               }}>
                 {/* Bar segments container */}
@@ -536,7 +538,8 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                   position: 'relative' as const,
                   height: '10px',
                   display: 'flex',
-                  marginTop: '0px',
+                  margin: '0 auto',
+                  maxWidth: '90%',
                 }}>
                   {enabledTiers.map((tier, index) => {
                     const segmentWidth = 100 / enabledTiers.length;
@@ -591,9 +594,10 @@ export default function CartPreview({ design, addons, announcement, freeGifts }:
                             fontWeight: '400',
                             color: '#000000',
                             textAlign: 'center' as const,
-                            maxWidth: `${(420 - 40) / enabledTiers.length - 10}px`,
+                            maxWidth: '80px',
                             lineHeight: '1.2',
                             wordBreak: 'break-word' as const,
+                            overflowWrap: 'break-word' as const,
                           }}>
                             {tier?.rewardText}
                           </div>

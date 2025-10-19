@@ -38,7 +38,6 @@ export async function GET(request: NextRequest) {
         unlockedMessage: settings.free_gifts_tier1_unlocked_message || '🎉 Free Gift Unlocked!',
         showUnlockedMessage: settings.free_gifts_tier1_show_unlocked_message ?? true,
         icon: settings.free_gifts_tier1_icon || '🎁',
-        discountCode: settings.free_gifts_tier1_discount_code || '',
       },
       
       tier2: {
@@ -50,7 +49,6 @@ export async function GET(request: NextRequest) {
         unlockedMessage: settings.free_gifts_tier2_unlocked_message || '🎉 Free Gift Unlocked!',
         showUnlockedMessage: settings.free_gifts_tier2_show_unlocked_message ?? true,
         icon: settings.free_gifts_tier2_icon || '🎁',
-        discountCode: settings.free_gifts_tier2_discount_code || '',
       },
       
       tier3: {
@@ -62,7 +60,6 @@ export async function GET(request: NextRequest) {
         unlockedMessage: settings.free_gifts_tier3_unlocked_message || '🎉 Free Gift Unlocked!',
         showUnlockedMessage: settings.free_gifts_tier3_show_unlocked_message ?? true,
         icon: settings.free_gifts_tier3_icon || '🎁',
-        discountCode: settings.free_gifts_tier3_discount_code || '',
       },
     });
   } catch (error) {
@@ -101,7 +98,6 @@ export async function POST(request: NextRequest) {
         free_gifts_tier1_unlocked_message: freeGiftsSettings.tier1.unlockedMessage,
         free_gifts_tier1_show_unlocked_message: freeGiftsSettings.tier1.showUnlockedMessage,
         free_gifts_tier1_icon: freeGiftsSettings.tier1.icon,
-        free_gifts_tier1_discount_code: freeGiftsSettings.tier1.discountCode,
         
         // Tier 2
         free_gifts_tier2_enabled: freeGiftsSettings.tier2.enabled,
@@ -112,7 +108,6 @@ export async function POST(request: NextRequest) {
         free_gifts_tier2_unlocked_message: freeGiftsSettings.tier2.unlockedMessage,
         free_gifts_tier2_show_unlocked_message: freeGiftsSettings.tier2.showUnlockedMessage,
         free_gifts_tier2_icon: freeGiftsSettings.tier2.icon,
-        free_gifts_tier2_discount_code: freeGiftsSettings.tier2.discountCode,
         
         // Tier 3
         free_gifts_tier3_enabled: freeGiftsSettings.tier3.enabled,
@@ -123,7 +118,6 @@ export async function POST(request: NextRequest) {
         free_gifts_tier3_unlocked_message: freeGiftsSettings.tier3.unlockedMessage,
         free_gifts_tier3_show_unlocked_message: freeGiftsSettings.tier3.showUnlockedMessage,
         free_gifts_tier3_icon: freeGiftsSettings.tier3.icon,
-        free_gifts_tier3_discount_code: freeGiftsSettings.tier3.discountCode,
         
         updated_at: new Date().toISOString(),
       })
