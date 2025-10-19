@@ -298,21 +298,6 @@ export default function SettingsPage() {
       <div style={styles.card}>
         <h2 style={styles.sectionTitle}>Shopify Connection</h2>
         
-        {storeDomain && (
-          <div style={{
-            padding: '12px 16px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            backgroundColor: '#e3f2fd',
-            border: '1px solid #2196f3',
-            color: '#0d47a1'
-          }}>
-            <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.5' }}>
-              ℹ️ <strong>Note:</strong> Changing your store domain or API token will preserve all your settings including cart activation status, design preferences, and add-on configurations.
-            </p>
-          </div>
-        )}
-        
         <div style={styles.formGroup}>
           <label style={styles.label}>Store Domain</label>
           <input
@@ -380,19 +365,19 @@ export default function SettingsPage() {
 
         <div style={{
           padding: '12px',
-          backgroundColor: '#e3f2fd',
+          backgroundColor: '#000',
           borderRadius: '8px',
-          border: '1px solid #2196f3',
+          border: '1px solid #fff',
           marginTop: '16px'
         }}>
-          <p style={{ margin: 0, fontSize: '14px', color: '#1565c0' }}>
+          <p style={{ margin: 0, fontSize: '14px', color: '#fff' }}>
             <strong>📚 How to get your API token:</strong>
           </p>
-          <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px', fontSize: '13px', color: '#1976d2' }}>
+          <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px', fontSize: '13px', color: '#fff' }}>
             <li>Go to your Shopify Admin → Settings → Apps and sales channels</li>
             <li>Click "Develop apps" → "Create an app"</li>
-            <li>Name it "XCart Revenue Tracking"</li>
-            <li>Configure Admin API scopes: Enable <strong>read_orders</strong></li>
+            <li>Name it "Cartbase"</li>
+            <li>Configure Admin API scopes: Enable <strong>read_orders</strong> and <strong>read_products</strong></li>
             <li>Install the app and copy the Admin API access token</li>
           </ol>
         </div>
