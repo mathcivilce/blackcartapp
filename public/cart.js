@@ -3750,6 +3750,38 @@
       console.log('[Cart.js] Both settings and cart cached - instant cart opening on all pages! 🚀');
     }
     
+    // ⚡ OPTIMIZATION: Pre-fetch settings on page load for instant first cart open (non-blocking)
+    // This eliminates skeleton UI on first visit by warming up the cache in background
+    if (!cachedSettings) {
+      console.log('[Cart.js] ⚡ Pre-fetching settings on page load for instant cart opening...');
+      
+      const shopDomain = getShopDomain();
+      if (shopDomain) {
+        // Fetch in background (doesn't block page render)
+        fetchSettingsFromAPI(shopDomain).then(fresh => {
+          if (fresh) {
+            state.settings = fresh;
+            state.settingsLoaded = true;
+            setCachedSettings(fresh);
+            console.log('[Cart.js] ✅ Settings pre-fetched and cached! First cart open will be instant ⚡');
+            
+            // Apply settings if cart HTML already exists
+            const cartSidebar = document.getElementById('sp-cart-sidebar');
+            if (cartSidebar) {
+              applySettings();
+            }
+          }
+        }).catch(error => {
+          console.warn('[Cart.js] Pre-fetch failed (will retry on cart open):', error.message);
+          // Silent fail - will fetch on cart open with skeleton UI (fallback behavior)
+        });
+      } else {
+        console.warn('[Cart.js] Shop domain not available, skipping pre-fetch');
+      }
+    } else {
+      console.log('[Cart.js] ✅ Settings already cached, skipping pre-fetch');
+    }
+    
     // ⚡ OPTIMIZATION: Pre-cache protection variant ID for batch add (non-blocking)
     // This runs in background and enables instant batch add when user clicks "Add to Cart"
     if (cachedSettings && cachedSettings.addons?.enabled && cachedSettings.addons?.productHandle) {
