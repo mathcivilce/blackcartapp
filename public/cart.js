@@ -2848,8 +2848,12 @@
 
   // Fetch and cache all enabled upsell products
   async function fetchUpsellProducts() {
-    if (!state.settings?.upsell?.enabled) return;
+    if (!state.settings?.upsell?.enabled) {
+      console.log('[Upsell] Feature not enabled, skipping fetch');
+      return;
+    }
 
+    console.log('[Upsell] Fetching upsell products...');
     const upsell = state.settings.upsell;
     const items = ['item1', 'item2', 'item3'];
 
@@ -2858,24 +2862,40 @@
       
       // Only fetch if enabled and has product handle or variant ID
       if (item?.enabled && (item.productHandle || item.variantId)) {
+        console.log(`[Upsell] Fetching ${itemKey}:`, { 
+          handle: item.productHandle, 
+          variantId: item.variantId 
+        });
+        
         // Skip if already cached
-        if (state.upsellProducts[itemKey]) continue;
+        if (state.upsellProducts[itemKey]) {
+          console.log(`[Upsell] ${itemKey} already cached`);
+          continue;
+        }
 
         const productData = await fetchUpsellProduct(item);
         if (productData) {
           state.upsellProducts[itemKey] = productData;
+          console.log(`[Upsell] ${itemKey} fetched successfully:`, productData.title);
+        } else {
+          console.log(`[Upsell] ${itemKey} fetch failed`);
         }
       }
     }
+    console.log('[Upsell] Fetch complete. Cached products:', Object.keys(state.upsellProducts));
   }
 
   // Render upsell products
   function renderUpsellProducts() {
     const container = document.getElementById('sp-upsell-container');
-    if (!container) return;
+    if (!container) {
+      console.log('[Upsell] Container not found');
+      return;
+    }
 
     // Hide if upsell not enabled
     if (!state.settings?.upsell?.enabled) {
+      console.log('[Upsell] Feature not enabled');
       container.style.display = 'none';
       return;
     }
@@ -2886,9 +2906,17 @@
     // Check if any items are enabled
     const hasEnabledItems = items.some(key => upsell[key]?.enabled);
     if (!hasEnabledItems) {
+      console.log('[Upsell] No items enabled');
       container.style.display = 'none';
       return;
     }
+
+    console.log('[Upsell] Rendering upsell products', {
+      enabled: upsell.enabled,
+      item1: { enabled: upsell.item1?.enabled, hasProduct: !!state.upsellProducts.item1 },
+      item2: { enabled: upsell.item2?.enabled, hasProduct: !!state.upsellProducts.item2 },
+      item3: { enabled: upsell.item3?.enabled, hasProduct: !!state.upsellProducts.item3 }
+    });
 
     // Get button styling from settings
     const buttonColor = upsell.buttonColor || '#1a3a52';
@@ -3735,6 +3763,11 @@
         // ✅ Check protection in cart (to set state.protectionVariantId)
         checkProtectionInCart();
         
+        // ⚡ Fetch upsell products if enabled
+        if (state.settings?.upsell?.enabled) {
+          await fetchUpsellProducts();
+        }
+        
         // Smooth transition: fade out skeleton, fade in real content
         const contentArea = document.getElementById('sp-cart-content');
         if (contentArea) {
@@ -3806,6 +3839,11 @@
         
         // ✅ Check protection in cart (to filter it out correctly)
         checkProtectionInCart();
+        
+        // ⚡ Fetch upsell products if enabled
+        if (state.settings?.upsell?.enabled) {
+          await fetchUpsellProducts();
+        }
         
         // Render immediately (no skeleton needed)
         renderCart();
