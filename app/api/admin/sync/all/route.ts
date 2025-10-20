@@ -69,134 +69,61 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ [Admin Batch Sync API] Admin authenticated:', user.email);
 
-    // Use service role client to fetch all stores with Shopify credentials
-    const serviceClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // Call the Supabase edge function directly
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    console.log(`🔄 [Admin Batch Sync API] Calling edge function for all stores`);
+    
+    const syncResponse = await fetch(`${supabaseUrl}/functions/v1/sync-orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+      },
+      body: JSON.stringify(syncParams) // No store_id = sync all stores
+    });
 
-    const { data: stores, error: storesError } = await serviceClient
-      .from('stores')
-      .select('id, shop_domain, api_token, user_id')
-      .not('api_token', 'is', null);
-
-    if (storesError) {
-      console.error('❌ [Admin Batch Sync API] Error fetching stores:', storesError);
+    if (!syncResponse.ok) {
+      const errorText = await syncResponse.text();
+      console.error('❌ [Admin Batch Sync API] Edge function error:', errorText);
       return NextResponse.json({
         success: false,
-        error: 'Failed to fetch stores',
-        details: storesError.message || storesError
+        error: 'Batch sync failed',
+        details: errorText
       }, { status: 500 });
     }
 
-    console.log(`✅ [Admin Batch Sync API] Found ${stores?.length || 0} stores with API tokens`);
+    const syncResults = await syncResponse.json();
+    console.log('✅ [Admin Batch Sync API] Edge function response:', syncResults);
 
-    if (!stores || stores.length === 0) {
+    // Extract results from edge function response
+    const { results } = syncResults;
+    
+    if (!results) {
       return NextResponse.json({
-        success: true,
-        message: 'No stores to sync',
-        results: []
-      });
+        success: false,
+        error: 'Invalid response from sync function'
+      }, { status: 500 });
     }
 
-    console.log(`🔄 [Admin Batch Sync API] Starting batch sync for ${stores.length} stores`);
+    // Calculate summary for frontend
+    const summary = {
+      totalStores: results.totalStores || 0,
+      successfulSyncs: results.successfulStores || 0,
+      failedSyncs: results.failedStores || 0,
+      totalRevenue: results.totalRevenue || 0,
+      totalCommission: results.totalCommission || 0,
+      totalSales: results.totalProtectionSales || 0,
+      totalNewSales: results.storeResults?.reduce((sum: number, r: any) => sum + (r.new_sales_count || 0), 0) || 0
+    };
 
-    // Sync all stores in a loop with delay to avoid rate limiting
-    const results = [];
-    let successCount = 0;
-    let errorCount = 0;
-
-    for (const store of stores) {
-      try {
-        console.log(`🔄 Syncing store: ${store.shop_domain}`);
-        
-        // Call the existing sync API for each store
-        const syncResponse = await fetch(`${request.nextUrl.origin}/api/admin/sync`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cookie': `sb-access-token=${accessToken}`
-          },
-          body: JSON.stringify({
-            userId: store.user_id,
-            ...syncParams
-          })
-        });
-
-        const syncData = await syncResponse.json();
-        
-        if (syncData.success) {
-          successCount++;
-          results.push({
-            storeId: store.id,
-            shopDomain: store.shop_domain,
-            success: true,
-            ...syncData.results?.storeResults?.[0]
-          });
-        } else {
-          errorCount++;
-          results.push({
-            storeId: store.id,
-            shopDomain: store.shop_domain,
-            success: false,
-            error: syncData.error || 'Sync failed'
-          });
-        }
-
-        // Add a small delay to avoid overwhelming the system
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-      } catch (error) {
-        console.error(`❌ Error syncing store ${store.shop_domain}:`, error);
-        errorCount++;
-        results.push({
-          storeId: store.id,
-          shopDomain: store.shop_domain,
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        });
-      }
-    }
-
-    // Calculate aggregate results
-    const totalRevenue = results
-      .filter(r => r.success)
-      .reduce((sum, r) => sum + (r.revenue || 0), 0);
-    
-    const totalCommission = results
-      .filter(r => r.success)
-      .reduce((sum, r) => sum + (r.commission || 0), 0);
-    
-    const totalSales = results
-      .filter(r => r.success)
-      .reduce((sum, r) => sum + (r.protection_sales || 0), 0);
-
-    const totalNewSales = results
-      .filter(r => r.success)
-      .reduce((sum, r) => sum + (r.new_sales_count || 0), 0);
-
-    console.log(`✅ [Admin Batch Sync API] Batch sync complete:`, {
-      totalStores: stores.length,
-      successful: successCount,
-      failed: errorCount,
-      totalRevenue,
-      totalCommission,
-      totalSales,
-      totalNewSales
-    });
+    console.log(`✅ [Admin Batch Sync API] Batch sync complete:`, summary);
 
     return NextResponse.json({
       success: true,
-      summary: {
-        totalStores: stores.length,
-        successfulSyncs: successCount,
-        failedSyncs: errorCount,
-        totalRevenue,
-        totalCommission,
-        totalSales,
-        totalNewSales
-      },
-      results
+      summary,
+      results: results.storeResults || []
     });
 
   } catch (error) {
