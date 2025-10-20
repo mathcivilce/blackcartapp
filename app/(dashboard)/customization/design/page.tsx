@@ -39,10 +39,6 @@ export default function DesignPage() {
     paymentIconPaypal: false,
     paymentIconShopPay: false,
     paymentIconVisa: false,
-    showTotalSavings: false,
-    totalSavingsText: 'Savings',
-    showEstimatedTotal: false,
-    estimatedTotalText: 'Subtotal',
   });
 
   const [addons, setAddons] = useState({
@@ -203,15 +199,7 @@ export default function DesignPage() {
       const response = await fetch(`/api/design?storeId=${storeIdParam}`);
       if (response.ok) {
         const data = await response.json();
-        setDesign(prev => ({
-          ...prev,
-          ...data,
-          // Ensure new fields have defaults if not in response
-          showTotalSavings: data.showTotalSavings ?? false,
-          totalSavingsText: data.totalSavingsText || 'Savings',
-          showEstimatedTotal: data.showEstimatedTotal ?? false,
-          estimatedTotalText: data.estimatedTotalText || 'Subtotal',
-        }));
+        setDesign(data);
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -814,60 +802,6 @@ export default function DesignPage() {
                 <span>Display compare-at-price</span>
               </label>
             </div>
-
-            <div style={styles.checkboxGroup}>
-              <label style={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  name="showTotalSavings"
-                  checked={design.showTotalSavings}
-                  onChange={handleInputChange}
-                  style={styles.checkbox}
-                />
-                <span>Show total savings above checkout button</span>
-              </label>
-            </div>
-            
-            {design.showTotalSavings && (
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Total savings label</label>
-                <input
-                  type="text"
-                  name="totalSavingsText"
-                  value={design.totalSavingsText}
-                  onChange={handleInputChange}
-                  style={styles.textInput}
-                  placeholder="Savings"
-                />
-              </div>
-            )}
-
-            <div style={styles.checkboxGroup}>
-              <label style={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  name="showEstimatedTotal"
-                  checked={design.showEstimatedTotal}
-                  onChange={handleInputChange}
-                  style={styles.checkbox}
-                />
-                <span>Show estimated total above checkout button</span>
-              </label>
-            </div>
-            
-            {design.showEstimatedTotal && (
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Estimated total label</label>
-                <input
-                  type="text"
-                  name="estimatedTotalText"
-                  value={design.estimatedTotalText}
-                  onChange={handleInputChange}
-                  style={styles.textInput}
-                  placeholder="Subtotal"
-                />
-              </div>
-            )}
           </div>
 
           <div style={styles.card}>

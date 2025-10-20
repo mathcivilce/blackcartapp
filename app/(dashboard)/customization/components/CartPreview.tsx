@@ -35,10 +35,6 @@ interface CartPreviewProps {
     paymentIconPaypal?: boolean;
     paymentIconShopPay?: boolean;
     paymentIconVisa?: boolean;
-    showTotalSavings?: boolean;
-    totalSavingsText?: string;
-    showEstimatedTotal?: boolean;
-    estimatedTotalText?: string;
   };
   addons: {
     enabled: boolean;
@@ -811,24 +807,6 @@ export default function CartPreview({ design, addons, announcement, freeGifts, u
             </div>
           )}
 
-          {/* Totals Summary */}
-          {(design.showTotalSavings || design.showEstimatedTotal) && (
-            <div style={styles.totalsSummary}>
-              {design.showTotalSavings && (
-                <div style={styles.totalRow}>
-                  <span>{design.totalSavingsText || 'Savings'}</span>
-                  <span style={styles.savingsValue}>$10.00</span>
-                </div>
-              )}
-              {design.showEstimatedTotal && (
-                <div style={styles.totalRow}>
-                  <span>{design.estimatedTotalText || 'Subtotal'}</span>
-                  <span>${calculateTotal()}</span>
-                </div>
-              )}
-            </div>
-          )}
-
           <button 
             style={{
               ...styles.checkoutButton,
@@ -1117,23 +1095,6 @@ const styles = {
     height: '24px',
     width: 'auto',
     objectFit: 'contain' as const,
-  },
-  totalsSummary: {
-    marginBottom: '16px',
-    paddingTop: '12px',
-    borderTop: '1px solid #e5e5e5',
-  },
-  totalRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '8px',
-    fontSize: '15px',
-    fontWeight: '600' as const,
-  },
-  savingsValue: {
-    color: '#2ea818',
-    fontWeight: '600' as const,
   },
 };
 
