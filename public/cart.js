@@ -73,6 +73,10 @@
       paymentIconPaypal: false,
       paymentIconShopPay: false,
       paymentIconVisa: false,
+      showTotalSavings: false,
+      totalSavingsText: 'Savings',
+      showEstimatedTotal: false,
+      estimatedTotalText: 'Subtotal',
     },
     announcement: {
       enabled: false,
@@ -225,6 +229,18 @@
                     <span class="sp-toggle-slider"></span>
                   </label>
                 </div>
+              </div>
+            </div>
+
+            <!-- Total Savings & Estimated Total Summary -->
+            <div id="sp-cart-totals-summary" class="sp-cart-totals-summary" style="display: none;">
+              <div id="sp-cart-total-savings-row" class="sp-cart-total-row" style="display: none;">
+                <span id="sp-total-savings-label">Savings</span>
+                <span id="sp-total-savings-amount" class="sp-total-savings-value">$0.00</span>
+              </div>
+              <div id="sp-cart-estimated-total-row" class="sp-cart-total-row" style="display: none;">
+                <span id="sp-estimated-total-label">Subtotal</span>
+                <span id="sp-estimated-total-amount">$0.00</span>
               </div>
             </div>
 
@@ -803,6 +819,39 @@
         height: 24px;
         width: auto;
         object-fit: contain;
+      }
+
+      /* Cart Totals Summary */
+      .sp-cart-totals-summary {
+        margin-bottom: 16px;
+        padding: 12px 0;
+        border-top: 1px solid #e5e5e5;
+      }
+
+      .sp-cart-total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 15px;
+      }
+
+      .sp-cart-total-row:last-child {
+        margin-bottom: 0;
+      }
+
+      #sp-cart-total-savings-row {
+        color: #2ea818;
+        font-weight: 600;
+      }
+
+      .sp-total-savings-value {
+        color: #2ea818;
+        font-weight: 600;
+      }
+
+      #sp-cart-estimated-total-row {
+        font-weight: 600;
       }
 
       /* Protection Toggle */
@@ -3382,6 +3431,70 @@
     const checkoutBtn = document.getElementById('sp-cart-checkout');
     if (checkoutBtn) {
       checkoutBtn.disabled = cents === 0;
+    }
+
+    // Update totals summary (total savings and estimated total)
+    updateTotalsSummary(displayTotal);
+  }
+
+  function updateTotalsSummary(cartTotal) {
+    const summaryContainer = document.getElementById('sp-cart-totals-summary');
+    const savingsRow = document.getElementById('sp-cart-total-savings-row');
+    const estimatedTotalRow = document.getElementById('sp-cart-estimated-total-row');
+    const savingsLabel = document.getElementById('sp-total-savings-label');
+    const savingsAmount = document.getElementById('sp-total-savings-amount');
+    const estimatedTotalLabel = document.getElementById('sp-estimated-total-label');
+    const estimatedTotalAmount = document.getElementById('sp-estimated-total-amount');
+
+    if (!summaryContainer || !state.cart || !state.settings) return;
+
+    const showTotalSavings = state.settings.design?.showTotalSavings ?? false;
+    const showEstimatedTotal = state.settings.design?.showEstimatedTotal ?? false;
+
+    // Calculate total savings from compare-at-price
+    let totalSavings = 0;
+    if (showTotalSavings && state.cart.items) {
+      state.cart.items.forEach(item => {
+        // Skip protection product
+        if (state.protectionVariantId && 
+            (item.id === state.protectionVariantId || item.variant_id === state.protectionVariantId)) {
+          return;
+        }
+        
+        const itemFinalPrice = item.final_price || item.price || 0;
+        if (item.compare_at_price && item.compare_at_price > itemFinalPrice) {
+          const savingsPerItem = item.compare_at_price - itemFinalPrice;
+          totalSavings += savingsPerItem * item.quantity;
+        }
+      });
+    }
+
+    // Update savings row
+    if (savingsRow && savingsLabel && savingsAmount) {
+      if (showTotalSavings && totalSavings > 0) {
+        savingsLabel.textContent = state.settings.design?.totalSavingsText || 'Savings';
+        savingsAmount.textContent = formatMoney(totalSavings);
+        savingsRow.style.display = 'flex';
+      } else {
+        savingsRow.style.display = 'none';
+      }
+    }
+
+    // Update estimated total row
+    if (estimatedTotalRow && estimatedTotalLabel && estimatedTotalAmount) {
+      if (showEstimatedTotal) {
+        estimatedTotalLabel.textContent = state.settings.design?.estimatedTotalText || 'Subtotal';
+        estimatedTotalAmount.textContent = formatMoney(cartTotal);
+        estimatedTotalRow.style.display = 'flex';
+      } else {
+        estimatedTotalRow.style.display = 'none';
+      }
+    }
+
+    // Show/hide summary container based on whether any rows are visible
+    if (summaryContainer) {
+      const hasVisibleRows = (showTotalSavings && totalSavings > 0) || showEstimatedTotal;
+      summaryContainer.style.display = hasVisibleRows ? 'block' : 'none';
     }
   }
 

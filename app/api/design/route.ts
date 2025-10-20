@@ -57,6 +57,10 @@ export async function GET(request: NextRequest) {
       paymentIconPaypal: settings?.payment_icon_paypal ?? false,
       paymentIconShopPay: settings?.payment_icon_shoppay ?? false,
       paymentIconVisa: settings?.payment_icon_visa ?? false,
+      showTotalSavings: settings?.show_total_savings ?? false,
+      totalSavingsText: settings?.total_savings_text || 'Savings',
+      showEstimatedTotal: settings?.show_estimated_total ?? false,
+      estimatedTotalText: settings?.estimated_total_text || 'Subtotal',
     });
   } catch (error) {
     console.error('Design settings API error:', error);
@@ -110,6 +114,10 @@ export async function POST(request: NextRequest) {
     if (designSettings.paymentIconPaypal !== undefined) dbSettings.payment_icon_paypal = designSettings.paymentIconPaypal;
     if (designSettings.paymentIconShopPay !== undefined) dbSettings.payment_icon_shoppay = designSettings.paymentIconShopPay;
     if (designSettings.paymentIconVisa !== undefined) dbSettings.payment_icon_visa = designSettings.paymentIconVisa;
+    if (designSettings.showTotalSavings !== undefined) dbSettings.show_total_savings = designSettings.showTotalSavings;
+    if (designSettings.totalSavingsText !== undefined) dbSettings.total_savings_text = designSettings.totalSavingsText;
+    if (designSettings.showEstimatedTotal !== undefined) dbSettings.show_estimated_total = designSettings.showEstimatedTotal;
+    if (designSettings.estimatedTotalText !== undefined) dbSettings.estimated_total_text = designSettings.estimatedTotalText;
 
     const { error } = await supabase
       .from('settings')
