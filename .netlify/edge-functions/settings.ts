@@ -341,6 +341,10 @@ export default async (request: Request, context: Context) => {
         paymentIconPaypal: settings?.payment_icon_paypal ?? false,
         paymentIconShopPay: settings?.payment_icon_shoppay ?? false,
         paymentIconVisa: settings?.payment_icon_visa ?? false,
+        showTotalSavings: settings?.show_total_savings ?? false,
+        totalSavingsText: settings?.total_savings_text || 'Savings',
+        showEstimatedTotal: settings?.show_estimated_total ?? false,
+        estimatedTotalText: settings?.estimated_total_text || 'Subtotal',
       },
       announcement: {
         enabled: settings?.announcement_enabled ?? false,
