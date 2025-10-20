@@ -812,22 +812,22 @@ export default function CartPreview({ design, addons, announcement, freeGifts, u
           )}
 
           {/* Totals Summary */}
-          {(design.showTotalSavings === true || design.showEstimatedTotal === true) && (
+          {(design.showTotalSavings || design.showEstimatedTotal) ? (
             <div style={styles.totalsSummary}>
-              {design.showTotalSavings === true && (
+              {design.showTotalSavings ? (
                 <div style={styles.totalRow}>
                   <span>{design.totalSavingsText || 'Savings'}</span>
                   <span style={styles.savingsValue}>$10.00</span>
                 </div>
-              )}
-              {design.showEstimatedTotal === true && (
+              ) : null}
+              {design.showEstimatedTotal ? (
                 <div style={styles.totalRow}>
                   <span>{design.estimatedTotalText || 'Subtotal'}</span>
                   <span>${calculateTotal()}</span>
                 </div>
-              )}
+              ) : null}
             </div>
-          )}
+          ) : null}
 
           <button 
             style={{
