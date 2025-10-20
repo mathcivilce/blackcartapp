@@ -16,8 +16,8 @@ serve(async (req) => {
     console.log('💰 Starting weekly invoice generation...')
     const startTime = Date.now()
 
-    // Parse request body to check for test mode
-    const { test_mode } = await req.json().catch(() => ({ test_mode: false }))
+    // Parse request body to check for test mode and specific store
+    const { test_mode, store_id } = await req.json().catch(() => ({ test_mode: false, store_id: null }))
     
     // Calculate week identifier and date range
     const now = new Date()
@@ -73,11 +73,19 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     })
 
-    // Get all stores with Stripe customers
-    const { data: stores, error: storesError } = await supabase
+    // Get all stores with Stripe customers (or specific store if store_id provided)
+    let storesQuery = supabase
       .from('stores')
       .select('id, shop_domain, stripe_customer_id')
       .not('stripe_customer_id', 'is', null)
+    
+    // If specific store_id provided, filter to that store only
+    if (store_id) {
+      console.log(`🎯 Generating invoice for specific store: ${store_id}`)
+      storesQuery = storesQuery.eq('id', store_id)
+    }
+
+    const { data: stores, error: storesError } = await storesQuery
 
     if (storesError) throw storesError
 

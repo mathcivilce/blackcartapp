@@ -43,6 +43,8 @@ export default function AdminInvoicesPage() {
   const [usersLoading, setUsersLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [generating, setGenerating] = useState(false);
+  const [generateMessage, setGenerateMessage] = useState<string>('');
 
   useEffect(() => {
     checkAdminAndLoadUsers();
@@ -111,6 +113,58 @@ export default function AdminInvoicesPage() {
       setError('Network error while loading invoices.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleManualGeneration = async () => {
+    if (!selectedUserId) {
+      setGenerateMessage('❌ Please select a user first');
+      setTimeout(() => setGenerateMessage(''), 3000);
+      return;
+    }
+
+    if (!confirm('Are you sure you want to manually generate an invoice for this user?\n\nThis will create a REAL Stripe invoice and charge the customer for the previous week.')) {
+      return;
+    }
+
+    try {
+      setGenerating(true);
+      setGenerateMessage('');
+      
+      const response = await fetch('/api/admin/invoices/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: selectedUserId })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate invoice');
+      }
+
+      const results = data.results?.results || {};
+      const created = results.invoices_created || 0;
+      const failed = results.invoices_failed || 0;
+      const totalCommission = (results.total_commission || 0) / 100;
+
+      if (created > 0) {
+        setGenerateMessage(`✅ Invoice generated successfully!\n\nCreated: ${created}\nFailed: ${failed}\nTotal Commission: $${totalCommission.toFixed(2)}`);
+        // Refresh invoices after generation
+        setTimeout(() => loadInvoices(), 1000);
+      } else if (failed > 0) {
+        setGenerateMessage(`❌ Invoice generation failed.\n\nFailed: ${failed}`);
+      } else {
+        setGenerateMessage(`⚠️ No invoice generated. This user may have no sales for the previous week.`);
+      }
+
+      setTimeout(() => setGenerateMessage(''), 10000);
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      setGenerateMessage(`❌ Error: ${error instanceof Error ? error.message : 'Failed to generate invoice'}`);
+      setTimeout(() => setGenerateMessage(''), 5000);
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -202,6 +256,40 @@ export default function AdminInvoicesPage() {
 
       {selectedUserId && (
         <>
+          {/* Manual Invoice Generation */}
+          <div style={styles.card}>
+            <h2 style={styles.sectionTitle}>Generate Invoice</h2>
+            <p style={styles.hint}>
+              Manually generate an invoice for the selected user for the previous week.
+            </p>
+            
+            <div style={{ marginTop: '16px' }}>
+              <button
+                onClick={handleManualGeneration}
+                disabled={generating}
+                style={{
+                  ...styles.generateButton,
+                  opacity: generating ? 0.5 : 1,
+                  cursor: generating ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {generating ? 'Generating Invoice...' : 'Manual Generation'}
+              </button>
+            </div>
+
+            {generateMessage && (
+              <div style={{
+                ...styles.message,
+                backgroundColor: generateMessage.startsWith('✅') ? '#1a3a1a' : '#3a1a1a',
+                color: generateMessage.startsWith('✅') ? '#4caf50' : '#f44336',
+                border: generateMessage.startsWith('✅') ? '1px solid #2e7d32' : '1px solid #c62828',
+                whiteSpace: 'pre-line'
+              }}>
+                {generateMessage}
+              </div>
+            )}
+          </div>
+
           {/* Summary Cards */}
           {summary && (
             <div style={styles.summaryGrid}>
@@ -516,6 +604,23 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#888',
     fontSize: '14px',
     lineHeight: '1.8',
+  },
+  generateButton: {
+    padding: '12px 24px',
+    fontSize: '14px',
+    fontWeight: '600',
+    border: '1px solid #fff',
+    borderRadius: '8px',
+    backgroundColor: '#fff',
+    color: '#000',
+    transition: 'all 0.2s',
+  },
+  message: {
+    marginTop: '16px',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
   },
 };
 
