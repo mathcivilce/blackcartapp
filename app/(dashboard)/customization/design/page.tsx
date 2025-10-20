@@ -179,7 +179,15 @@ export default function DesignPage() {
       const response = await fetch(`/api/design?storeId=${storeIdParam}`);
       if (response.ok) {
         const data = await response.json();
-        setDesign(data);
+        setDesign(prev => ({
+          ...prev,
+          ...data,
+          // Ensure new fields have defaults if not in response
+          showTotalSavings: data.showTotalSavings ?? false,
+          totalSavingsText: data.totalSavingsText || 'Savings',
+          showEstimatedTotal: data.showEstimatedTotal ?? false,
+          estimatedTotalText: data.estimatedTotalText || 'Subtotal',
+        }));
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
