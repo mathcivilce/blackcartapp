@@ -40,6 +40,7 @@ export default function LoginPage() {
   return (
     <div style={styles.container}>
       <div style={styles.loginBox}>
+        <h1 style={styles.logo}>Cartbase</h1>
         <form onSubmit={handleLogin} style={styles.form}>
           {error && (
             <div style={styles.error}>
@@ -114,6 +115,13 @@ const styles = {
     padding: '48px',
     width: '100%',
     maxWidth: '420px'
+  },
+  logo: {
+    fontSize: '24px',
+    fontWeight: '700',
+    color: '#fff',
+    margin: '0 0 32px 0',
+    textAlign: 'center' as const
   },
   form: {
     display: 'flex',
