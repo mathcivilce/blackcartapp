@@ -35,7 +35,6 @@ export default function DashboardLayout({
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: '▦' },
     { name: 'Sales', path: '/sales', icon: '$' },
-    { name: 'Invoices', path: '/invoices', icon: '📄' },
     { name: 'Settings', path: '/settings', icon: '⚙' },
   ];
 
