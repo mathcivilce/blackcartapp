@@ -111,9 +111,9 @@ function priceStringToCents(priceString: string): number {
   return Math.round(price * 100);
 }
 
-// Helper: Calculate commission (25%)
-function calculateCommission(protectionPrice: number): number {
-  return Math.round(protectionPrice * 0.25);
+// Helper: Calculate commission based on platform fee percentage
+function calculateCommission(protectionPrice: number, platformFeePercent: number): number {
+  return Math.round(protectionPrice * (platformFeePercent / 100));
 }
 
 // Helper: Get month identifier
@@ -213,6 +213,10 @@ serve(async (req) => {
       console.log(`\n🏪 Processing: ${store.shop_domain}`);
       
       try {
+        // Get platform fee for this store (default to 25 if not set)
+        const platformFee = store.platform_fee || 25;
+        console.log(`💰 Platform fee for ${store.shop_domain}: ${platformFee}%`);
+
         // Get store settings
         const { data: settings } = await supabase
           .from('settings')
@@ -267,7 +271,7 @@ serve(async (req) => {
           }
 
           const protectionPrice = priceStringToCents(protectionItem.price);
-          const commission = calculateCommission(protectionPrice);
+          const commission = calculateCommission(protectionPrice, platformFee);
           
           // Count all protection sales found (for accurate reporting)
           storeProtectionTotal++;

@@ -76,7 +76,7 @@ serve(async (req) => {
     // Get all stores with Stripe customers (or specific store if store_id provided)
     let storesQuery = supabase
       .from('stores')
-      .select('id, shop_domain, stripe_customer_id')
+      .select('id, shop_domain, stripe_customer_id, platform_fee')
       .not('stripe_customer_id', 'is', null)
     
     // If specific store_id provided, filter to that store only

@@ -49,6 +49,7 @@ export default function DashboardLayout({
   const adminSubmenu = [
     { name: '  Admin Sales', path: '/adminsales', icon: '💰' },
     { name: '  Admin Invoices', path: '/admininvoices', icon: '📋' },
+    { name: '  User Details', path: '/userdetails', icon: '👤' },
   ];
 
   return (
