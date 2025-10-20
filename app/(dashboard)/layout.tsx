@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
 export default function DashboardLayout({
@@ -11,6 +11,21 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [customizationExpanded, setCustomizationExpanded] = useState(true);
+  const [adminExpanded, setAdminExpanded] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    checkAdminStatus();
+  }, []);
+
+  const checkAdminStatus = async () => {
+    try {
+      const response = await fetch('/api/admin/users');
+      setIsAdmin(response.ok);
+    } catch {
+      setIsAdmin(false);
+    }
+  };
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -20,6 +35,7 @@ export default function DashboardLayout({
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: '▦' },
     { name: 'Sales', path: '/sales', icon: '$' },
+    { name: 'Invoices', path: '/invoices', icon: '📄' },
     { name: 'Settings', path: '/settings', icon: '⚙' },
   ];
 
@@ -29,6 +45,11 @@ export default function DashboardLayout({
     { name: '  Announcement', path: '/customization/announcement', icon: '📢' },
     { name: '  Free Gifts', path: '/customization/free-gifts', icon: '🎁' },
     { name: '  Upsell', path: '/customization/upsell', icon: '🛍️' },
+  ];
+
+  const adminSubmenu = [
+    { name: '  Admin Sales', path: '/adminsales', icon: '💰' },
+    { name: '  Admin Invoices', path: '/admininvoices', icon: '📋' },
   ];
 
   return (
@@ -81,6 +102,38 @@ export default function DashboardLayout({
               <span style={styles.navText}>{item.name}</span>
             </button>
           ))}
+
+          {/* Admin Menu (only visible for admins) */}
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => setAdminExpanded(!adminExpanded)}
+                style={{
+                  ...styles.navItem,
+                  ...(pathname.startsWith('/admin') ? styles.navItemActive : {})
+                }}
+              >
+                <span style={styles.navIcon}>🔐</span>
+                <span style={styles.navText}>Admin</span>
+                <span style={styles.expandIcon}>{adminExpanded ? '▼' : '▶'}</span>
+              </button>
+              
+              {adminExpanded && adminSubmenu.map((item: any) => (
+                <button
+                  key={item.path}
+                  onClick={() => router.push(item.path)}
+                  style={{
+                    ...styles.navItem,
+                    ...styles.navItemSubmenu,
+                    ...(pathname === item.path ? styles.navItemActive : {})
+                  }}
+                >
+                  <span style={styles.navIcon}>└</span>
+                  <span style={styles.navText}>{item.name}</span>
+                </button>
+              ))}
+            </>
+          )}
         </nav>
 
         <div style={styles.sidebarFooter}>
