@@ -63,10 +63,10 @@ export async function GET(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Get all sales from all stores
+    // Get all sales from all stores (including commission for platform fee)
     const { data: sales, error: salesError } = await serviceClient
       .from('sales')
-      .select('protection_price, created_at')
+      .select('protection_price, commission, created_at')
       .order('created_at', { ascending: true });
 
     if (salesError) {

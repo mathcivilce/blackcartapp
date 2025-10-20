@@ -53,10 +53,10 @@ export default function AdminSalesPage() {
   const [batchEndDate, setBatchEndDate] = useState('');
 
   // Chart states
-  const [chartSales, setChartSales] = useState<Array<{protection_price: number, created_at: string}>>([]);
+  const [chartSales, setChartSales] = useState<Array<{protection_price: number, commission: number, created_at: string}>>([]);
   const [chartLoading, setChartLoading] = useState(true);
   const [dateRange, setDateRange] = useState('7');
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; date: string; revenue: number } | null>(null);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; date: string; revenue: number; platformFee: number } | null>(null);
 
   useEffect(() => {
     checkAdminAndLoadUsers();
@@ -187,7 +187,8 @@ export default function AdminSalesPage() {
         x: e.clientX,
         y: e.clientY,
         date: dataPoint.date,
-        revenue: dataPoint.revenue
+        revenue: dataPoint.revenue,
+        platformFee: dataPoint.platformFee
       });
     }
   };
@@ -213,22 +214,27 @@ export default function AdminSalesPage() {
     const daysAgo = dateRange === 'all' ? 365 : parseInt(dateRange);
     const startDateCalc = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
     
-    const salesByDay: { [key: string]: number } = {};
+    const salesByDay: { [key: string]: { revenue: number; platformFee: number } } = {};
     
     filteredChartSales.forEach(sale => {
       const date = new Date(sale.created_at);
       const dayKey = date.toISOString().split('T')[0];
-      salesByDay[dayKey] = (salesByDay[dayKey] || 0) + sale.protection_price;
+      if (!salesByDay[dayKey]) {
+        salesByDay[dayKey] = { revenue: 0, platformFee: 0 };
+      }
+      salesByDay[dayKey].revenue += sale.protection_price;
+      salesByDay[dayKey].platformFee += sale.commission;
     });
 
-    const allDates: Array<{ date: string; revenue: number }> = [];
+    const allDates: Array<{ date: string; revenue: number; platformFee: number }> = [];
     const currentDate = new Date(startDateCalc);
     
     while (currentDate <= now) {
       const dayKey = currentDate.toISOString().split('T')[0];
       allDates.push({
         date: dayKey,
-        revenue: salesByDay[dayKey] || 0
+        revenue: salesByDay[dayKey]?.revenue || 0,
+        platformFee: salesByDay[dayKey]?.platformFee || 0
       });
       currentDate.setDate(currentDate.getDate() + 1);
     }
@@ -551,18 +557,30 @@ export default function AdminSalesPage() {
       <div style={styles.card}>
         <div style={styles.chartHeader}>
           <h2 style={styles.sectionTitle}>All Accounts Revenue</h2>
-          <select 
-            value={dateRange} 
-            onChange={(e) => setDateRange(e.target.value)}
-            style={styles.dateSelect}
-          >
-            <option value="7">Last 7 Days</option>
-            <option value="14">Last 14 Days</option>
-            <option value="30">Last 30 Days</option>
-            <option value="90">Last 90 Days</option>
-            <option value="365">Last Year</option>
-            <option value="all">All Time</option>
-          </select>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div style={styles.legend}>
+              <div style={styles.legendItem}>
+                <div style={{ ...styles.legendColor, backgroundColor: '#fff' }}></div>
+                <span style={styles.legendText}>Total Revenue</span>
+              </div>
+              <div style={styles.legendItem}>
+                <div style={{ ...styles.legendColor, backgroundColor: '#4CAF50' }}></div>
+                <span style={styles.legendText}>Platform Fee</span>
+              </div>
+            </div>
+            <select 
+              value={dateRange} 
+              onChange={(e) => setDateRange(e.target.value)}
+              style={styles.dateSelect}
+            >
+              <option value="7">Last 7 Days</option>
+              <option value="14">Last 14 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+              <option value="365">Last Year</option>
+              <option value="all">All Time</option>
+            </select>
+          </div>
         </div>
 
         {chartLoading ? (
@@ -608,17 +626,26 @@ export default function AdminSalesPage() {
                     <stop offset="0%" stopColor="#fff" stopOpacity="0.1" />
                     <stop offset="100%" stopColor="#fff" stopOpacity="0" />
                   </linearGradient>
+                  <linearGradient id="platformFeeGradient" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#4CAF50" stopOpacity="0.1" />
+                    <stop offset="100%" stopColor="#4CAF50" stopOpacity="0" />
+                  </linearGradient>
                 </defs>
                 
                 {(() => {
                   if (chartData.length === 0) return null;
                   
-                  const points = chartData.map((d, i) => ({
+                  const revenuePoints = chartData.map((d, i) => ({
                     x: (i / (chartData.length - 1 || 1)) * 100,
                     y: 300 - ((d.revenue / maxRevenue) * 280)
                   }));
+
+                  const platformFeePoints = chartData.map((d, i) => ({
+                    x: (i / (chartData.length - 1 || 1)) * 100,
+                    y: 300 - ((d.platformFee / maxRevenue) * 280)
+                  }));
                   
-                  const createSmoothPath = (points: Array<{x: number, y: number}>) => {
+                  const createSmoothPath = (points: Array<{x: number, y: number}>, dataKey: 'revenue' | 'platformFee') => {
                     if (points.length < 2) return '';
                     
                     let path = `M ${points[0].x},${points[0].y}`;
@@ -626,10 +653,10 @@ export default function AdminSalesPage() {
                     for (let i = 0; i < points.length - 1; i++) {
                       const p1 = points[i];
                       const p2 = points[i + 1];
-                      const rev1 = chartData[i].revenue;
-                      const rev2 = chartData[i + 1].revenue;
+                      const val1 = chartData[i][dataKey];
+                      const val2 = chartData[i + 1][dataKey];
                       
-                      if (rev1 === 0 && rev2 === 0) {
+                      if (val1 === 0 && val2 === 0) {
                         path += ` L ${p2.x},${p2.y}`;
                       } else {
                         const p0 = points[i > 0 ? i - 1 : i];
@@ -644,27 +671,54 @@ export default function AdminSalesPage() {
                     return path;
                   };
                   
-                  const linePath = createSmoothPath(points);
-                  const areaPath = `${linePath} L ${points[points.length - 1].x},300 L ${points[0].x},300 Z`;
+                  const revenueLinePath = createSmoothPath(revenuePoints, 'revenue');
+                  const revenueAreaPath = `${revenueLinePath} L ${revenuePoints[revenuePoints.length - 1].x},300 L ${revenuePoints[0].x},300 Z`;
+
+                  const platformFeeLinePath = createSmoothPath(platformFeePoints, 'platformFee');
+                  const platformFeeAreaPath = `${platformFeeLinePath} L ${platformFeePoints[platformFeePoints.length - 1].x},300 L ${platformFeePoints[0].x},300 Z`;
                   
                   return (
                     <>
-                      <path d={areaPath} fill="url(#areaGradient)" />
-                      <path d={linePath} fill="none" stroke="#fff" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                      {/* Revenue line and area */}
+                      <path d={revenueAreaPath} fill="url(#areaGradient)" />
+                      <path d={revenueLinePath} fill="none" stroke="#fff" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                      
+                      {/* Platform fee line and area */}
+                      <path d={platformFeeAreaPath} fill="url(#platformFeeGradient)" />
+                      <path d={platformFeeLinePath} fill="none" stroke="#4CAF50" strokeWidth="2" vectorEffect="non-scaling-stroke" />
                     </>
                   );
                 })()}
                 
+                {/* Revenue data points */}
                 {chartData.map((d, i) => {
                   const x = (i / (chartData.length - 1 || 1)) * 100;
                   const y = 300 - ((d.revenue / maxRevenue) * 280);
                   return (
                     <circle
-                      key={i}
+                      key={`rev-${i}`}
                       cx={x}
                       cy={y}
                       r="0.8"
                       fill="#fff"
+                      stroke="#111"
+                      strokeWidth="0.4"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  );
+                })}
+
+                {/* Platform fee data points */}
+                {chartData.map((d, i) => {
+                  const x = (i / (chartData.length - 1 || 1)) * 100;
+                  const y = 300 - ((d.platformFee / maxRevenue) * 280);
+                  return (
+                    <circle
+                      key={`fee-${i}`}
+                      cx={x}
+                      cy={y}
+                      r="0.8"
+                      fill="#4CAF50"
                       stroke="#111"
                       strokeWidth="0.4"
                       vectorEffect="non-scaling-stroke"
@@ -699,10 +753,19 @@ export default function AdminSalesPage() {
         <div style={{
           ...styles.tooltip,
           left: `${tooltip.x + 10}px`,
-          top: `${tooltip.y - 40}px`,
+          top: `${tooltip.y - 60}px`,
         }}>
           <div style={styles.tooltipDate}>{formatDateLabel(tooltip.date)}</div>
-          <div style={styles.tooltipValue}>{formatCurrency(tooltip.revenue)}</div>
+          <div style={styles.tooltipValue}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#fff' }}></div>
+              <span>Revenue: {formatCurrency(tooltip.revenue)}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#4CAF50' }}></div>
+              <span>Platform Fee: {formatCurrency(tooltip.platformFee)}</span>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1232,9 +1295,28 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '4px',
   },
   tooltipValue: {
-    fontSize: '16px',
-    fontWeight: '600',
+    fontSize: '14px',
+    fontWeight: '500',
     color: '#fff',
+  },
+  legend: {
+    display: 'flex',
+    gap: '16px',
+    alignItems: 'center',
+  },
+  legendItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  legendColor: {
+    width: '12px',
+    height: '12px',
+    borderRadius: '50%',
+  },
+  legendText: {
+    fontSize: '13px',
+    color: '#ccc',
   },
 };
 
