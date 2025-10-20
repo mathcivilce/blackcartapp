@@ -1207,7 +1207,7 @@
       
       const { data, timestamp } = parsed;
       
-      // Check if expired
+      // Check if expiredd
       if (Date.now() - timestamp > CONFIG.cacheTTL) {
         localStorage.removeItem(CONFIG.cacheKey);
         return null;
