@@ -105,6 +105,17 @@ export default function DesignPage() {
     },
   });
 
+  const [upsell, setUpsell] = useState({
+    enabled: false,
+    headlineEnabled: true,
+    headlineText: 'Help Save More Animals',
+    buttonColor: '#1a3a52',
+    buttonCornerRadius: 6,
+    item1: { enabled: false, productHandle: '', variantId: '' },
+    item2: { enabled: false, productHandle: '', variantId: '' },
+    item3: { enabled: false, productHandle: '', variantId: '' },
+  });
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -144,6 +155,7 @@ export default function DesignPage() {
       await fetchAddons(store.id);
       await fetchAnnouncement(store.id);
       await fetchFreeGifts(store.id);
+      await fetchUpsell(store.id);
     } catch (error) {
       console.error('Error loading user and settings:', error);
       setLoading(false);
@@ -171,6 +183,18 @@ export default function DesignPage() {
       }
     } catch (error) {
       console.error('Error fetching free gifts:', error);
+    }
+  };
+
+  const fetchUpsell = async (storeIdParam: string) => {
+    try {
+      const response = await fetch('/api/upsell');
+      if (response.ok) {
+        const data = await response.json();
+        setUpsell(data);
+      }
+    } catch (error) {
+      console.error('Error fetching upsell:', error);
     }
   };
 
@@ -999,7 +1023,7 @@ export default function DesignPage() {
 
         {/* Right Column - Cart Preview */}
         <div style={styles.rightColumn}>
-          <CartPreview design={design} addons={addons} announcement={announcement} freeGifts={freeGifts} />
+          <CartPreview design={design} addons={addons} announcement={announcement} freeGifts={freeGifts} upsell={upsell} />
         </div>
       </div>
     </div>
