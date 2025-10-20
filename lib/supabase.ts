@@ -147,6 +147,12 @@ export interface Settings {
   payment_icon_shoppay?: boolean;
   payment_icon_visa?: boolean;
   
+  // Total savings and estimated total
+  show_total_savings?: boolean;
+  total_savings_text?: string;
+  show_estimated_total?: boolean;
+  estimated_total_text?: string;
+  
   // Announcement settings
   announcement_enabled?: boolean;
   announcement_text?: string;
