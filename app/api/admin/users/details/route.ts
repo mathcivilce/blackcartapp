@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
         shopDomain: store.shop_domain,
         shopName: store.shop_name,
         subscriptionStatus: store.subscription_status,
-        platformFee: store.platform_fee || 25, // Default to 25 if null
+        platformFee: store.platform_fee ?? 25, // Default to 25 if null/undefined only
         createdAt: store.created_at
       }
     });

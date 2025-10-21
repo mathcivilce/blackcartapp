@@ -214,7 +214,7 @@ serve(async (req) => {
       
       try {
         // Get platform fee for this store (default to 25 if not set)
-        const platformFee = store.platform_fee || 25;
+        const platformFee = store.platform_fee ?? 25;
         console.log(`💰 Platform fee for ${store.shop_domain}: ${platformFee}%`);
 
         // Get store settings
