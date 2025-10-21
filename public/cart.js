@@ -836,7 +836,7 @@
 
       /* Payment Icons */
       .sp-payment-icons {
-        display: flex !important;
+        display: flex;
         justify-content: center !important;
         align-items: center !important;
         gap: 8px !important;
