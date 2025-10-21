@@ -621,11 +621,12 @@
       }
 
       .sp-cart-item {
-        display: flex;
-        gap: 16px;
+        display: flex !important;
+        gap: 16px !important;
         padding-bottom: 10px;
         border-bottom: 1px solid #e5e5e5;
         border-top: none;
+        align-items: flex-start !important;
       }
 
       .sp-cart-item:first-child {
@@ -638,18 +639,21 @@
       }
 
       .sp-cart-item-image {
-        width: 100px;
-        height: 100px;
-        object-fit: cover;
+        width: 100px !important;
+        height: 100px !important;
+        object-fit: cover !important;
         border-radius: 8px;
         background: #f5f5f5;
+        flex-shrink: 0 !important;
+        display: block !important;
       }
 
       .sp-cart-item-details {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
+        flex: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+        min-width: 0 !important;
       }
 
       .sp-cart-item-title {
@@ -690,34 +694,42 @@
       }
 
       .sp-cart-item-controls {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
         margin-top: 10px;
+        gap: 12px !important;
       }
 
       /* Quantity Controls */
       .sp-quantity-controls {
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
         border: 1px solid #e5e5e5;
         border-radius: 4px;
-        padding: 2px;
+        padding: 2px !important;
+        flex-shrink: 0 !important;
       }
 
       .sp-quantity-btn {
-        background: none;
-        border: none;
+        background: none !important;
+        border: none !important;
         cursor: pointer;
-        width: 22px;
-        height: 22px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
+        width: 22px !important;
+        height: 22px !important;
+        min-width: 22px !important;
+        min-height: 22px !important;
+        max-width: 22px !important;
+        max-height: 22px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 14px !important;
         color: #000;
         transition: opacity 0.2s;
+        flex-shrink: 0 !important;
+        padding: 0 !important;
       }
 
       .sp-quantity-btn:hover {
@@ -730,24 +742,29 @@
       }
 
       .sp-quantity-value {
-        min-width: 24px;
-        text-align: center;
-        font-size: 13px;
+        min-width: 24px !important;
+        text-align: center !important;
+        font-size: 13px !important;
         font-weight: 500;
+        flex-shrink: 0 !important;
+        display: inline-block !important;
       }
 
       .sp-remove-btn {
-        background: none;
-        border: none;
+        background: none !important;
+        border: none !important;
         cursor: pointer;
         color: #999;
-        padding: 4px;
+        padding: 4px !important;
         transition: color 0.2s;
-        width: 20px;
-        height: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        width: 20px !important;
+        height: 20px !important;
+        min-width: 20px !important;
+        min-height: 20px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
       }
 
       .sp-remove-btn:hover {
@@ -755,8 +772,8 @@
       }
       
       .sp-remove-btn svg {
-        width: 16px;
-        height: 16px;
+        width: 16px !important;
+        height: 16px !important;
       }
 
       /* Footer */
@@ -967,8 +984,8 @@
         }
 
         .sp-cart-item-image {
-          width: 80px;
-          height: 80px;
+          width: 80px !important;
+          height: 80px !important;
         }
 
         .sp-cart-header h2 {
