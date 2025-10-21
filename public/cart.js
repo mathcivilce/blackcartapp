@@ -4227,6 +4227,35 @@
       if (target) {
         console.log('[Cart.js] Cart icon/link clicked:', target);
         
+        // Check for data-action attributes (priority check)
+        const dataAction = target.getAttribute('data-action');
+        if (dataAction && (
+          dataAction.includes('cart') || 
+          dataAction.includes('mini-cart') ||
+          dataAction === 'toggle-mini-cart' ||
+          dataAction === 'open-cart'
+        )) {
+          console.log('[Cart.js] Intercepting data-action cart trigger:', dataAction);
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          openCart();
+          return;
+        }
+        
+        // Check for aria-controls attributes
+        const ariaControls = target.getAttribute('aria-controls');
+        if (ariaControls && (
+          ariaControls.includes('cart') || 
+          ariaControls === 'mini-cart' ||
+          ariaControls === 'CartDrawer'
+        )) {
+          console.log('[Cart.js] Intercepting aria-controls cart trigger:', ariaControls);
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          openCart();
+          return;
+        }
+        
         // Check the target itself and its parents for href
         let href = target.getAttribute('href');
         
@@ -4242,7 +4271,7 @@
         if (href && (href === '/cart' || href.includes('/cart') || href === '#cart')) {
           console.log('[Cart.js] Intercepting cart link, opening custom cart');
           e.preventDefault();
-          e.stopPropagation();
+          e.stopImmediatePropagation();
           openCart();
         }
       }
@@ -4260,7 +4289,7 @@
       if (form.getAttribute('action')?.includes('/cart/add')) {
         console.log('[Cart.js] Intercepting Add to Cart form submission');
         e.preventDefault();
-        e.stopPropagation();
+        e.stopImmediatePropagation();
         
         // ✨ OPTIMISTIC UI: Open cart IMMEDIATELY with skeleton
         openCartWithSkeleton();
@@ -4294,7 +4323,7 @@
         if (form) {
           console.log('[Cart.js] Intercepting Add to Cart button click');
           e.preventDefault();
-          e.stopPropagation();
+          e.stopImmediatePropagation();
           
           // ✨ OPTIMISTIC UI: Open cart IMMEDIATELY with skeleton
           openCartWithSkeleton();
