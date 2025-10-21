@@ -624,11 +624,6 @@
         color: #666;
       }
 
-      .sp-cart-empty-icon {
-        font-size: 48px;
-        margin-bottom: 16px;
-      }
-
       /* Cart Items */
       .sp-cart-items {
         display: flex;
@@ -3272,9 +3267,7 @@
       const emptyText = state.settings?.design?.emptyCartText || 'Your cart is empty';
       contentEl.innerHTML = `
         <div class="sp-cart-empty">
-          <div class="sp-cart-empty-icon">🛒</div>
           <h3>${emptyText}</h3>
-          <p>Add some products to get started!</p>
         </div>
         <div id="sp-upsell-container" style="display: none;"></div>
       `;
