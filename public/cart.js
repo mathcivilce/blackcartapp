@@ -303,23 +303,6 @@
         opacity: 0 !important;
         pointer-events: none !important;
       }
-      
-      /* Explicitly ensure cart buttons/icons/links stay visible */
-      button[class*="cart"],
-      a[class*="cart"],
-      cart-icon,
-      .cart-icon,
-      .header [class*="cart"],
-      .header [id*="cart"],
-      [class*="cart-trigger"],
-      [class*="cart-button"],
-      [aria-label*="cart" i] button,
-      [aria-label*="cart" i] a {
-        display: revert !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        pointer-events: auto !important;
-      }
 
       /* Overlay */
       .sp-cart-overlay {
