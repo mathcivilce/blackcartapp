@@ -285,7 +285,19 @@
       div.cart-drawer:not(.header *),
       div.cart-popup:not(.header *),
       div[id="cart-drawer"]:not(.header *),
-      div[id="CartDrawer"]:not(.header *) {
+      div[id="CartDrawer"]:not(.header *),
+      
+      /* Hide mini-cart components (specific theme patterns) */
+      .mini-cart__inner,
+      .mini-cart__content,
+      .mini-cart__line-item-list,
+      .mini-cart__line-item,
+      .mini-cart__item-wrapper,
+      .mini-cart__image-wrapper,
+      .mini-cart__product-info,
+      .mini-cart__price-list,
+      .mini-cart__quantity,
+      .mini-cart__recap {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
