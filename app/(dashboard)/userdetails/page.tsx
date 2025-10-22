@@ -258,7 +258,7 @@ export default function UserDetailsPage() {
           <div style={styles.card}>
             <h2 style={styles.sectionTitle}>Platform Fee Settings</h2>
             <p style={styles.hint}>
-              Adjust the platform fee percentage for this user. This affects commission calculations on all future sales and invoices.
+              Adjust the platform fee percentage for this user. Supports decimal values (e.g., 6.5%, 12.75%). This affects commission calculations on all future sales and invoices.
             </p>
             
             <div style={styles.platformFeeContainer}>
@@ -277,10 +277,12 @@ export default function UserDetailsPage() {
                     type="number"
                     min="0"
                     max="100"
+                    step="0.01"
                     value={platformFee}
                     onChange={(e) => setPlatformFee(Number(e.target.value))}
                     style={styles.input}
                     disabled={updating}
+                    placeholder="e.g., 6.5, 12.75, 25"
                   />
                   <button
                     onClick={handleUpdatePlatformFee}
@@ -329,6 +331,7 @@ export default function UserDetailsPage() {
             <ul style={styles.infoList}>
               <li>Platform fee is calculated as a percentage of each protection sale</li>
               <li>The remaining percentage goes to the user as their commission</li>
+              <li>Supports decimal values (e.g., 6.5%, 12.75%, 0.50%)</li>
               <li>Changes apply to all future sales and invoices</li>
               <li>Past invoices and sales are not affected by this change</li>
               <li>Default platform fee is 25% for all new users</li>
