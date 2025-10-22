@@ -27,6 +27,13 @@ interface AllAccountsSummary {
   platformFee: number;
 }
 
+interface IndividualSummary {
+  totalSales: number;
+  totalRevenue: number;
+  totalCommission: number;
+  displayedSales: number;
+}
+
 export default function AdminSalesPage() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -51,6 +58,9 @@ export default function AdminSalesPage() {
   const [batchUseCustomDates, setBatchUseCustomDates] = useState(false);
   const [batchStartDate, setBatchStartDate] = useState('');
   const [batchEndDate, setBatchEndDate] = useState('');
+
+  // Individual user summary (accurate totals)
+  const [individualSummary, setIndividualSummary] = useState<IndividualSummary | null>(null);
 
   // Chart states
   const [chartSales, setChartSales] = useState<Array<{protection_price: number, commission: number, created_at: string}>>([]);
@@ -107,6 +117,7 @@ export default function AdminSalesPage() {
   const loadSales = async () => {
     if (!selectedUserId) {
       setSales([]);
+      setIndividualSummary(null);
       setLoading(false);
       return;
     }
@@ -120,7 +131,11 @@ export default function AdminSalesPage() {
       
       if (response.ok) {
         setSales(data.sales || []);
-        console.log('✅ Sales loaded for user:', selectedUserId, data.sales?.length);
+        setIndividualSummary(data.summary || null);
+        console.log('✅ Sales loaded for user:', selectedUserId, {
+          displayed: data.sales?.length,
+          total: data.summary?.totalSales
+        });
       } else {
         setError(data.error || 'Failed to load sales');
         console.error('Failed to load sales:', data);
@@ -408,9 +423,9 @@ export default function AdminSalesPage() {
     });
   };
 
-  // Calculate totals
-  const totalRevenue = sales.reduce((sum, sale) => sum + sale.protection_price, 0);
-  const totalCommission = sales.reduce((sum, sale) => sum + sale.commission, 0);
+  // Use accurate summary from API (not calculated from limited sales array)
+  const totalRevenue = individualSummary?.totalRevenue || 0;
+  const totalCommission = individualSummary?.totalCommission || 0;
 
   // Show error if not admin
   if (!isAdmin && !usersLoading) {
@@ -892,7 +907,7 @@ export default function AdminSalesPage() {
           <div style={styles.statsGrid}>
             <div style={styles.statCard}>
               <h3 style={styles.statLabel}>Total Sales</h3>
-              <p style={styles.statValue}>{sales.length}</p>
+              <p style={styles.statValue}>{individualSummary?.totalSales || 0}</p>
             </div>
             <div style={styles.statCard}>
               <h3 style={styles.statLabel}>Total Revenue</h3>
@@ -911,6 +926,14 @@ export default function AdminSalesPage() {
           {/* Sales Table */}
           <div style={styles.card}>
             <h2 style={styles.sectionTitle}>Sales History</h2>
+            
+            {/* Show note when displaying limited results */}
+            {individualSummary && individualSummary.totalSales > individualSummary.displayedSales && (
+              <div style={styles.limitNote}>
+                📊 Showing most recent {individualSummary.displayedSales} of {individualSummary.totalSales} total sales. 
+                Summary totals above reflect all sales.
+              </div>
+            )}
             
             {loading ? (
               <div style={styles.loadingContainer}>
@@ -1136,6 +1159,16 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '14px',
     color: '#888',
     margin: '8px 0 0 0',
+  },
+  limitNote: {
+    fontSize: '14px',
+    color: '#f0ad4e',
+    backgroundColor: '#2a2416',
+    border: '1px solid #3d3520',
+    borderRadius: '8px',
+    padding: '12px 16px',
+    marginBottom: '16px',
+    fontWeight: '500',
   },
   loadingContainer: {
     display: 'flex',

@@ -95,7 +95,38 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get sales for this store
+    // Query 1: Get accurate aggregates (no limit) for summary cards
+    const { count, error: countError } = await serviceClient
+      .from('sales')
+      .select('*', { count: 'exact', head: true })
+      .eq('store_id', store.id);
+
+    if (countError) {
+      console.error('❌ [Admin Sales API] Error fetching count:', countError);
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to fetch sales count'
+      }, { status: 500 });
+    }
+
+    // Get sum aggregates for revenue and commission
+    const { data: aggregates, error: aggregatesError } = await serviceClient
+      .from('sales')
+      .select('protection_price, commission')
+      .eq('store_id', store.id);
+
+    if (aggregatesError) {
+      console.error('❌ [Admin Sales API] Error fetching aggregates:', aggregatesError);
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to fetch sales aggregates'
+      }, { status: 500 });
+    }
+
+    const totalRevenue = aggregates?.reduce((sum, sale) => sum + (sale.protection_price || 0), 0) || 0;
+    const totalCommission = aggregates?.reduce((sum, sale) => sum + (sale.commission || 0), 0) || 0;
+
+    // Query 2: Get recent sales for display (with limit)
     const { data: sales, error: salesError } = await serviceClient
       .from('sales')
       .select('*')
@@ -111,16 +142,18 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Calculate summary
+    // Summary with accurate counts from aggregates
     const summary = {
-      totalSales: sales?.length || 0,
-      totalRevenue: sales?.reduce((sum, sale) => sum + (sale.protection_price || 0), 0) || 0,
-      totalCommission: sales?.reduce((sum, sale) => sum + (sale.commission || 0), 0) || 0
+      totalSales: count || 0,
+      totalRevenue,
+      totalCommission,
+      displayedSales: sales?.length || 0  // Number of sales actually being displayed
     };
 
     console.log('✅ [Admin Sales API] Returning data:', { 
       userId: targetUserId,
-      salesCount: sales?.length, 
+      totalSales: count,
+      displayedSales: sales?.length, 
       summary 
     });
 

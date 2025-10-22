@@ -77,31 +77,66 @@ async function fetchShopifyOrders(
   }
 }
 
-// Helper: Check if line item is protection product
-function isProtectionProduct(
+// Helper: Get product ID from handle (reverse lookup for exact matching)
+async function getProductIdByHandle(
+  shopDomain: string,
+  apiToken: string,
+  handle: string
+): Promise<{ productId: number | null; error?: string }> {
+  try {
+    const url = `https://${shopDomain}/admin/api/2024-01/products.json?handle=${handle}&limit=1&fields=id,handle`;
+    
+    const response = await fetch(url, {
+      headers: {
+        'X-Shopify-Access-Token': apiToken,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return { productId: null, error: `Shopify API error: ${response.status}` };
+    }
+
+    const data = await response.json();
+    const product = data.products?.[0];
+    
+    if (!product) {
+      return { productId: null, error: `Product with handle "${handle}" not found` };
+    }
+    
+    console.log(`✅ Found product ID ${product.id} for handle "${handle}"`);
+    return { productId: product.id };
+  } catch (error) {
+    return { productId: null, error: error.message };
+  }
+}
+
+// Helper: Check if line item matches protection product (fallback method)
+// Uses title, SKU, and name matching for cases where product ID lookup fails
+function isProtectionProductByContent(
   lineItem: ShopifyOrder['line_items'][0],
-  protectionProductId: string | null
+  protectionHandle: string | null
 ): boolean {
-  if (!protectionProductId) return false;
+  if (!protectionHandle) return false;
 
-  const normalizedId = protectionProductId.toLowerCase().trim();
+  const normalizedHandle = protectionHandle.toLowerCase().trim();
   
-  if (lineItem.sku && lineItem.sku.toLowerCase().includes(normalizedId)) {
+  // Check SKU
+  if (lineItem.sku && lineItem.sku.toLowerCase().includes(normalizedHandle)) {
     return true;
   }
   
-  if (lineItem.title && lineItem.title.toLowerCase().includes(normalizedId)) {
+  // Check title
+  if (lineItem.title && lineItem.title.toLowerCase().includes(normalizedHandle)) {
     return true;
   }
   
-  if (lineItem.name && lineItem.name.toLowerCase().includes(normalizedId)) {
+  // Check name
+  if (lineItem.name && lineItem.name.toLowerCase().includes(normalizedHandle)) {
     return true;
   }
 
-  const protectionKeywords = ['shipping protection', 'shipping insurance', 'package protection'];
-  const itemTitle = lineItem.title?.toLowerCase() || '';
-  
-  return protectionKeywords.some(keyword => itemTitle.includes(keyword));
+  return false;
 }
 
 // Helper: Convert price string to cents
@@ -224,9 +259,28 @@ serve(async (req) => {
           .eq('store_id', store.id)
           .single();
 
-        const protectionProductId = settings?.addon_product_id || 
-                                    settings?.protection_product_id || 
-                                    'shipping-protection';
+        const protectionProductHandle = settings?.addon_product_id || 
+                                        settings?.protection_product_id || 
+                                        'shipping-protection';
+
+        console.log(`🔍 Looking up product ID for handle: "${protectionProductHandle}"`);
+        console.log(`📋 Using dual-strategy matching: exact product ID + content-based (title/SKU/name)`);
+
+        // Strategy 1: Get product ID from handle for exact matching
+        const { productId: protectionProductId, error: productError } = await getProductIdByHandle(
+          store.shop_domain,
+          store.api_token,
+          protectionProductHandle
+        );
+
+        if (productError || !protectionProductId) {
+          console.warn(`⚠️ Could not find product ID for handle "${protectionProductHandle}": ${productError}`);
+          console.log(`📝 Strategy 1 (exact ID): Unavailable - will rely on Strategy 2 (content matching)`);
+        } else {
+          console.log(`✅ Strategy 1 (exact ID): Product ID ${protectionProductId} found`);
+        }
+        
+        console.log(`✅ Strategy 2 (content): Always active - matching by title/SKU/name containing "${protectionProductHandle}"`);
 
         // Fetch orders from Shopify
         const { orders, error } = await fetchShopifyOrders(
@@ -261,10 +315,20 @@ serve(async (req) => {
 
         // Process each order
         for (const order of orders) {
-          // Find protection product first
-          const protectionItem = order.line_items.find(item =>
-            isProtectionProduct(item, protectionProductId)
-          );
+          // Find protection product using BOTH strategies simultaneously
+          // Strategy 1: Exact product ID match
+          // Strategy 2: Content-based matching (title/SKU/name)
+          // If EITHER strategy matches, the product is found
+          const protectionItem = order.line_items.find(item => {
+            // Strategy 1: Check exact product ID match
+            const matchesById = protectionProductId && item.product_id === protectionProductId;
+            
+            // Strategy 2: Check content-based match (title/SKU/name)
+            const matchesByContent = isProtectionProductByContent(item, protectionProductHandle);
+            
+            // Return true if EITHER strategy matches
+            return matchesById || matchesByContent;
+          });
 
           if (!protectionItem) {
             continue; // No protection in this order
