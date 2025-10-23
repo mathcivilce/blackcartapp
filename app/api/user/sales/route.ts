@@ -70,7 +70,38 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get sales for this store using authenticated client (uses new RLS policy)
+    // Query 1: Get accurate aggregates (no limit) for summary cards
+    const { count, error: countError } = await authClient
+      .from('sales')
+      .select('*', { count: 'exact', head: true })
+      .eq('store_id', store.id);
+
+    if (countError) {
+      console.error('❌ [Sales API] Error fetching count:', countError);
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to fetch sales count'
+      }, { status: 500 });
+    }
+
+    // Get sum aggregates for revenue and commission
+    const { data: aggregates, error: aggregatesError } = await authClient
+      .from('sales')
+      .select('protection_price, commission')
+      .eq('store_id', store.id);
+
+    if (aggregatesError) {
+      console.error('❌ [Sales API] Error fetching aggregates:', aggregatesError);
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to fetch sales aggregates'
+      }, { status: 500 });
+    }
+
+    const totalRevenue = aggregates?.reduce((sum, sale) => sum + (sale.protection_price || 0), 0) || 0;
+    const totalCommission = aggregates?.reduce((sum, sale) => sum + (sale.commission || 0), 0) || 0;
+
+    // Query 2: Get recent sales for display (with limit)
     const { data: sales, error: salesError } = await authClient
       .from('sales')
       .select('*')
@@ -78,7 +109,7 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(100);
 
-    console.log('💰 [Sales API] Sales query:', { salesCount: sales?.length, salesError });
+    console.log('💰 [Sales API] Sales query:', { totalCount: count, displayedCount: sales?.length, salesError });
 
     if (salesError) {
       console.error('❌ [Sales API] Error fetching sales:', salesError);
@@ -88,11 +119,12 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Calculate summary
+    // Summary with accurate counts from aggregates
     const summary = {
-      totalSales: sales?.length || 0,
-      totalRevenue: sales?.reduce((sum, sale) => sum + (sale.protection_price || 0), 0) || 0,
-      totalCommission: sales?.reduce((sum, sale) => sum + (sale.commission || 0), 0) || 0
+      totalSales: count || 0,
+      totalRevenue,
+      totalCommission,
+      displayedSales: sales?.length || 0  // Number of sales actually being displayed
     };
 
     console.log('✅ [Sales API] Returning data:', { salesCount: sales?.length, summary });

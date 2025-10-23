@@ -11,6 +11,13 @@ interface Sale {
   month: string;
 }
 
+interface Summary {
+  totalSales: number;
+  totalRevenue: number;
+  totalCommission: number;
+  displayedSales: number;
+}
+
 interface SyncResult {
   store_domain: string;
   success: boolean;
@@ -25,6 +32,7 @@ interface SyncResult {
 
 export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([]);
+  const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
@@ -45,6 +53,11 @@ export default function SalesPage() {
       
       if (response.ok) {
         setSales(data.sales || []);
+        setSummary(data.summary || null);
+        console.log('✅ Sales loaded:', {
+          displayed: data.sales?.length,
+          total: data.summary?.totalSales
+        });
       } else {
         console.error('Failed to load sales:', data);
       }
@@ -126,9 +139,10 @@ export default function SalesPage() {
     });
   };
 
-  // Calculate totals
-  const totalRevenue = sales.reduce((sum, sale) => sum + sale.protection_price, 0);
-  const totalCommission = sales.reduce((sum, sale) => sum + sale.commission, 0);
+  // Use accurate summary from API (not calculated from limited sales array)
+  const totalRevenue = summary?.totalRevenue || 0;
+  const totalCommission = summary?.totalCommission || 0;
+  const totalSalesCount = summary?.totalSales || 0;
 
   return (
     <div style={styles.container}>
@@ -143,7 +157,7 @@ export default function SalesPage() {
       <div style={styles.statsGrid}>
         <div style={styles.statCard}>
           <h3 style={styles.statLabel}>Total Sales</h3>
-          <p style={styles.statValue}>{sales.length}</p>
+          <p style={styles.statValue}>{totalSalesCount}</p>
         </div>
         <div style={styles.statCard}>
           <h3 style={styles.statLabel}>Total Revenue</h3>
