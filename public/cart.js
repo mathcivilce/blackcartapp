@@ -352,7 +352,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 20px;
+        padding: 12px 20px;
         border-bottom: 1px solid #e5e5e5;
       }
 
