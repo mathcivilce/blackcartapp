@@ -139,7 +139,8 @@
   const state = {
     isOpen: false,
     cart: null,
-    currency: 'USD',  // Track current cart currency from Shopify
+    currency: 'USD',  // Track active display currency (from Shopify.currency.active)
+    country: null,    // Track customer's country (from Shopify.country)
     settings: null,
     settingsLoaded: false,  // Track if settings have been fetched from API (for lazy loading)
     isFirstCartOpen: true,  // Track if this is the first cart open in session (for skeleton UI)
@@ -1349,10 +1350,21 @@
       
       console.log('[Cart.js] ✅ Cart loaded from cache:', data.item_count, 'items');
       
-      // Extract currency from cached cart
-      if (data.currency) {
+      // Extract active display currency (same priority as live fetch)
+      // Priority 1: Shopify.currency.active (live, not cached)
+      // Priority 2: Cached cart.currency (fallback)
+      if (window.Shopify?.currency?.active) {
+        state.currency = window.Shopify.currency.active;
+        console.log('[Cart.js] ✅ Currency from Shopify.currency.active (cache load):', state.currency);
+      } else if (data.currency) {
         state.currency = data.currency;
-        console.log('[Cart.js] Currency from cache:', state.currency);
+        console.log('[Cart.js] ⚠️ Currency from cached cart (fallback):', state.currency);
+      }
+      
+      // Extract country from Shopify native data (live, not cached)
+      if (window.Shopify?.country) {
+        state.country = window.Shopify.country;
+        console.log('[Cart.js] 🌍 Country detected (cache load):', state.country);
       }
       
       return data;
@@ -1520,10 +1532,31 @@
         
         state.cart = cart;
         
-        // ✅ Extract currency from Shopify cart
-        if (cart.currency) {
+        // ✅ Extract active display currency using Shopify native data
+        // Priority 1: Shopify.currency.active (what customer SEES - Shopify Markets)
+        // Priority 2: cart.currency (checkout currency - fallback)
+        if (window.Shopify?.currency?.active) {
+          state.currency = window.Shopify.currency.active;
+          console.log('[Cart.js] ✅ Currency from Shopify.currency.active:', state.currency);
+        } else if (cart.currency) {
           state.currency = cart.currency;
-          console.log('[Cart.js] Currency detected:', state.currency);
+          console.log('[Cart.js] ⚠️ Currency from cart.currency (fallback):', state.currency);
+        }
+        
+        // 🎁 Bonus: Extract country from Shopify native data
+        if (window.Shopify?.country) {
+          state.country = window.Shopify.country;
+          console.log('[Cart.js] 🌍 Country detected:', state.country);
+        }
+        
+        // 📊 Diagnostic logging (helpful for debugging)
+        if (window.Shopify?.currency) {
+          console.log('[Cart.js] 📊 Currency info:', {
+            active: window.Shopify.currency.active,
+            store: window.Shopify.currency.store,
+            cart: cart.currency,
+            country: window.Shopify.country
+          });
         }
         
         // ✅ NEW: Cache cart data for instant opening on next page
@@ -2795,6 +2828,27 @@
     }
     
     return symbol + amount;
+  }
+
+  // Helper function: Detect active currency from Shopify native data
+  function detectActiveCurrency() {
+    // Priority 1: Shopify.currency.active (Shopify Markets display currency)
+    if (window.Shopify?.currency?.active) {
+      return window.Shopify.currency.active;
+    }
+    
+    // Priority 2: state.cart.currency (if cart already fetched)
+    if (state.cart?.currency) {
+      return state.cart.currency;
+    }
+    
+    // Priority 3: Default fallback
+    return 'USD';
+  }
+  
+  // Helper function: Detect customer's country from Shopify native data
+  function detectCountry() {
+    return window.Shopify?.country || null;
   }
 
   // ============================================
@@ -4586,6 +4640,15 @@
       console.warn('[Cart.js] Shopify object not available, cart will not initialize');
       return;
     }
+
+    // ✅ Detect currency and country early (before cart fetch)
+    // This ensures we have the correct currency from the start
+    state.currency = detectActiveCurrency();
+    state.country = detectCountry();
+    console.log('[Cart.js] 🌍 Early detection:', {
+      currency: state.currency,
+      country: state.country || 'not detected'
+    });
 
     // Wait for document.body to be available
     if (!document.body) {
