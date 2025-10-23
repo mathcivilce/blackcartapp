@@ -139,6 +139,7 @@
   const state = {
     isOpen: false,
     cart: null,
+    currency: 'USD',  // Track current cart currency from Shopify
     settings: null,
     settingsLoaded: false,  // Track if settings have been fetched from API (for lazy loading)
     isFirstCartOpen: true,  // Track if this is the first cart open in session (for skeleton UI)
@@ -1347,6 +1348,13 @@
       }
       
       console.log('[Cart.js] ✅ Cart loaded from cache:', data.item_count, 'items');
+      
+      // Extract currency from cached cart
+      if (data.currency) {
+        state.currency = data.currency;
+        console.log('[Cart.js] Currency from cache:', state.currency);
+      }
+      
       return data;
     } catch (error) {
       console.warn('[Cart.js] Cart cache read failed:', error.message);
@@ -1511,6 +1519,12 @@
         }
         
         state.cart = cart;
+        
+        // ✅ Extract currency from Shopify cart
+        if (cart.currency) {
+          state.currency = cart.currency;
+          console.log('[Cart.js] Currency detected:', state.currency);
+        }
         
         // ✅ NEW: Cache cart data for instant opening on next page
         setCachedCart(cart);
@@ -2606,8 +2620,181 @@
     return await updateCartItem(lineIndex, 0);
   }
 
-  function formatMoney(cents) {
-    return '$' + (cents / 100).toFixed(2);
+  // ============================================
+  // CURRENCY SYMBOLS MAP (100+ Currencies)
+  // ============================================
+  
+  const CURRENCY_SYMBOLS = {
+    // Americas
+    'USD': '$',        // US Dollar
+    'CAD': 'CA$',      // Canadian Dollar
+    'MXN': 'MX$',      // Mexican Peso
+    'BRL': 'R$',       // Brazilian Real
+    'ARS': 'AR$',      // Argentine Peso
+    'CLP': 'CL$',      // Chilean Peso
+    'COP': 'CO$',      // Colombian Peso
+    'PEN': 'S/',       // Peruvian Sol
+    'UYU': 'UY$',      // Uruguayan Peso
+    'VEF': 'Bs',       // Venezuelan Bolívar
+    'TTD': 'TT$',      // Trinidad and Tobago Dollar
+    'JMD': 'J$',       // Jamaican Dollar
+    'BSD': 'B$',       // Bahamian Dollar
+    'BBD': 'Bds$',     // Barbadian Dollar
+    'XCD': 'EC$',      // East Caribbean Dollar
+    
+    // Europe
+    'EUR': '€',        // Euro
+    'GBP': '£',        // British Pound
+    'CHF': 'CHF',      // Swiss Franc
+    'NOK': 'kr',       // Norwegian Krone
+    'SEK': 'kr',       // Swedish Krona
+    'DKK': 'kr',       // Danish Krone
+    'ISK': 'kr',       // Icelandic Króna
+    'PLN': 'zł',       // Polish Zloty
+    'CZK': 'Kč',       // Czech Koruna
+    'HUF': 'Ft',       // Hungarian Forint
+    'RON': 'lei',      // Romanian Leu
+    'BGN': 'лв',       // Bulgarian Lev
+    'HRK': 'kn',       // Croatian Kuna
+    'RSD': 'дин',      // Serbian Dinar
+    'UAH': '₴',        // Ukrainian Hryvnia
+    'RUB': '₽',        // Russian Ruble
+    'BYN': 'Br',       // Belarusian Ruble
+    'TRY': '₺',        // Turkish Lira
+    'GEL': '₾',        // Georgian Lari
+    'AMD': '֏',        // Armenian Dram
+    'AZN': '₼',        // Azerbaijani Manat
+    'MDL': 'L',        // Moldovan Leu
+    'BAM': 'KM',       // Bosnia-Herzegovina Convertible Mark
+    'MKD': 'ден',      // Macedonian Denar
+    'ALL': 'L',        // Albanian Lek
+    
+    // Middle East & Africa
+    'AED': 'د.إ',      // UAE Dirham
+    'SAR': 'ر.س',      // Saudi Riyal
+    'QAR': 'ر.ق',      // Qatari Riyal
+    'OMR': 'ر.ع.',     // Omani Rial
+    'KWD': 'د.ك',      // Kuwaiti Dinar
+    'BHD': 'د.ب',      // Bahraini Dinar
+    'JOD': 'د.ا',      // Jordanian Dinar
+    'ILS': '₪',        // Israeli Shekel
+    'EGP': 'E£',       // Egyptian Pound
+    'LBP': 'ل.ل',      // Lebanese Pound
+    'SYP': 'ل.س',      // Syrian Pound
+    'IQD': 'ع.د',      // Iraqi Dinar
+    'YER': 'ر.ي',      // Yemeni Rial
+    'IRR': '﷼',        // Iranian Rial
+    'MAD': 'د.م.',     // Moroccan Dirham
+    'TND': 'د.ت',      // Tunisian Dinar
+    'DZD': 'د.ج',      // Algerian Dinar
+    'LYD': 'ل.د',      // Libyan Dinar
+    'SDG': 'ج.س.',     // Sudanese Pound
+    'ZAR': 'R',        // South African Rand
+    'NGN': '₦',        // Nigerian Naira
+    'KES': 'KSh',      // Kenyan Shilling
+    'GHS': 'GH₵',      // Ghanaian Cedi
+    'TZS': 'TSh',      // Tanzanian Shilling
+    'UGX': 'USh',      // Ugandan Shilling
+    'ETB': 'Br',       // Ethiopian Birr
+    'MUR': '₨',        // Mauritian Rupee
+    'MWK': 'MK',       // Malawian Kwacha
+    'ZMW': 'ZK',       // Zambian Kwacha
+    'BWP': 'P',        // Botswana Pula
+    'NAD': 'N$',       // Namibian Dollar
+    'SZL': 'L',        // Swazi Lilangeni
+    'LSL': 'L',        // Lesotho Loti
+    
+    // Asia-Pacific
+    'JPY': '¥',        // Japanese Yen
+    'CNY': '¥',        // Chinese Yuan
+    'KRW': '₩',        // South Korean Won
+    'HKD': 'HK$',      // Hong Kong Dollar
+    'TWD': 'NT$',      // Taiwan Dollar
+    'SGD': 'S$',       // Singapore Dollar
+    'MYR': 'RM',       // Malaysian Ringgit
+    'THB': '฿',        // Thai Baht
+    'IDR': 'Rp',       // Indonesian Rupiah
+    'PHP': '₱',        // Philippine Peso
+    'VND': '₫',        // Vietnamese Dong
+    'INR': '₹',        // Indian Rupee
+    'PKR': '₨',        // Pakistani Rupee
+    'BDT': '৳',        // Bangladeshi Taka
+    'LKR': 'Rs',       // Sri Lankan Rupee
+    'NPR': 'Rs',       // Nepalese Rupee
+    'MMK': 'K',        // Myanmar Kyat
+    'KHR': '៛',        // Cambodian Riel
+    'LAK': '₭',        // Lao Kip
+    'BND': 'B$',       // Brunei Dollar
+    'AUD': 'A$',       // Australian Dollar
+    'NZD': 'NZ$',      // New Zealand Dollar
+    'FJD': 'FJ$',      // Fijian Dollar
+    'PGK': 'K',        // Papua New Guinean Kina
+    'MNT': '₮',        // Mongolian Tugrik
+    'KZT': '₸',        // Kazakhstani Tenge
+    'UZS': 'so\'m',    // Uzbekistani Som
+    'KGS': 'с',        // Kyrgyzstani Som
+    'TJS': 'ЅМ',       // Tajikistani Somoni
+    'TMT': 'm',        // Turkmenistani Manat
+    'AFN': '؋',        // Afghan Afghani
+    'MVR': 'Rf',       // Maldivian Rufiyaa
+    'BTN': 'Nu.',      // Bhutanese Ngultrum
+    
+    // Additional Currencies
+    'XOF': 'CFA',      // West African CFA Franc
+    'XAF': 'FCFA',     // Central African CFA Franc
+    'XPF': '₣',        // CFP Franc
+    'AOA': 'Kz',       // Angolan Kwanza
+    'MZN': 'MT',       // Mozambican Metical
+    'MGA': 'Ar',       // Malagasy Ariary
+    'SCR': '₨',        // Seychellois Rupee
+    'SLL': 'Le',       // Sierra Leonean Leone
+    'GMD': 'D',        // Gambian Dalasi
+    'GNF': 'FG',       // Guinean Franc
+    'LRD': 'L$',       // Liberian Dollar
+    'CDF': 'FC',       // Congolese Franc
+    'RWF': 'FRw',      // Rwandan Franc
+    'BIF': 'FBu',      // Burundian Franc
+    'DJF': 'Fdj',      // Djiboutian Franc
+    'SOS': 'Sh',       // Somali Shilling
+    'ERN': 'Nfk',      // Eritrean Nakfa
+    'CVE': '$',        // Cape Verdean Escudo
+    'STN': 'Db',       // São Tomé and Príncipe Dobra
+    'CUP': '₱',        // Cuban Peso
+    'HTG': 'G',        // Haitian Gourde
+    'DOP': 'RD$',      // Dominican Peso
+    'NIO': 'C$',       // Nicaraguan Córdoba
+    'GTQ': 'Q',        // Guatemalan Quetzal
+    'HNL': 'L',        // Honduran Lempira
+    'SVC': '₡',        // Salvadoran Colón
+    'CRC': '₡',        // Costa Rican Colón
+    'PAB': 'B/.',      // Panamanian Balboa
+    'BOB': 'Bs.',      // Bolivian Boliviano
+    'PYG': '₲',        // Paraguayan Guaraní
+    'GYD': 'G$',       // Guyanese Dollar
+    'SRD': '$',        // Surinamese Dollar
+    'AWG': 'ƒ',        // Aruban Florin
+    'ANG': 'ƒ',        // Netherlands Antillean Guilder
+    'BMD': '$',        // Bermudian Dollar
+    'KYD': '$',        // Cayman Islands Dollar
+  };
+
+  function formatMoney(cents, currencyCode = null) {
+    // Use currency from state if not provided
+    const currency = currencyCode || state.currency || 'USD';
+    const symbol = CURRENCY_SYMBOLS[currency] || currency + ' ';
+    
+    // Format the amount with 2 decimal places
+    const amount = (cents / 100).toFixed(2);
+    
+    // For most currencies, symbol comes before the amount
+    // Special cases where symbol comes after can be handled here
+    const symbolAfterCurrencies = ['SEK', 'NOK', 'DKK', 'ISK', 'CZK', 'HUF', 'PLN', 'RON'];
+    
+    if (symbolAfterCurrencies.includes(currency)) {
+      return amount + ' ' + symbol;
+    }
+    
+    return symbol + amount;
   }
 
   // ============================================
