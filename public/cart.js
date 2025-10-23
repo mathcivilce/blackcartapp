@@ -3842,6 +3842,16 @@
       return;
     }
     
+    // ✅ DETECT CURRENCY WHEN CART OPENS (not at page load)
+    // By this time, Shopify objects should be fully loaded
+    state.currency = detectActiveCurrency();
+    state.country = detectCountry();
+    console.log('[Cart.js] 🌍 Currency detected on cart open (Add to Cart):', {
+      currency: state.currency,
+      country: state.country || 'not detected',
+      'Shopify.currency.active': window.Shopify?.currency?.active
+    });
+    
     // ✨ INSTANT: Open cart immediately
     state.isOpen = true;
     overlay.classList.add('sp-open');
@@ -4172,6 +4182,18 @@
     }
     
     console.log('[Cart.js] Overlay found, proceeding to open cart');
+    
+    // ✅ DETECT CURRENCY WHEN CART OPENS (not at page load)
+    // By this time, Shopify objects should be fully loaded
+    // Only runs when user actually opens cart (no performance impact on page load)
+    state.currency = detectActiveCurrency();
+    state.country = detectCountry();
+    console.log('[Cart.js] 🌍 Currency detected on cart open:', {
+      currency: state.currency,
+      country: state.country || 'not detected',
+      'Shopify.currency.active': window.Shopify?.currency?.active,
+      'Shopify.country': window.Shopify?.country
+    });
     
     // Reset countdown start time for fresh timer (so it restarts fresh each time)
     state.countdownStartTime = null;
@@ -4640,15 +4662,6 @@
       console.warn('[Cart.js] Shopify object not available, cart will not initialize');
       return;
     }
-
-    // ✅ Detect currency and country early (before cart fetch)
-    // This ensures we have the correct currency from the start
-    state.currency = detectActiveCurrency();
-    state.country = detectCountry();
-    console.log('[Cart.js] 🌍 Early detection:', {
-      currency: state.currency,
-      country: state.country || 'not detected'
-    });
 
     // Wait for document.body to be available
     if (!document.body) {
