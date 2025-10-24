@@ -3,7 +3,7 @@
 
   // Configuration - will be fetched from API in production
   // VERSION CHECK - If you see this log, you have the latest code
-  console.log('[Cart.js] VERSION: 2.8.0-upsell-cached');
+  console.log('[Cart.js] VERSION: 2.9.0-early-intercept');
   
   const CONFIG = {
     appUrl: (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
@@ -156,6 +156,84 @@
     upsellProducts: {}, // Cache upsell product data: { item1: {...}, item2: {...}, item3: {...} } - loaded after init
     fixingProtectionQuantity: false  // ⚡ Prevent concurrent protection quantity fixes
   };
+
+  // ============================================
+  // EARLY CART LINK INTERCEPTION
+  // ============================================
+  // This runs IMMEDIATELY when script loads (before init)
+  // Catches cart icon clicks that happen before full initialization completes
+  // Prevents race condition where fast-clicking users see native Shopify cart
+  
+  let earlyInterceptionActive = true;
+  
+  console.log('[Cart.js] ⚡ Early interception enabled - catching clicks before full init');
+  
+  document.addEventListener('click', function(e) {
+    // Skip if full interception is already active
+    if (!earlyInterceptionActive) return;
+    
+    // Check if click target is a cart-related element
+    const cartLink = e.target.closest([
+      'a[href="/cart"]',
+      'a[href*="/cart"]',
+      '[data-action*="cart"]',
+      '[data-action="toggle-mini-cart"]',
+      '[data-action="open-cart"]',
+      '[aria-controls*="cart"]',
+      '[aria-controls="mini-cart"]',
+      '[aria-controls="CartDrawer"]',
+      '.cart-link',
+      '.cart-icon',
+      '.header-cart',
+      '.header__icon--cart',
+      '[data-cart-icon]',
+      '[href="#cart"]',
+      '#cart-icon',
+      'cart-icon-bubble',
+      '[id*="cart"][href]',
+      '[class*="cart"][href]'
+    ].join(','));
+    
+    if (cartLink) {
+      console.log('[Cart.js] 🎯 EARLY INTERCEPT: Cart link clicked before full init', cartLink);
+      
+      // Prevent default navigation immediately
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      
+      console.log('[Cart.js] ⏳ Waiting for cart to be ready...');
+      
+      // Wait for cart to be ready (openShippingProtectionCart becomes available)
+      const startWait = Date.now();
+      const checkInterval = setInterval(function() {
+        if (window.openShippingProtectionCart) {
+          clearInterval(checkInterval);
+          const waitTime = Date.now() - startWait;
+          console.log('[Cart.js] ✅ Cart ready after', waitTime + 'ms', '- opening now');
+          
+          // Try to open cart with error handling
+          try {
+            window.openShippingProtectionCart();
+          } catch (error) {
+            console.error('[Cart.js] ❌ Error opening cart:', error);
+            // Fallback: Navigate to cart page so user isn't stuck
+            window.location.href = '/cart';
+          }
+        }
+      }, 50); // Check every 50ms
+      
+      // Timeout after 5 seconds (safety fallback)
+      setTimeout(function() {
+        clearInterval(checkInterval);
+        if (!window.openShippingProtectionCart) {
+          const waitTime = Date.now() - startWait;
+          console.error('[Cart.js] ❌ Cart init timeout after', waitTime + 'ms', '- falling back to native cart');
+          // Fallback: Navigate to cart page so user isn't stuck
+          window.location.href = '/cart';
+        }
+      }, 5000);
+    }
+  }, true); // Use capture phase to intercept early
 
   // ============================================
   // CART SIDEBAR HTML & CSS
@@ -4462,7 +4540,14 @@
           console.log('[Cart.js] Intercepting data-action cart trigger:', dataAction);
           e.preventDefault();
           e.stopImmediatePropagation();
-          openCart();
+          
+          // Try to open cart with error handling
+          try {
+            openCart();
+          } catch (error) {
+            console.error('[Cart.js] ❌ Error opening cart:', error);
+            window.location.href = '/cart';
+          }
           return;
         }
         
@@ -4476,7 +4561,14 @@
           console.log('[Cart.js] Intercepting aria-controls cart trigger:', ariaControls);
           e.preventDefault();
           e.stopImmediatePropagation();
-          openCart();
+          
+          // Try to open cart with error handling
+          try {
+            openCart();
+          } catch (error) {
+            console.error('[Cart.js] ❌ Error opening cart:', error);
+            window.location.href = '/cart';
+          }
           return;
         }
         
@@ -4496,7 +4588,14 @@
           console.log('[Cart.js] Intercepting cart link, opening custom cart');
           e.preventDefault();
           e.stopImmediatePropagation();
-          openCart();
+          
+          // Try to open cart with error handling
+          try {
+            openCart();
+          } catch (error) {
+            console.error('[Cart.js] ❌ Error opening cart:', error);
+            window.location.href = '/cart';
+          }
         }
       }
     }, true); // Use capture phase to intercept early
@@ -4843,6 +4942,10 @@
 
     // STEP 5: Apply default/cached settings (static only - dynamic settings applied on cart open)
     applySettings();
+    
+    // STEP 6: Deactivate early interception now that full initialization is complete
+    earlyInterceptionActive = false;
+    console.log('[Cart.js] ✅ Full initialization complete - early interception deactivated');
     
     console.log('[Cart.js] Cart initialized with lazy loading! Settings and cart data will be fetched when user opens cart.');
   }
