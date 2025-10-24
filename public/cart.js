@@ -3,7 +3,7 @@
 
   // Configuration - will be fetched from API in production
   // VERSION CHECK - If you see this log, you have the latest code
-  console.log('[Cart.js] VERSION: 2.9.0-early-intercept');
+  console.log('[Cart.js] VERSION: 2.10.0-lazy-retry');
   
   const CONFIG = {
     appUrl: (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
@@ -154,7 +154,8 @@
     freeGiftsUnlocked: { tier1: false, tier2: false, tier3: false },  // Track which tiers are unlocked
     processingFreeGifts: false,  // Prevent concurrent free gift operations
     upsellProducts: {}, // Cache upsell product data: { item1: {...}, item2: {...}, item3: {...} } - loaded after init
-    fixingProtectionQuantity: false  // ⚡ Prevent concurrent protection quantity fixes
+    fixingProtectionQuantity: false,  // ⚡ Prevent concurrent protection quantity fixes
+    shopDomainRetryNeeded: false  // Track if shop domain fetch failed at init (need retry at cart open)
   };
 
   // ============================================
@@ -4262,6 +4263,40 @@
     console.log('[Cart.js] Cart opened instantly (optimistic UI)');
     
     try {
+      // LAZY LOAD RETRY: Check if we need to retry getting shop domain
+      if (state.shopDomainRetryNeeded) {
+        console.log('[Cart.js] 🔄 LAZY LOAD: Retrying shop domain fetch (1 immediate attempt)...');
+        
+        // ONE immediate check (no waiting)
+        if (window.Shopify?.shop) {
+          console.log('[Cart.js] ✅ LAZY LOAD: Shop domain NOW available!', window.Shopify.shop);
+          state.shopDomainRetryNeeded = false;
+          
+          // Try to fetch settings now
+          const shopDomain = getShopDomain();
+          if (shopDomain) {
+            try {
+              const fresh = await fetchSettingsFromAPI(shopDomain);
+              if (fresh) {
+                state.settings = fresh;
+                state.settingsLoaded = true;
+                setCachedSettings(fresh);
+                console.log('[Cart.js] ✅ Settings fetched successfully on lazy load retry');
+              }
+            } catch (error) {
+              console.warn('[Cart.js] Settings fetch failed on retry:', error);
+            }
+          }
+        } else {
+          // BOTH attempts failed (pre-load + lazy load) - fallback to native cart
+          console.error('[Cart.js] ❌ LAZY LOAD: Shop domain still not available');
+          console.error('[Cart.js] Both pre-load and lazy load failed - falling back to native cart');
+          closeCart();
+          window.location.href = '/cart';
+          return;
+        }
+      }
+      
       // Check if this is the first cart open (show skeleton)
       if (state.isFirstCartOpen && !state.settingsLoaded) {
         console.log('[Cart.js] First cart open - showing skeleton UI');
@@ -4733,14 +4768,7 @@
   }
 
   async function init() {
-    // Wait for Shopify object to be available
-    const shopifyAvailable = await waitForShopify();
-    if (!shopifyAvailable) {
-      console.warn('[Cart.js] Shopify object not available, cart will not initialize');
-      return;
-    }
-
-    // Wait for document.body to be available
+    // Wait for document.body to be available first
     if (!document.body) {
       console.warn('[Cart.js] document.body not ready, waiting...');
       await new Promise(resolve => {
@@ -4752,16 +4780,32 @@
       });
     }
 
+    // PRE-LOAD ATTEMPT: Try to get Shopify object (10 seconds)
+    const shopifyAvailable = await waitForShopify();
+    
+    if (!shopifyAvailable) {
+      // PRE-LOAD FAILED: Mark for retry at cart open, but CONTINUE init
+      console.warn('[Cart.js] ⚠️ PRE-LOAD: Shopify object not available after 10s, will retry when cart opens');
+      state.shopDomainRetryNeeded = true;
+      // DON'T return - continue with init!
+    } else {
+      // PRE-LOAD SUCCESS
+      console.log('[Cart.js] ✅ PRE-LOAD: Shopify object available');
+      state.shopDomainRetryNeeded = false;
+    }
+
     console.log('[Cart.js] Initializing cart with lazy loading...');
     
-    // ✅ Detect currency at initialization (after Shopify is ready)
+    // ✅ Detect currency at initialization (if Shopify is ready)
     // This ensures currency is ready when cart opens (no delay)
-    state.currency = detectActiveCurrency();
-    state.country = detectCountry();
-    console.log('[Cart.js] 🌍 Currency detected at init:', {
-      currency: state.currency,
-      country: state.country || 'not detected'
-    });
+    if (shopifyAvailable) {
+      state.currency = detectActiveCurrency();
+      state.country = detectCountry();
+      console.log('[Cart.js] 🌍 Currency detected at init:', {
+        currency: state.currency,
+        country: state.country || 'not detected'
+      });
+    }
 
     // LAZY LOADING: Use cached or default settings (no API call on page load!)
     const cachedSettings = getCachedSettings();
@@ -4802,7 +4846,7 @@
     
     // ⚡ OPTIMIZATION: Pre-fetch settings on page load for instant first cart open (non-blocking)
     // This eliminates skeleton UI on first visit by warming up the cache in background
-    if (!cachedSettings) {
+    if (!cachedSettings && !state.shopDomainRetryNeeded) {
       console.log('[Cart.js] ⚡ Pre-fetching settings on page load for instant cart opening...');
       
       const shopDomain = getShopDomain();
@@ -4831,6 +4875,8 @@
       } else {
         console.warn('[Cart.js] Shop domain not available, skipping pre-fetch');
       }
+    } else if (state.shopDomainRetryNeeded) {
+      console.log('[Cart.js] ⏭️ Skipping pre-fetch (shop domain not available, will retry when cart opens)');
     } else {
       console.log('[Cart.js] ✅ Settings already cached, skipping pre-fetch');
       
