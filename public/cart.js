@@ -212,18 +212,34 @@
           const waitTime = Date.now() - startWait;
           console.log('[Cart.js] ✅ Cart ready after', waitTime + 'ms', '- opening now');
           
-          // Try to open cart with error handling
-          try {
-            window.openShippingProtectionCart();
-          } catch (error) {
-            console.error('[Cart.js] ❌ Error opening cart:', error);
-            // Fallback: Navigate to cart page so user isn't stuck
-            window.location.href = '/cart';
+          // Try to open cart with retry logic (handles transient errors)
+          function tryOpenCart(attempt = 1, maxAttempts = 3) {
+            try {
+              window.openShippingProtectionCart();
+              console.log('[Cart.js] ✅ Cart opened successfully on attempt', attempt);
+            } catch (error) {
+              console.error('[Cart.js] ❌ Error opening cart (attempt ' + attempt + '/' + maxAttempts + '):', error);
+              
+              if (attempt < maxAttempts) {
+                // Retry with exponential backoff: 100ms, then 300ms
+                const delay = attempt === 1 ? 100 : 300;
+                console.log('[Cart.js] Retrying in ' + delay + 'ms...');
+                setTimeout(function() {
+                  tryOpenCart(attempt + 1, maxAttempts);
+                }, delay);
+              } else {
+                // All retries failed - fallback to cart page
+                console.error('[Cart.js] ❌ All retry attempts failed - falling back to cart page');
+                window.location.href = '/cart';
+              }
+            }
           }
+          
+          tryOpenCart();
         }
       }, 50); // Check every 50ms
       
-      // Timeout after 5 seconds (safety fallback)
+      // Timeout after 10 seconds (safety fallback) - increased from 5s for slow devices/networks
       setTimeout(function() {
         clearInterval(checkInterval);
         if (!window.openShippingProtectionCart) {
@@ -232,7 +248,7 @@
           // Fallback: Navigate to cart page so user isn't stuck
           window.location.href = '/cart';
         }
-      }, 5000);
+      }, 10000);
     }
   }, true); // Use capture phase to intercept early
 
