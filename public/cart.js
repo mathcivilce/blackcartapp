@@ -3,7 +3,7 @@
 
   // Configuration - will be fetched from API in production
   // VERSION CHECK - If you see this log, you have the latest code
-  console.log('[Cart.js] VERSION: 2.11.0-ajax-intercept');
+  console.log('[Cart.js] VERSION: 2.10.0-lazy-retry');
   
   const CONFIG = {
     appUrl: (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
@@ -4638,121 +4638,6 @@
 
   function interceptAddToCart() {
     console.log('[Cart.js] Setting up Add to Cart interception...');
-    
-    // ============================================
-    // PATCH: Intercept AJAX fetch() calls to /cart/add.js
-    // ============================================
-    // Many modern Shopify themes use fetch('/cart/add.js') directly
-    // This catches those AJAX calls before they trigger native cart behavior
-    const originalFetch = window.fetch;
-    
-    window.fetch = function(input, init) {
-      try {
-        // Parse the URL from either Request object or string
-        const url = new URL(
-          input instanceof Request ? input.url : input,
-          window.location.origin
-        );
-        
-        // Check if this is a cart add request
-        if (url.pathname === '/cart/add.js' || url.pathname === '/cart/add') {
-          console.log('[Cart.js] 🎯 INTERCEPTED: AJAX fetch() call to', url.pathname);
-          
-          // ✨ OPTIMISTIC UI: Open cart IMMEDIATELY with skeleton
-          openCartWithSkeleton();
-          
-          // Extract the request body to get product data
-          return (async () => {
-            try {
-              let formData;
-              
-              // Get body from Request object or init
-              const bodySource = input instanceof Request ? input : init;
-              const body = bodySource?.body;
-              
-              // Convert body to FormData (handle different formats)
-              if (body instanceof FormData) {
-                formData = body;
-              } else if (typeof body === 'string') {
-                // Handle URL-encoded or JSON string
-                try {
-                  const parsed = JSON.parse(body);
-                  formData = new FormData();
-                  Object.keys(parsed).forEach(key => {
-                    formData.append(key, parsed[key]);
-                  });
-                } catch {
-                  // URL-encoded string
-                  formData = new FormData();
-                  const params = new URLSearchParams(body);
-                  params.forEach((value, key) => {
-                    formData.append(key, value);
-                  });
-                }
-              } else if (body && typeof body.entries === 'function') {
-                // Already iterable
-                formData = new FormData();
-                for (const [key, value] of body.entries()) {
-                  formData.append(key, value);
-                }
-              } else {
-                // Fallback: let the original fetch handle it
-                console.warn('[Cart.js] ⚠️ Unknown body format, falling back to original fetch');
-                return originalFetch.call(this, input, init);
-              }
-              
-              // Add to cart using our safe method
-              const result = await safelyAddToCart(formData);
-              console.log('[Cart.js] ✅ Product added via AJAX interception:', result);
-              
-              // Smooth transition from skeleton to real content
-              await transitionToRealCart();
-              
-              // Return a Response object that matches Shopify's /cart/add.js format
-              // This maintains compatibility with theme code expecting a response
-              return new Response(
-                JSON.stringify(result), 
-                {
-                  status: 200,
-                  statusText: 'OK',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Connection': 'keep-alive'
-                  }
-                }
-              );
-            } catch (error) {
-              console.error('[Cart.js] ❌ Error in AJAX interception:', error);
-              
-              // Show error in cart UI
-              showCartError('Failed to add product to cart. Please try again.');
-              
-              // Return error response
-              return new Response(
-                JSON.stringify({ 
-                  status: 'error', 
-                  message: error.message || 'Failed to add to cart',
-                  description: error.message
-                }), 
-                {
-                  status: 422,
-                  statusText: 'Unprocessable Entity',
-                  headers: { 'Content-Type': 'application/json' }
-                }
-              );
-            }
-          })();
-        }
-      } catch (error) {
-        console.error('[Cart.js] ⚠️ Error parsing fetch URL:', error);
-        // If we can't parse the URL, let original fetch handle it
-      }
-      
-      // Not a cart add request, use original fetch
-      return originalFetch.call(this, input, init);
-    };
-    
-    console.log('[Cart.js] ✅ Fetch patching enabled for /cart/add.js interception');
     
     // Intercept form submissions
     document.addEventListener('submit', (e) => {
