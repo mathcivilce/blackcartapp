@@ -3,7 +3,7 @@
 
   // Configuration - will be fetched from API in production
   // VERSION CHECK - If you see this log, you have the latest code
-  console.log('[Cart.js] VERSION: 2.10.0-lazy-retry');
+  console.log('[Cart.js] VERSION: 2.11.0-safe-optimizations');
   
   const CONFIG = {
     appUrl: (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
@@ -356,45 +356,50 @@
 
   function injectCSS() {
     const css = `
-      /* Hide native Shopify cart drawer/popup (ONLY the drawer itself, not buttons/icons) */
+      /* ============================================
+         SCOPED NATIVE CART SUPPRESSION
+         ============================================
+         Only hides native Shopify cart when .cartbase-ready class is present
+         This ensures native cart remains functional if custom cart fails to initialize
+      */
       
       /* Hide custom element drawers */
-      cart-drawer > dialog,
-      cart-drawer > aside,
-      cart-drawer > .drawer,
-      cart-notification,
+      :root.cartbase-ready cart-drawer > dialog,
+      :root.cartbase-ready cart-drawer > aside,
+      :root.cartbase-ready cart-drawer > .drawer,
+      :root.cartbase-ready cart-notification,
       
       /* Hide drawer dialogs and panels */
-      dialog.cart-drawer__dialog,
-      dialog[class*="cart-drawer"],
-      aside.cart-drawer,
-      aside[class*="cart-drawer"],
-      div.cart-drawer[role="dialog"],
-      div.cart-popup,
-      div.mini-cart,
+      :root.cartbase-ready dialog.cart-drawer__dialog,
+      :root.cartbase-ready dialog[class*="cart-drawer"],
+      :root.cartbase-ready aside.cart-drawer,
+      :root.cartbase-ready aside[class*="cart-drawer"],
+      :root.cartbase-ready div.cart-drawer[role="dialog"],
+      :root.cartbase-ready div.cart-popup,
+      :root.cartbase-ready div.mini-cart,
       
       /* Hide specific IDs (exact matches only) */
-      #cart-drawer.drawer,
-      #mini-cart.drawer,
-      #CartDrawer[role="dialog"],
+      :root.cartbase-ready #cart-drawer.drawer,
+      :root.cartbase-ready #mini-cart.drawer,
+      :root.cartbase-ready #CartDrawer[role="dialog"],
       
       /* Hide drawer containers that are NOT custom elements */
-      div.cart-drawer:not(.header *),
-      div.cart-popup:not(.header *),
-      div[id="cart-drawer"]:not(.header *),
-      div[id="CartDrawer"]:not(.header *),
+      :root.cartbase-ready div.cart-drawer:not(.header *),
+      :root.cartbase-ready div.cart-popup:not(.header *),
+      :root.cartbase-ready div[id="cart-drawer"]:not(.header *),
+      :root.cartbase-ready div[id="CartDrawer"]:not(.header *),
       
       /* Hide mini-cart components (specific theme patterns) */
-      .mini-cart__inner,
-      .mini-cart__content,
-      .mini-cart__line-item-list,
-      .mini-cart__line-item,
-      .mini-cart__item-wrapper,
-      .mini-cart__image-wrapper,
-      .mini-cart__product-info,
-      .mini-cart__price-list,
-      .mini-cart__quantity,
-      .mini-cart__recap {
+      :root.cartbase-ready .mini-cart__inner,
+      :root.cartbase-ready .mini-cart__content,
+      :root.cartbase-ready .mini-cart__line-item-list,
+      :root.cartbase-ready .mini-cart__line-item,
+      :root.cartbase-ready .mini-cart__item-wrapper,
+      :root.cartbase-ready .mini-cart__image-wrapper,
+      :root.cartbase-ready .mini-cart__product-info,
+      :root.cartbase-ready .mini-cart__price-list,
+      :root.cartbase-ready .mini-cart__quantity,
+      :root.cartbase-ready .mini-cart__recap {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
@@ -4784,6 +4789,18 @@
   }
 
   async function init() {
+    // ============================================
+    // IDEMPOTENT BOOT GUARD
+    // ============================================
+    // Prevents double initialization on SPA themes (Turbo, Shopify Section Rendering)
+    // Without this, listeners get attached multiple times → race conditions
+    if (window.__cartbase_booted) {
+      console.log('[Cart.js] ⚠️ Already booted, skipping re-initialization');
+      return;
+    }
+    window.__cartbase_booted = true;
+    console.log('[Cart.js] ✅ Boot guard set - preventing duplicate initialization');
+    
     // Wait for document.body to be available first
     if (!document.body) {
       console.warn('[Cart.js] document.body not ready, waiting...');
@@ -5008,6 +5025,13 @@
     // STEP 6: Deactivate early interception now that full initialization is complete
     earlyInterceptionActive = false;
     console.log('[Cart.js] ✅ Full initialization complete - early interception deactivated');
+    
+    // STEP 7: Mark as ready - enables scoped CSS suppression of native cart
+    // This class gates aggressive native cart hiding (only applies when custom cart is confirmed working)
+    document.documentElement.classList.add('cartbase-ready');
+    window.Cartbase = window.Cartbase || {};
+    window.Cartbase.ready = true;
+    console.log('[Cart.js] ✅ Cartbase marked as ready - native cart suppression active');
     
     console.log('[Cart.js] Cart initialized with lazy loading! Settings and cart data will be fetched when user opens cart.');
   }
