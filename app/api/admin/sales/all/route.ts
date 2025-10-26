@@ -63,24 +63,54 @@ export async function GET(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Get all sales from all stores
-    const { data: sales, error: salesError } = await serviceClient
+    // Use aggregate queries to bypass the 1000 row limit
+    // Query 1: Get total count
+    const { count, error: countError } = await serviceClient
       .from('sales')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*', { count: 'exact', head: true });
 
-    if (salesError) {
-      console.error('❌ [Admin All Sales API] Error fetching sales:', salesError);
+    if (countError) {
+      console.error('❌ [Admin All Sales API] Error fetching count:', countError);
       return NextResponse.json({
         success: false,
-        error: 'Failed to fetch sales data'
+        error: 'Failed to fetch sales count'
       }, { status: 500 });
     }
 
-    // Calculate aggregated summary
-    const totalSales = sales?.length || 0;
-    const totalRevenue = sales?.reduce((sum, sale) => sum + (sale.protection_price || 0), 0) || 0;
-    const totalCommission = sales?.reduce((sum, sale) => sum + (sale.commission || 0), 0) || 0;
+    // Query 2: Get all sales data for sum calculations (fetch in batches if needed)
+    let allSales: any[] = [];
+    let hasMore = true;
+    let offset = 0;
+    const batchSize = 1000;
+
+    while (hasMore) {
+      const { data: salesBatch, error: salesError } = await serviceClient
+        .from('sales')
+        .select('protection_price, commission')
+        .order('created_at', { ascending: false })
+        .range(offset, offset + batchSize - 1);
+
+      if (salesError) {
+        console.error('❌ [Admin All Sales API] Error fetching sales batch:', salesError);
+        return NextResponse.json({
+          success: false,
+          error: 'Failed to fetch sales data'
+        }, { status: 500 });
+      }
+
+      if (salesBatch && salesBatch.length > 0) {
+        allSales = allSales.concat(salesBatch);
+        offset += batchSize;
+        hasMore = salesBatch.length === batchSize;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    // Calculate aggregated summary from all fetched sales
+    const totalSales = count || 0;
+    const totalRevenue = allSales.reduce((sum, sale) => sum + (sale.protection_price || 0), 0);
+    const totalCommission = allSales.reduce((sum, sale) => sum + (sale.commission || 0), 0);
     const userCommission = totalRevenue - totalCommission;
 
     const summary = {
@@ -90,7 +120,7 @@ export async function GET(request: NextRequest) {
       platformFee: totalCommission
     };
 
-    console.log('✅ [Admin All Sales API] Returning aggregated data:', summary);
+    console.log('✅ [Admin All Sales API] Returning aggregated data:', summary, `(fetched ${allSales.length} sales in batches)`);
 
     return NextResponse.json({
       success: true,

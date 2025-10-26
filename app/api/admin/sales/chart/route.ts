@@ -63,27 +63,44 @@ export async function GET(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Get all sales from all stores (including commission for platform fee)
-    const { data: sales, error: salesError } = await serviceClient
-      .from('sales')
-      .select('protection_price, commission, created_at')
-      .order('created_at', { ascending: true });
+    // Fetch all sales in batches to bypass the 1000 row limit
+    let allSales: any[] = [];
+    let hasMore = true;
+    let offset = 0;
+    const batchSize = 1000;
 
-    if (salesError) {
-      console.error('❌ [Admin Sales Chart] Error fetching sales:', salesError);
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to fetch sales data'
-      }, { status: 500 });
+    while (hasMore) {
+      const { data: salesBatch, error: salesError } = await serviceClient
+        .from('sales')
+        .select('protection_price, commission, created_at')
+        .order('created_at', { ascending: true })
+        .range(offset, offset + batchSize - 1);
+
+      if (salesError) {
+        console.error('❌ [Admin Sales Chart] Error fetching sales batch:', salesError);
+        return NextResponse.json({
+          success: false,
+          error: 'Failed to fetch sales data'
+        }, { status: 500 });
+      }
+
+      if (salesBatch && salesBatch.length > 0) {
+        allSales = allSales.concat(salesBatch);
+        offset += batchSize;
+        hasMore = salesBatch.length === batchSize;
+      } else {
+        hasMore = false;
+      }
     }
 
     console.log('✅ [Admin Sales Chart] Returning data:', { 
-      totalSales: sales?.length || 0
+      totalSales: allSales.length,
+      fetchedInBatches: offset > batchSize
     });
 
     return NextResponse.json({
       success: true,
-      sales: sales || []
+      sales: allSales
     });
 
   } catch (error) {
