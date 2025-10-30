@@ -2555,6 +2555,17 @@
     }
   }
   
+  // Update protection price display if cart UI is visible
+  function updateProtectionPriceIfVisible() {
+    const priceEl = document.getElementById('sp-protection-price');
+    
+    // Only update if element exists and we have the Shopify price cached
+    if (priceEl && state.protectionPrice) {
+      priceEl.textContent = formatMoney(state.protectionPrice);
+      console.log('[Cart.js] ✅ Updated protection price display to currency-converted Shopify price:', formatMoney(state.protectionPrice));
+    }
+  }
+  
   // Wrapper function: Pre-fetch protection variant ID from current settings
   async function prefetchProtectionVariantId() {
     const productHandle = state.settings?.addons?.productHandle || state.settings?.protectionProductHandle;
@@ -4042,7 +4053,10 @@
       console.log('[Cart.js] ⚡ Parallel fetch: settings + protection variant');
       const [settings] = await Promise.all([
         fetchSettings(false),
-        prefetchProtectionVariantId().catch(error => {
+        prefetchProtectionVariantId().then(() => {
+          // Update price display after fetch completes (non-blocking)
+          updateProtectionPriceIfVisible();
+        }).catch(error => {
           // Silently fail - variant will be fetched on-demand if needed
           console.log('[Cart.js] Variant pre-fetch failed (will fetch on-demand if needed):', error.message);
         })
@@ -4360,7 +4374,10 @@
         const [settings, cart] = await Promise.all([
           fetchSettings(false), // Fetch fresh from API
           fetchCart(2, false),  // Skip enrichment for speed
-          prefetchProtectionVariantId().catch(error => {
+          prefetchProtectionVariantId().then(() => {
+            // Update price display after fetch completes (non-blocking)
+            updateProtectionPriceIfVisible();
+          }).catch(error => {
             // Silently fail - variant will be fetched on-demand if needed
             console.log('[Cart.js] Variant pre-fetch failed (will fetch on-demand if needed):', error.message);
           })
@@ -4956,6 +4973,10 @@
       console.log('[Cart.js] Pre-fetching protection variant ID for batch add optimization...');
       prefetchProtectionVariantId().then(() => {
         console.log('[Cart.js] ✅ Protection variant ID cached:', state.protectionVariantId);
+        console.log('[Cart.js] ✅ Protection price cached:', state.protectionPrice);
+        
+        // Update price display if cart UI already exists (background pre-fetch complete)
+        updateProtectionPriceIfVisible();
       }).catch(error => {
         console.warn('[Cart.js] Failed to pre-fetch protection variant ID:', error);
         // Non-critical: will fetch on-demand if needed
