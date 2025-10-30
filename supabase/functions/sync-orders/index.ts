@@ -25,7 +25,7 @@ interface ShopifyOrder {
   }>;
 }
 
-// Helper: Fetch orders from Shopify
+// Helper: Fetch orders from Shopify with pagination
 async function fetchShopifyOrders(
   shopDomain: string,
   apiToken: string,
@@ -50,28 +50,78 @@ async function fetchShopifyOrders(
       createdAtMax = now.toISOString();
     }
 
-    const params = new URLSearchParams({
-      status: 'any',
-      limit: '250',
-      created_at_min: createdAtMin,
-      created_at_max: createdAtMax,
-    });
+    let allOrders: ShopifyOrder[] = [];
+    let pageInfo: string | null = null;
+    let hasNextPage = true;
+    let pageCount = 0;
+    const maxPages = 20; // Safety limit to prevent infinite loops
 
-    const url = `https://${shopDomain}/admin/api/2024-01/orders.json?${params}`;
+    // Paginate through all orders
+    while (hasNextPage && pageCount < maxPages) {
+      pageCount++;
+      
+      let url: string;
+      
+      if (pageInfo) {
+        // For subsequent pages, ONLY use page_info (no other filters)
+        const params = new URLSearchParams({
+          limit: '250',
+          page_info: pageInfo,
+        });
+        url = `https://${shopDomain}/admin/api/2024-01/orders.json?${params}`;
+      } else {
+        // For first page, use full filters
+        const params = new URLSearchParams({
+          status: 'any',
+          limit: '250',
+          created_at_min: createdAtMin,
+          created_at_max: createdAtMax,
+        });
+        url = `https://${shopDomain}/admin/api/2024-01/orders.json?${params}`;
+      }
 
-    const response = await fetch(url, {
-      headers: {
-        'X-Shopify-Access-Token': apiToken,
-        'Content-Type': 'application/json',
-      },
-    });
+      const response = await fetch(url, {
+        headers: {
+          'X-Shopify-Access-Token': apiToken,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (!response.ok) {
-      return { orders: [], error: `Shopify API error: ${response.status}` };
+      if (!response.ok) {
+        return { orders: allOrders, error: `Shopify API error: ${response.status}` };
+      }
+
+      const data = await response.json();
+      const orders = data.orders || [];
+      allOrders = allOrders.concat(orders);
+
+      // Check for pagination using Link header
+      const linkHeader = response.headers.get('Link');
+      if (linkHeader) {
+        // Parse Link header to extract page_info for next page
+        // Example: <https://shop.myshopify.com/admin/api/2024-01/orders.json?page_info=abc123>; rel="next"
+        const nextLinkMatch = linkHeader.match(/<[^>]*page_info=([^>&]+)[^>]*>;\s*rel="next"/);
+        if (nextLinkMatch) {
+          pageInfo = nextLinkMatch[1];
+          hasNextPage = true;
+          console.log(`📄 Fetched page ${pageCount} (${orders.length} orders), continuing...`);
+        } else {
+          hasNextPage = false;
+          console.log(`📄 Fetched page ${pageCount} (${orders.length} orders), last page reached`);
+        }
+      } else {
+        // No Link header means no more pages
+        hasNextPage = false;
+        console.log(`📄 Fetched ${orders.length} orders (single page)`);
+      }
     }
 
-    const data = await response.json();
-    return { orders: data.orders || [] };
+    if (pageCount >= maxPages) {
+      console.warn(`⚠️ Reached maximum page limit (${maxPages} pages, ${allOrders.length} orders)`);
+    }
+
+    console.log(`✅ Total orders fetched: ${allOrders.length} across ${pageCount} page(s)`);
+    return { orders: allOrders };
   } catch (error) {
     return { orders: [], error: error.message };
   }
@@ -230,21 +280,10 @@ serve(async (req) => {
       );
     }
 
-    console.log(`📊 Processing ${stores.length} store(s)`);
+    console.log(`📊 Processing ${stores.length} store(s) in parallel`);
 
-    const results = {
-      totalStores: stores.length,
-      successfulStores: 0,
-      failedStores: 0,
-      totalOrders: 0,
-      totalProtectionSales: 0,
-      totalRevenue: 0,
-      totalCommission: 0,
-      storeResults: [] as any[]
-    };
-
-    // Process each store
-    for (const store of stores) {
+    // Process all stores in parallel using Promise.all
+    const storeProcessingPromises = stores.map(async (store) => {
       console.log(`\n🏪 Processing: ${store.shop_domain}`);
       
       try {
@@ -293,17 +332,14 @@ serve(async (req) => {
 
         if (error) {
           console.error(`❌ Error for ${store.shop_domain}:`, error);
-          results.failedStores++;
-          results.storeResults.push({
+          return {
             store_domain: store.shop_domain,
             success: false,
             error
-          });
-          continue;
+          };
         }
 
         console.log(`📦 Found ${orders.length} orders`);
-        results.totalOrders += orders.length;
 
         let storeProtectionCount = 0; // New sales saved
         let storeProtectionTotal = 0; // Total protection sales found
@@ -385,12 +421,9 @@ serve(async (req) => {
           }
         }
 
-        results.successfulStores++;
-        results.totalProtectionSales += storeProtectionTotal; // Use total found
-        results.totalRevenue += storeTotalRevenue;
-        results.totalCommission += storeTotalCommission;
+        console.log(`✅ ${store.shop_domain}: ${storeProtectionTotal} found (${storeProtectionCount} new, ${skippedCount} already saved)`);
 
-        results.storeResults.push({
+        return {
           store_domain: store.shop_domain,
           success: true,
           orders_checked: orders.length,
@@ -399,18 +432,43 @@ serve(async (req) => {
           existing_sales_count: skippedCount, // Already saved
           revenue: storeTotalRevenue, // Total revenue from all found
           commission: storeTotalCommission // Total commission from all found
-        });
-
-        console.log(`✅ ${store.shop_domain}: ${storeProtectionTotal} found (${storeProtectionCount} new, ${skippedCount} already saved)`);
+        };
 
       } catch (storeError) {
         console.error(`❌ Error processing ${store.shop_domain}:`, storeError);
-        results.failedStores++;
-        results.storeResults.push({
+        return {
           store_domain: store.shop_domain,
           success: false,
           error: storeError.message
-        });
+        };
+      }
+    });
+
+    // Wait for all stores to complete processing in parallel
+    const storeResults = await Promise.all(storeProcessingPromises);
+
+    // Aggregate results
+    const results = {
+      totalStores: stores.length,
+      successfulStores: 0,
+      failedStores: 0,
+      totalOrders: 0,
+      totalProtectionSales: 0,
+      totalRevenue: 0,
+      totalCommission: 0,
+      storeResults: storeResults
+    };
+
+    // Calculate totals from results
+    for (const result of storeResults) {
+      if (result.success) {
+        results.successfulStores++;
+        results.totalOrders += result.orders_checked || 0;
+        results.totalProtectionSales += result.protection_sales || 0;
+        results.totalRevenue += result.revenue || 0;
+        results.totalCommission += result.commission || 0;
+      } else {
+        results.failedStores++;
       }
     }
 

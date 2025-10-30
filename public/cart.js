@@ -148,6 +148,7 @@
     protectionEnabled: false,
     protectionInCart: false,
     protectionVariantId: null,  // Cache variant ID for removal
+    protectionPrice: null,  // Cache actual Shopify price (currency-converted, in cents)
     staticSettingsApplied: false,  // Track if static settings have been applied
     countdownStartTime: null,  // Track when fresh countdown started
     freeGiftsVariants: {},  // Track which free gifts are in cart: { tier1: variantId, tier2: variantId, tier3: variantId }
@@ -2124,7 +2125,9 @@
     }
 
     const priceEl = document.getElementById('sp-protection-price');
-    const addonPrice = state.settings.addons?.price ? Math.round(state.settings.addons.price * 100) : state.settings.price;
+    // Use actual Shopify price (currency-converted) if available, otherwise fall back to settings
+    const addonPrice = state.protectionPrice 
+      || (state.settings.addons?.price ? Math.round(state.settings.addons.price * 100) : state.settings.price);
     if (priceEl && addonPrice) {
       priceEl.textContent = formatMoney(addonPrice);
     }
@@ -2531,9 +2534,21 @@
       
       const productData = await productResponse.json();
       
-      // Cache variant ID for later use
+      // Cache variant ID and price for later use
       if (productData.variants && productData.variants.length > 0) {
-        state.protectionVariantId = productData.variants[0].id;
+        const variant = productData.variants[0];
+        state.protectionVariantId = variant.id;
+        
+        // Cache the actual Shopify price (already currency-converted!)
+        state.protectionPrice = typeof variant.price === 'number' 
+          ? variant.price 
+          : Math.round(parseFloat(variant.price) * 100);
+        
+        console.log('[Cart.js] Protection product cached:', {
+          variantId: state.protectionVariantId,
+          price: state.protectionPrice,
+          currency: state.currency
+        });
       }
     } catch (error) {
       // Silently fail, will fetch on-demand if needed
@@ -2629,9 +2644,20 @@
           return;
         }
 
-        variantId = productData.variants[0].id;
-        // Cache for future use
+        const variant = productData.variants[0];
+        variantId = variant.id;
+        
+        // Cache variant ID and actual price (currency-converted)
         state.protectionVariantId = variantId;
+        state.protectionPrice = typeof variant.price === 'number' 
+          ? variant.price 
+          : Math.round(parseFloat(variant.price) * 100);
+        
+        console.log('[Cart.js] Protection product fetched:', {
+          variantId: state.protectionVariantId,
+          price: state.protectionPrice,
+          currency: state.currency
+        });
       }
 
       // Now add to cart using the variant ID
@@ -3770,7 +3796,9 @@
     
     // If adjustTotalPrice is explicitly false, subtract protection price from displayed total
     if (state.protectionInCart && !adjustTotalPrice) {
-      const protectionPrice = Math.round((state.settings?.addons?.price || 0) * 100);
+      // Use actual Shopify price (currency-converted) if available, otherwise fall back to settings
+      const protectionPrice = state.protectionPrice 
+        || Math.round((state.settings?.addons?.price || 0) * 100);
       displayTotal = Math.max(0, cents - protectionPrice);
       
       // Debug logging
@@ -3778,7 +3806,8 @@
         cartTotal: cents,
         protectionPrice: protectionPrice,
         displayTotal: displayTotal,
-        adjustTotalPrice: adjustTotalPrice
+        adjustTotalPrice: adjustTotalPrice,
+        usingShopifyPrice: !!state.protectionPrice
       });
     } else if (state.protectionInCart) {
       // Debug logging when adjustment is ON or undefined
