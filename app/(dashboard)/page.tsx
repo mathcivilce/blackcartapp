@@ -155,11 +155,11 @@ export default function DashboardPage() {
           <p style={styles.statValue}>{loading ? '...' : formatCurrency(totalRevenue)}</p>
         </div>
         <div style={styles.statCard}>
-          <h3 style={styles.statLabel}>Your Commission (75%)</h3>
+          <h3 style={styles.statLabel}>Your Commission</h3>
           <p style={styles.statValue}>{loading ? '...' : formatCurrency(userCommission)}</p>
         </div>
         <div style={styles.statCard}>
-          <h3 style={styles.statLabel}>Platform Fee (25%)</h3>
+          <h3 style={styles.statLabel}>Platform Fee</h3>
           <p style={styles.statValue}>{loading ? '...' : formatCurrency(totalCommission)}</p>
         </div>
       </div>

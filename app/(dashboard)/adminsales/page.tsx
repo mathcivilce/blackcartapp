@@ -553,11 +553,11 @@ export default function AdminSalesPage() {
               <p style={styles.statValue}>{formatCurrency(allAccountsSummary.totalRevenue)}</p>
             </div>
             <div style={styles.statCard}>
-              <h3 style={styles.statLabel}>Users Commission (75%)</h3>
+              <h3 style={styles.statLabel}>Users Commission</h3>
               <p style={styles.statValue}>{formatCurrency(allAccountsSummary.userCommission)}</p>
             </div>
             <div style={styles.statCard}>
-              <h3 style={styles.statLabel}>Platform Fee (25%)</h3>
+              <h3 style={styles.statLabel}>Platform Fee</h3>
               <p style={styles.statValue}>{formatCurrency(allAccountsSummary.platformFee)}</p>
             </div>
           </div>
@@ -914,11 +914,11 @@ export default function AdminSalesPage() {
               <p style={styles.statValue}>{formatCurrency(totalRevenue)}</p>
             </div>
             <div style={styles.statCard}>
-              <h3 style={styles.statLabel}>User Commission (75%)</h3>
+              <h3 style={styles.statLabel}>User Commission</h3>
               <p style={styles.statValue}>{formatCurrency(totalRevenue - totalCommission)}</p>
             </div>
             <div style={styles.statCard}>
-              <h3 style={styles.statLabel}>Platform Fee (25%)</h3>
+              <h3 style={styles.statLabel}>Platform Fee</h3>
               <p style={styles.statValue}>{formatCurrency(totalCommission)}</p>
             </div>
           </div>
@@ -960,7 +960,7 @@ export default function AdminSalesPage() {
                       <th style={styles.tableHeader}>Date</th>
                       <th style={styles.tableHeader}>Protection Price</th>
                       <th style={styles.tableHeader}>User Share (75%)</th>
-                      <th style={styles.tableHeader}>Platform Fee (25%)</th>
+                      <th style={styles.tableHeader}>Platform Fee</th>
                     </tr>
                   </thead>
                   <tbody>

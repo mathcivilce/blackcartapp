@@ -164,11 +164,11 @@ export default function SalesPage() {
           <p style={styles.statValue}>{formatCurrency(totalRevenue)}</p>
         </div>
         <div style={styles.statCard}>
-          <h3 style={styles.statLabel}>Your Commission (75%)</h3>
+          <h3 style={styles.statLabel}>Your Commission</h3>
           <p style={styles.statValue}>{formatCurrency(totalRevenue - totalCommission)}</p>
         </div>
         <div style={styles.statCard}>
-          <h3 style={styles.statLabel}>Platform Fee (25%)</h3>
+          <h3 style={styles.statLabel}>Platform Fee</h3>
           <p style={styles.statValue}>{formatCurrency(totalCommission)}</p>
         </div>
       </div>
@@ -250,7 +250,7 @@ export default function SalesPage() {
                   <th style={styles.tableHeader}>Date</th>
                   <th style={styles.tableHeader}>Protection Price</th>
                   <th style={styles.tableHeader}>Your Share (75%)</th>
-                  <th style={styles.tableHeader}>Platform Fee (25%)</th>
+                  <th style={styles.tableHeader}>Platform Fee</th>
                 </tr>
               </thead>
               <tbody>
