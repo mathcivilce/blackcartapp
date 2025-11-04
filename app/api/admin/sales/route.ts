@@ -109,22 +109,38 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Get sum aggregates for revenue and commission
-    const { data: aggregates, error: aggregatesError } = await serviceClient
-      .from('sales')
-      .select('protection_price, commission')
-      .eq('store_id', store.id);
+    // Get sum aggregates for revenue and commission - fetch in batches to bypass 1000 row limit
+    let allAggregates: any[] = [];
+    let hasMore = true;
+    let offset = 0;
+    const batchSize = 1000;
 
-    if (aggregatesError) {
-      console.error('❌ [Admin Sales API] Error fetching aggregates:', aggregatesError);
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to fetch sales aggregates'
-      }, { status: 500 });
+    while (hasMore) {
+      const { data: aggregatesBatch, error: aggregatesError } = await serviceClient
+        .from('sales')
+        .select('protection_price, commission')
+        .eq('store_id', store.id)
+        .range(offset, offset + batchSize - 1);
+
+      if (aggregatesError) {
+        console.error('❌ [Admin Sales API] Error fetching aggregates batch:', aggregatesError);
+        return NextResponse.json({
+          success: false,
+          error: 'Failed to fetch sales aggregates'
+        }, { status: 500 });
+      }
+
+      if (aggregatesBatch && aggregatesBatch.length > 0) {
+        allAggregates = allAggregates.concat(aggregatesBatch);
+        offset += batchSize;
+        hasMore = aggregatesBatch.length === batchSize;
+      } else {
+        hasMore = false;
+      }
     }
 
-    const totalRevenue = aggregates?.reduce((sum, sale) => sum + (sale.protection_price || 0), 0) || 0;
-    const totalCommission = aggregates?.reduce((sum, sale) => sum + (sale.commission || 0), 0) || 0;
+    const totalRevenue = allAggregates.reduce((sum, sale) => sum + (sale.protection_price || 0), 0);
+    const totalCommission = allAggregates.reduce((sum, sale) => sum + (sale.commission || 0), 0);
 
     // Query 2: Get recent sales for display (with limit)
     const { data: sales, error: salesError } = await serviceClient
