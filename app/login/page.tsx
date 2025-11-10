@@ -62,7 +62,12 @@ export default function LoginPage() {
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.label}>Password</label>
+            <div style={styles.labelRow}>
+              <label style={styles.label}>Password</label>
+              <a href="/forgot-password" style={styles.forgotLink}>
+                Forgot password?
+              </a>
+            </div>
             <input
               type="password"
               value={password}
@@ -133,10 +138,22 @@ const styles = {
     flexDirection: 'column' as const,
     gap: '8px'
   },
+  labelRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
   label: {
     fontSize: '14px',
     fontWeight: '600',
     color: '#fff'
+  },
+  forgotLink: {
+    fontSize: '13px',
+    color: '#888',
+    textDecoration: 'none',
+    fontWeight: '500',
+    transition: 'color 0.2s'
   },
   input: {
     padding: '12px 16px',

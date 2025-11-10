@@ -99,18 +99,35 @@ serve(async (req) => {
         console.log(`Processing ${store.shop_domain}...`)
 
         // Calculate total commission for this store in the week
-        const { data: sales, error: salesError } = await supabase
-          .from('sales')
-          .select('commission')
-          .eq('store_id', store.id)
-          .eq('week', weekIdentifier)
+        // Use batch fetching to bypass 1000 row limit
+        let allSales: any[] = [];
+        let hasMore = true;
+        let offset = 0;
+        const batchSize = 1000;
 
-        if (salesError) throw salesError
+        while (hasMore) {
+          const { data: salesBatch, error: salesError } = await supabase
+            .from('sales')
+            .select('commission')
+            .eq('store_id', store.id)
+            .eq('week', weekIdentifier)
+            .range(offset, offset + batchSize - 1);
+
+          if (salesError) throw salesError;
+
+          if (salesBatch && salesBatch.length > 0) {
+            allSales = allSales.concat(salesBatch);
+            offset += batchSize;
+            hasMore = salesBatch.length === batchSize;
+          } else {
+            hasMore = false;
+          }
+        }
 
         // Commission is stored as INTEGER (cents), so divide by 100 to get dollars
-        const totalCommission = sales?.reduce((sum, sale) => sum + (parseFloat(sale.commission) / 100), 0) || 0
+        const totalCommission = allSales.reduce((sum, sale) => sum + (parseFloat(sale.commission) / 100), 0) || 0
 
-        console.log(`${sales?.length || 0} sales, commission: $${totalCommission.toFixed(2)}`)
+        console.log(`${allSales.length} sales (fetched in ${Math.ceil(allSales.length / batchSize)} batch(es)), commission: $${totalCommission.toFixed(2)}`)
 
         if (totalCommission === 0) {
           console.log(`⏭️ No sales for ${store.shop_domain}, skipping invoice`)
@@ -216,7 +233,7 @@ serve(async (req) => {
             week: weekIdentifier,
             week_start_date: weekStart.toISOString().split('T')[0], // Convert to date
             week_end_date: weekEnd.toISOString().split('T')[0], // Convert to date
-            sales_count: sales?.length || 0,
+            sales_count: allSales.length,
             commission_total: Math.round(totalCommission * 100), // Store as cents
             subscription_fee: 0, // No subscription fee for weekly commission
             total_amount: Math.round(totalCommission * 100), // Store as cents
