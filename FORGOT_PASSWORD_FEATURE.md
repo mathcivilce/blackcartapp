@@ -17,14 +17,26 @@ This document describes the forgot password functionality that has been added to
 - Requires minimum 8 characters
 - Shows success message and redirects to login
 
-### 3. API Route (`app/api/auth/forgot-password/route.ts`)
+### 3. Auth Callback Route (`app/auth/callback/route.ts`)
+- Handles the token verification from Supabase
+- Exchanges the token hash for a session
+- Sets secure HTTP-only cookies
+- Redirects to the reset password page
+
+### 4. API Route (`app/api/auth/forgot-password/route.ts`)
 - Handles password reset email requests
 - Uses Supabase Auth `resetPasswordForEmail` function
+- Configures redirect to callback handler
 - Returns success regardless of email existence (for security)
 
-### 4. Updated Login Page (`app/login/page.tsx`)
+### 5. Updated Login Page (`app/login/page.tsx`)
 - Added "Forgot password?" link next to the password field
+- Uses Next.js Link component for proper navigation
 - Styled to match the existing design
+
+### 6. Updated Middleware (`middleware.ts`)
+- Added `/forgot-password`, `/reset-password`, and `/auth/callback` to public routes
+- Allows unauthenticated access to password reset flow
 
 ## How It Works
 
@@ -32,9 +44,11 @@ This document describes the forgot password functionality that has been added to
 1. User clicks "Forgot password?" on the login page
 2. User enters their email on the forgot password page
 3. User receives an email with a password reset link
-4. User clicks the link and is taken to the reset password page
-5. User enters and confirms their new password
-6. User is redirected to login page and can sign in with the new password
+4. User clicks the link → goes to Supabase for verification
+5. Supabase redirects to `/auth/callback` → verifies token and sets session
+6. User is redirected to `/reset-password` page
+7. User enters and confirms their new password
+8. User is redirected to login page and can sign in with the new password
 
 ## Configuration Required
 
@@ -44,8 +58,19 @@ Ensure these environment variables are set (they should already be configured):
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://ezzpivxxdxcdnmerrcbt.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-anon-key]
-NEXT_PUBLIC_SITE_URL=[your-site-url]
+NEXT_PUBLIC_SITE_URL=http://www.cartbase.app
 ```
+
+### Supabase Redirect URLs (IMPORTANT!)
+You MUST add the callback URL to your Supabase project's allowed redirect URLs:
+
+1. Go to: https://supabase.com/dashboard/project/ezzpivxxdxcdnmerrcbt/auth/url-configuration
+2. In the "Redirect URLs" section, add these URLs:
+   - `http://www.cartbase.app/auth/callback` (production)
+   - `http://localhost:3000/auth/callback` (local development)
+3. Click "Save"
+
+**Without this configuration, password reset emails will not work properly!**
 
 ### Supabase Email Template (Optional)
 You can customize the password reset email template in your Supabase dashboard:
@@ -56,14 +81,7 @@ You can customize the password reset email template in your Supabase dashboard:
 
 The default template should work fine and will include:
 - A link to reset the password
-- The link redirects to: `[your-site-url]/reset-password`
-
-### Redirect URLs
-Make sure your site URL is configured in Supabase:
-
-1. Go to: https://supabase.com/dashboard/project/ezzpivxxdxcdnmerrcbt/auth/url-configuration
-2. Add your production URL to the redirect URLs allow list
-3. For local development, `http://localhost:3000` should already be configured
+- The link redirects through: `[your-site-url]/auth/callback` → `/reset-password`
 
 ## Testing
 

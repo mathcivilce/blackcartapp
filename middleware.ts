@@ -13,6 +13,7 @@ export async function middleware(request: NextRequest) {
     '/pricing',
     '/forgot-password',
     '/reset-password',
+    '/auth/callback',
     '/api/settings', 
     '/cart.js', 
     '/api/auth/login',
