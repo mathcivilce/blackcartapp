@@ -21,7 +21,46 @@ export default function ResetPasswordPage() {
     // Check if we have a valid session from the reset link
     const checkSession = async () => {
       try {
+        // Check the URL for hash fragments (Supabase puts session data there)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const access_token = hashParams.get('access_token');
+        const refresh_token = hashParams.get('refresh_token');
+        const type = hashParams.get('type');
+        
+        console.log('🔍 Checking URL hash:', { 
+          hasAccessToken: !!access_token, 
+          hasRefreshToken: !!refresh_token,
+          type 
+        });
+        
+        // If we have tokens in the URL from Supabase redirect
+        if (access_token && refresh_token && type === 'recovery') {
+          console.log('✅ Found recovery tokens in URL, setting session');
+          
+          // Set the session in Supabase client
+          const { data, error } = await supabaseClient.auth.setSession({
+            access_token,
+            refresh_token
+          });
+          
+          if (error) {
+            console.error('❌ Error setting session:', error);
+            setError('Invalid or expired reset link. Please request a new password reset.');
+            setValidating(false);
+            return;
+          }
+          
+          if (data.session) {
+            console.log('✅ Session set successfully');
+            setValidating(false);
+            return;
+          }
+        }
+
+        // Otherwise check for existing session
         const { data: { session }, error } = await supabaseClient.auth.getSession();
+        
+        console.log('📋 Session check:', { hasSession: !!session, error: error?.message });
         
         if (error || !session) {
           setError('Invalid or expired reset link. Please request a new password reset.');
@@ -31,6 +70,7 @@ export default function ResetPasswordPage() {
 
         setValidating(false);
       } catch (err) {
+        console.error('❌ Session check error:', err);
         setError('An error occurred. Please try again.');
         setValidating(false);
       }
