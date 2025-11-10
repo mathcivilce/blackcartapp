@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -64,9 +65,9 @@ export default function LoginPage() {
           <div style={styles.formGroup}>
             <div style={styles.labelRow}>
               <label style={styles.label}>Password</label>
-              <a href="/forgot-password" style={styles.forgotLink}>
+              <Link href="/forgot-password" style={styles.forgotLink}>
                 Forgot password?
-              </a>
+              </Link>
             </div>
             <input
               type="password"
@@ -95,7 +96,7 @@ export default function LoginPage() {
         <div style={styles.footer}>
           <p style={styles.footerText}>
             Don't have an account?{' '}
-            <a href="/pricing" style={styles.link}>Subscribe Now</a>
+            <Link href="/pricing" style={styles.link}>Subscribe Now</Link>
           </p>
         </div>
       </div>
@@ -153,7 +154,8 @@ const styles = {
     color: '#888',
     textDecoration: 'none',
     fontWeight: '500',
-    transition: 'color 0.2s'
+    transition: 'color 0.2s',
+    cursor: 'pointer'
   },
   input: {
     padding: '12px 16px',
@@ -200,7 +202,8 @@ const styles = {
     color: '#fff',
     textDecoration: 'none',
     fontWeight: '600',
-    transition: 'opacity 0.2s'
+    transition: 'opacity 0.2s',
+    cursor: 'pointer'
   }
 };
 

@@ -11,10 +11,13 @@ export async function middleware(request: NextRequest) {
     '/login',
     '/register',
     '/pricing',
+    '/forgot-password',
+    '/reset-password',
     '/api/settings', 
     '/cart.js', 
     '/api/auth/login',
     '/api/auth/register',
+    '/api/auth/forgot-password',
     '/api/stripe', // Allow Stripe routes
     '/api/setup' // Allow setup routes
   ];

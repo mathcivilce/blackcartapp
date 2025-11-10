@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabaseClient } from '@/lib/supabase-client';
 
 // Force dynamic rendering for this page
@@ -170,7 +171,7 @@ export default function ResetPasswordPage() {
             <div style={styles.footer}>
               <p style={styles.footerText}>
                 Remember your password?{' '}
-                <a href="/login" style={styles.link}>Sign In</a>
+                <Link href="/login" style={styles.link}>Sign In</Link>
               </p>
             </div>
           </>
@@ -314,7 +315,8 @@ const styles = {
     color: '#fff',
     textDecoration: 'none',
     fontWeight: '600',
-    transition: 'opacity 0.2s'
+    transition: 'opacity 0.2s',
+    cursor: 'pointer'
   }
 };
 
