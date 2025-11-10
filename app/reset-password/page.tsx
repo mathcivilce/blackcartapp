@@ -15,6 +15,7 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [validating, setValidating] = useState(true);
+  const [hasValidSession, setHasValidSession] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -30,7 +31,8 @@ export default function ResetPasswordPage() {
         console.log('🔍 Checking URL hash:', { 
           hasAccessToken: !!access_token, 
           hasRefreshToken: !!refresh_token,
-          type 
+          type,
+          fullHash: window.location.hash
         });
         
         // If we have tokens in the URL from Supabase redirect
@@ -51,8 +53,11 @@ export default function ResetPasswordPage() {
           }
           
           if (data.session) {
-            console.log('✅ Session set successfully');
+            console.log('✅ Session set successfully for user:', data.user?.email);
+            setHasValidSession(true);
             setValidating(false);
+            // Clear the hash from URL for security
+            window.history.replaceState(null, '', window.location.pathname);
             return;
           }
         }
@@ -68,6 +73,7 @@ export default function ResetPasswordPage() {
           return;
         }
 
+        setHasValidSession(true);
         setValidating(false);
       } catch (err) {
         console.error('❌ Session check error:', err);
@@ -82,6 +88,12 @@ export default function ResetPasswordPage() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Check if we have a valid session
+    if (!hasValidSession) {
+      setError('Auth session missing! Please use the link from your email.');
+      return;
+    }
 
     // Validate passwords match
     if (password !== confirmPassword) {
@@ -98,20 +110,28 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
+      console.log('🔄 Attempting to update password...');
       const { error } = await supabaseClient.auth.updateUser({
         password: password
       });
 
       if (error) {
+        console.error('❌ Password update error:', error);
         setError(error.message || 'Failed to reset password');
       } else {
+        console.log('✅ Password updated successfully');
         setSuccess(true);
+        
+        // Sign out the user to clear the recovery session
+        await supabaseClient.auth.signOut();
+        
         // Redirect to login after 3 seconds
         setTimeout(() => {
           router.push('/login');
         }, 3000);
       }
     } catch (err) {
+      console.error('❌ Reset password error:', err);
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -141,14 +161,23 @@ export default function ResetPasswordPage() {
             <div style={styles.successMessage}>
               <p style={styles.successTitle}>Password Reset Successful!</p>
               <p style={styles.successText}>
-                Your password has been successfully reset. You will be redirected to the login page in a few seconds.
+                Your password has been successfully reset. Redirecting to login page...
+              </p>
+            </div>
+          </div>
+        ) : !hasValidSession && !validating ? (
+          <div style={styles.errorContainer}>
+            <div style={styles.errorMessage}>
+              <p style={styles.errorTitle}>Invalid Reset Link</p>
+              <p style={styles.errorText}>
+                This password reset link is invalid or has expired. Please request a new one.
               </p>
             </div>
             <button
-              onClick={() => router.push('/login')}
+              onClick={() => router.push('/forgot-password')}
               style={styles.button}
             >
-              Go to Sign In
+              Request New Reset Link
             </button>
           </div>
         ) : (
@@ -332,6 +361,29 @@ const styles = {
     margin: 0,
     lineHeight: '1.6',
     color: '#b8ffb8'
+  },
+  errorContainer: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '24px'
+  },
+  errorMessage: {
+    padding: '20px',
+    background: '#2a0000',
+    color: '#ff6b6b',
+    borderRadius: '8px',
+    border: '1px solid #ff6b6b'
+  },
+  errorTitle: {
+    fontSize: '18px',
+    fontWeight: '600',
+    margin: '0 0 12px 0'
+  },
+  errorText: {
+    fontSize: '14px',
+    margin: 0,
+    lineHeight: '1.6',
+    color: '#ffb8b8'
   },
   loadingContainer: {
     padding: '40px 20px',
