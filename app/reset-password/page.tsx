@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { supabaseClient } from '@/lib/supabase-client';
+
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic';
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
@@ -12,7 +15,6 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [validating, setValidating] = useState(true);
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     // Check if we have a valid session from the reset link
