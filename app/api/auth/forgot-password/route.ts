@@ -12,9 +12,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get the site URL from environment variable
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    
+    if (!siteUrl) {
+      console.error('NEXT_PUBLIC_SITE_URL environment variable is not set');
+      return NextResponse.json(
+        { error: 'Server configuration error. Please contact support.' },
+        { status: 500 }
+      );
+    }
+
+    const redirectUrl = `${siteUrl}/reset-password`;
+    console.log('🔐 Sending password reset email with redirect:', redirectUrl);
+
     // Send password reset email via Supabase Auth
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password`,
+      redirectTo: redirectUrl,
     });
 
     if (error) {

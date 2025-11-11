@@ -26,3 +26,4 @@ CREATE INDEX IF NOT EXISTS idx_invoices_type ON invoices(invoice_type);
 -- Add comment explaining the types
 COMMENT ON COLUMN invoices.invoice_type IS 'Type of invoice: regular (weekly auto-generated) or supplemental (corrections for missing sales)';
 
+
