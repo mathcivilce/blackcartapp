@@ -3,7 +3,7 @@
 ## Overview
 Created an admin-only sales dashboard that allows the administrator (mathcivilce@gmail.com) to view sales data and orders for all users in the system.
 
-## Implementation Details
+## Implementation Detailss
 
 ### 1. Database Changes
 **Migration:** `add_admin_column`
