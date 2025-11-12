@@ -2121,9 +2121,13 @@
 
     const descEl = document.getElementById('sp-protection-description');
     const checkbox = document.getElementById('sp-protection-checkbox');
-    // Show correct description based on: 1) checkbox state (user interaction), 2) acceptByDefault setting (initial state), 3) protection in cart (fallback)
-    // This ensures description matches the toggle even when cart first opens with acceptByDefault=true
-    const isProtectionEnabled = checkbox?.checked ?? state.settings?.addons?.acceptByDefault ?? state.protectionInCart;
+    // Show correct description based on whether cart is loaded or not:
+    // - If cart is loaded: use checkbox state (synced by checkProtectionInCart)
+    // - If cart not loaded yet: use acceptByDefault setting (intended initial state)
+    // This fixes the issue where checkbox.checked returns false (not undefined) before being set
+    const isProtectionEnabled = state.cart
+      ? (checkbox?.checked ?? false)  // Cart loaded, use actual checkbox state
+      : (state.settings?.addons?.acceptByDefault ?? false);  // Cart not loaded, use setting
     const addonDesc = isProtectionEnabled
       ? (state.settings.addons?.description || state.settings.description)
       : (state.settings.addons?.disabledDescription || 'By deselecting shipping protection, we are not liable for lost, damaged, or stolen products.');
