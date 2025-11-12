@@ -40,6 +40,7 @@ interface CartPreviewProps {
     enabled: boolean;
     title: string;
     description: string;
+    disabledDescription?: string;
     price: string;
     acceptByDefault: boolean;
     adjustTotalPrice?: boolean;
@@ -168,6 +169,13 @@ function formatCountdown(endTime: string, timeFormat: string = 'text'): string {
 
 export default function CartPreview({ design, addons, announcement, freeGifts, upsell }: CartPreviewProps) {
   const [countdown, setCountdown] = React.useState('');
+  // Track protection toggle state for preview (to show correct description)
+  const [protectionEnabled, setProtectionEnabled] = React.useState(addons.acceptByDefault);
+
+  // Update protection state when acceptByDefault changes
+  React.useEffect(() => {
+    setProtectionEnabled(addons.acceptByDefault);
+  }, [addons.acceptByDefault]);
 
   const calculateTotal = () => {
     let total = 129.99;
@@ -780,7 +788,10 @@ export default function CartPreview({ design, addons, announcement, freeGifts, u
                 <div style={styles.protectionInfo}>
                   <h3 style={styles.protectionTitle}>{addons.title}</h3>
                   <p style={styles.protectionDescription}>
-                    {addons.description}
+                    {protectionEnabled 
+                      ? addons.description 
+                      : (addons.disabledDescription || 'By deselecting shipping protection, we are not liable for lost, damaged, or stolen products.')
+                    }
                   </p>
                 </div>
                 <div style={styles.protectionRight}>
@@ -788,17 +799,17 @@ export default function CartPreview({ design, addons, announcement, freeGifts, u
                   <label style={styles.toggleSwitch}>
                     <input 
                       type="checkbox" 
-                      checked={addons.acceptByDefault}
-                      readOnly
+                      checked={protectionEnabled}
+                      onChange={(e) => setProtectionEnabled(e.target.checked)}
                       style={{ opacity: 0, width: 0, height: 0 }} 
                     />
                     <span style={{
                       ...styles.toggleSlider,
-                      backgroundColor: addons.acceptByDefault ? '#2196F3' : '#ccc'
+                      backgroundColor: protectionEnabled ? '#2196F3' : '#ccc'
                     }}>
                       <span style={{
                         ...styles.toggleKnob,
-                        transform: addons.acceptByDefault ? 'translateX(18px)' : 'translateX(0)'
+                        transform: protectionEnabled ? 'translateX(18px)' : 'translateX(0)'
                       }}></span>
                     </span>
                   </label>

@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
       shippingProtection: {
         title: settings?.addon_title || 'Shipping Protection',
         description: settings?.addon_description || 'Protect your order from damage, loss, or theft during shipping.',
+        disabledDescription: settings?.addon_disabled_description || 'By deselecting shipping protection, we are not liable for lost, damaged, or stolen products.',
         price: settings?.addon_price?.toString() || '4.90',
         productId: settings?.addon_product_id || '',
         acceptByDefault: settings?.addon_accept_by_default ?? false,
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
     if (shippingProtection) {
       if (shippingProtection.title !== undefined) dbSettings.addon_title = shippingProtection.title;
       if (shippingProtection.description !== undefined) dbSettings.addon_description = shippingProtection.description;
+      if (shippingProtection.disabledDescription !== undefined) dbSettings.addon_disabled_description = shippingProtection.disabledDescription;
       if (shippingProtection.price !== undefined) dbSettings.addon_price = parseFloat(shippingProtection.price);
       if (shippingProtection.productId !== undefined) dbSettings.addon_product_id = shippingProtection.productId;
       if (shippingProtection.acceptByDefault !== undefined) dbSettings.addon_accept_by_default = shippingProtection.acceptByDefault;

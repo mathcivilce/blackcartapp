@@ -102,6 +102,7 @@
       enabled: false,
       title: 'Shipping Protection',
       description: 'Protect your order from damage, loss, or theft during shipping.',
+      disabledDescription: 'By deselecting shipping protection, we are not liable for lost, damaged, or stolen products.',
       price: 4.90,
       productHandle: null,
       acceptByDefault: false,
@@ -2119,7 +2120,11 @@
     }
 
     const descEl = document.getElementById('sp-protection-description');
-    const addonDesc = state.settings.addons?.description || state.settings.description;
+    // Show correct description based on current toggle state (protection in cart or not)
+    const isProtectionEnabled = state.protectionInCart;
+    const addonDesc = isProtectionEnabled
+      ? (state.settings.addons?.description || state.settings.description)
+      : (state.settings.addons?.disabledDescription || 'By deselecting shipping protection, we are not liable for lost, damaged, or stolen products.');
     if (descEl && addonDesc) {
       descEl.textContent = addonDesc;
     }
@@ -4552,6 +4557,19 @@
     }
   }
 
+  // Helper function to update protection description based on toggle state
+  function updateProtectionDescription(isEnabled) {
+    const descEl = document.getElementById('sp-protection-description');
+    if (!descEl || !state.settings) return;
+    
+    // Show enabled description when toggle is ON, disabled description when toggle is OFF
+    const description = isEnabled 
+      ? (state.settings.addons?.description || state.settings.description)
+      : (state.settings.addons?.disabledDescription || 'By deselecting shipping protection, we are not liable for lost, damaged, or stolen products.');
+    
+    descEl.textContent = description;
+  }
+
   function attachEventListeners() {
     // Close button
     const closeBtn = document.getElementById('sp-cart-close');
@@ -4590,6 +4608,9 @@
     if (protectionCheckbox) {
       protectionCheckbox.addEventListener('change', async (e) => {
         const isChecked = e.target.checked;
+        
+        // Update description based on toggle state
+        updateProtectionDescription(isChecked);
         
         if (isChecked) {
           await addProtectionToCart();

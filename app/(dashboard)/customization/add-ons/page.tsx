@@ -9,6 +9,7 @@ export default function AddOnsPage() {
     shippingProtection: {
       title: 'Shipping Protection',
       description: 'Protect your order from damage, loss, or theft during shipping.',
+      disabledDescription: 'By deselecting shipping protection, we are not liable for lost, damaged, or stolen products.',
       price: '4.90',
       productId: '',
       acceptByDefault: false,
@@ -359,7 +360,7 @@ export default function AddOnsPage() {
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>Description</label>
+              <label style={styles.label}>Description (when enabled)</label>
               <textarea
                 name="description"
                 value={addons.shippingProtection.description}
@@ -367,6 +368,23 @@ export default function AddOnsPage() {
                 style={{ ...styles.textInput, minHeight: '80px', resize: 'vertical' as const }}
                 disabled={!addons.featureEnabled}
               />
+              <p style={styles.helperText}>
+                This description is shown when the protection toggle is ON.
+              </p>
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Disabled Description (when disabled)</label>
+              <textarea
+                name="disabledDescription"
+                value={addons.shippingProtection.disabledDescription}
+                onChange={handleInputChange}
+                style={{ ...styles.textInput, minHeight: '80px', resize: 'vertical' as const }}
+                disabled={!addons.featureEnabled}
+              />
+              <p style={styles.helperText}>
+                This description is shown when the protection toggle is OFF. Use this to inform customers about liability.
+              </p>
             </div>
 
             <div style={styles.formGroup}>
@@ -535,6 +553,7 @@ export default function AddOnsPage() {
               enabled: addons.featureEnabled,
               title: addons.shippingProtection.title,
               description: addons.shippingProtection.description,
+              disabledDescription: addons.shippingProtection.disabledDescription,
               price: addons.shippingProtection.price,
               acceptByDefault: addons.shippingProtection.acceptByDefault,
               adjustTotalPrice: addons.shippingProtection.adjustTotalPrice,
