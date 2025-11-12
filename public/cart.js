@@ -2121,9 +2121,9 @@
 
     const descEl = document.getElementById('sp-protection-description');
     const checkbox = document.getElementById('sp-protection-checkbox');
-    // Show correct description based on checkbox state (which reflects the actual toggle UI state)
-    // This ensures description matches toggle even before protection is added to cart
-    const isProtectionEnabled = checkbox?.checked ?? state.protectionInCart;
+    // Show correct description based on: 1) checkbox state (user interaction), 2) acceptByDefault setting (initial state), 3) protection in cart (fallback)
+    // This ensures description matches the toggle even when cart first opens with acceptByDefault=true
+    const isProtectionEnabled = checkbox?.checked ?? state.settings?.addons?.acceptByDefault ?? state.protectionInCart;
     const addonDesc = isProtectionEnabled
       ? (state.settings.addons?.description || state.settings.description)
       : (state.settings.addons?.disabledDescription || 'By deselecting shipping protection, we are not liable for lost, damaged, or stolen products.');
