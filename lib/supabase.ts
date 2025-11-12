@@ -177,6 +177,7 @@ export interface Settings {
   addons_enabled?: boolean;
   addon_title?: string;
   addon_description?: string;
+  addon_disabled_description?: string;
   addon_price?: number;
   addon_product_id?: string;
   addon_accept_by_default?: boolean;
