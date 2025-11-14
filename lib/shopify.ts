@@ -139,11 +139,123 @@ export function calculateCommission(
 
 /**
  * Parse Shopify price string to cents
+ * @deprecated Use convertCurrencyToUSDCents instead for currency conversion
  */
 export function priceStringToCents(priceString: string): number {
   const price = parseFloat(priceString);
   if (isNaN(price)) return 0;
   return Math.round(price * 100);
+}
+
+/**
+ * Fetch exchange rate from source currency to USD
+ * Uses exchangerate-api.com (free tier: 1,500 requests/month)
+ * Returns cached rate if available and fresh (< 24 hours old)
+ */
+let exchangeRateCache: { [key: string]: { rate: number; timestamp: number } } = {};
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+export async function getExchangeRateToUSD(
+  fromCurrency: string
+): Promise<{ rate: number; error?: string }> {
+  // If already USD, rate is 1
+  if (fromCurrency === 'USD') {
+    return { rate: 1 };
+  }
+
+  // Check cache first
+  const cached = exchangeRateCache[fromCurrency];
+  if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+    console.log(`💰 Using cached exchange rate: ${fromCurrency} -> USD = ${cached.rate}`);
+    return { rate: cached.rate };
+  }
+
+  try {
+    // Free API - no key required for basic usage
+    // Fetches latest rates with USD as base
+    const response = await fetch(
+      `https://api.exchangerate-api.com/v4/latest/${fromCurrency}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`❌ Exchange rate API error: ${response.status}`);
+      return {
+        rate: 1, // Fallback to 1:1 if API fails
+        error: `Failed to fetch exchange rate: ${response.statusText}`,
+      };
+    }
+
+    const data = await response.json();
+    const rateToUSD = data.rates?.USD || 1;
+
+    // Cache the rate
+    exchangeRateCache[fromCurrency] = {
+      rate: rateToUSD,
+      timestamp: Date.now(),
+    };
+
+    console.log(`💱 Fetched exchange rate: ${fromCurrency} -> USD = ${rateToUSD}`);
+    return { rate: rateToUSD };
+  } catch (error) {
+    console.error('❌ Error fetching exchange rate:', error);
+    return {
+      rate: 1, // Fallback to 1:1 if error
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Convert price from any currency to USD cents
+ * This is the main function to use for all price conversions
+ * 
+ * @param priceString - Price as string (e.g., "599" for 599 JPY)
+ * @param currency - ISO currency code (e.g., "JPY", "USD", "EUR")
+ * @returns Price in USD cents
+ * 
+ * @example
+ * // Convert 599 JPY to USD cents
+ * const usdCents = await convertCurrencyToUSDCents("599", "JPY");
+ * // Returns ~400 cents ($4.00 USD) assuming 1 JPY = 0.0067 USD
+ */
+export async function convertCurrencyToUSDCents(
+  priceString: string,
+  currency: string
+): Promise<{ priceInUSDCents: number; exchangeRate?: number; error?: string }> {
+  const price = parseFloat(priceString);
+  
+  if (isNaN(price) || price < 0) {
+    return { priceInUSDCents: 0, error: 'Invalid price' };
+  }
+
+  // If already USD, just convert to cents
+  if (currency === 'USD') {
+    return { priceInUSDCents: Math.round(price * 100), exchangeRate: 1 };
+  }
+
+  // Get exchange rate
+  const { rate, error } = await getExchangeRateToUSD(currency);
+
+  if (error) {
+    console.warn(`⚠️ Currency conversion warning: ${error}. Using 1:1 rate.`);
+  }
+
+  // Convert: price in foreign currency * exchange rate = price in USD
+  const priceInUSD = price * rate;
+  const priceInUSDCents = Math.round(priceInUSD * 100);
+
+  console.log(`💵 Converted ${price} ${currency} -> ${priceInUSD.toFixed(2)} USD (${priceInUSDCents} cents) @ rate ${rate}`);
+
+  return {
+    priceInUSDCents,
+    exchangeRate: rate,
+    error,
+  };
 }
 
 /**
@@ -175,7 +287,7 @@ export function getMonthIdentifier(date: Date = new Date()): string {
 }
 
 /**
- * Validate Shopify API token
+ * Validate Shopify API token and fetch shop info including currency
  */
 export async function validateShopifyToken(
   shopDomain: string,
@@ -187,6 +299,7 @@ export async function validateShopifyToken(
     name: string;
     domain: string;
     email: string;
+    currency: string; // ISO 4217 currency code (e.g., "USD", "JPY")
   };
   error?: string;
 }> {
@@ -218,7 +331,8 @@ export async function validateShopifyToken(
         id: data.shop.id,
         name: data.shop.name,
         domain: data.shop.domain,
-        email: data.shop.email
+        email: data.shop.email,
+        currency: data.shop.currency || 'USD' // Shop's base currency
       }
     };
   } catch (error) {

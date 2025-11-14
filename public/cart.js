@@ -3,7 +3,7 @@
 
   // Configuration - will be fetched from API in production
   // VERSION CHECK - If you see this log, you have the latest code
-  console.log('[Cart.js] VERSION: 2.11.0-safe-optimizations');
+  console.log('[Cart.js] VERSION: 2.12.0-multi-store-checkout');
   
   const CONFIG = {
     appUrl: (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
@@ -1591,6 +1591,74 @@
       console.log('[Cart.js] Cart cache cleared');
     } catch (error) {
       console.warn('[Cart.js] Failed to clear cart cache:', error.message);
+    }
+  }
+
+  // ============================================
+  // MULTI-STORE CHECKOUT REDIRECT
+  // ============================================
+
+  async function handleCheckoutRedirect() {
+    try {
+      // Check if multi-store checkout is enabled
+      const multiStoreEnabled = state.settings?.multi_store_enabled;
+      
+      if (!multiStoreEnabled) {
+        // Multi-store not enabled, proceed to normal checkout
+        window.location.href = '/checkout';
+        return;
+      }
+
+      console.log('[Cart.js] Multi-store checkout enabled, checking for redirect...');
+
+      // Get current cart
+      if (!state.cart || !state.cart.items || state.cart.items.length === 0) {
+        console.error('[Cart.js] No cart items found');
+        window.location.href = '/checkout';
+        return;
+      }
+
+      // Prepare cart items for API
+      const cartItems = state.cart.items.map(item => ({
+        variant_id: item.variant_id,
+        quantity: item.quantity
+      }));
+
+      // Call API to get redirect URL
+      const response = await fetch(`${CONFIG.appUrl}/api/multi-store/checkout-redirect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          shop_domain: getShopDomain(),
+          cart_items: cartItems
+        })
+      });
+
+      if (!response.ok) {
+        console.error('[Cart.js] Failed to get checkout redirect');
+        window.location.href = '/checkout';
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.redirect && data.checkout_url) {
+        console.log('[Cart.js] Redirecting to backup store:', data.backup_store);
+        console.log('[Cart.js] Items mapped:', data.items_mapped);
+        // Redirect to backup store checkout
+        window.location.href = data.checkout_url;
+      } else {
+        // No redirect needed or error occurred, proceed to normal checkout
+        console.log('[Cart.js] No redirect:', data.message || data.error);
+        window.location.href = '/checkout';
+      }
+
+    } catch (error) {
+      console.error('[Cart.js] Error in multi-store checkout redirect:', error);
+      // Fallback to normal checkout on error
+      window.location.href = '/checkout';
     }
   }
 
@@ -4596,8 +4664,8 @@
     // Checkout button
     const checkoutBtn = document.getElementById('sp-cart-checkout');
     if (checkoutBtn) {
-      checkoutBtn.addEventListener('click', () => {
-        window.location.href = '/checkout';
+      checkoutBtn.addEventListener('click', async () => {
+        await handleCheckoutRedirect();
       });
     }
 

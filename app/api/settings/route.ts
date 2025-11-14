@@ -170,6 +170,7 @@ export async function GET(request: NextRequest) {
       const response = NextResponse.json({
         enabled: settings?.enabled ?? true,
         cart_active: settings?.cart_active ?? true,
+        multi_store_enabled: settings?.multi_store_enabled ?? false,
         store_domain: store?.shop_domain || '',
         api_token: store?.api_token || '',
         protectionProductId: settings?.protection_product_id || settings?.addon_product_id || null,
@@ -352,6 +353,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         enabled: true,
         cart_active: true,
+        multi_store_enabled: false,
         store_domain: '',
         api_token: '',
         protectionProductId: null,
@@ -482,6 +484,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       enabled: settings?.enabled ?? true,
       cart_active: settings?.cart_active ?? true,
+      multi_store_enabled: settings?.multi_store_enabled ?? false,
       store_domain: store?.shop_domain || '',
       api_token: store?.api_token || '',
       protectionProductId: settings?.protection_product_id || settings?.addon_product_id || null,
@@ -628,6 +631,7 @@ export async function GET(request: NextRequest) {
     // Return default settings on error
     return NextResponse.json({
       enabled: true,
+      multi_store_enabled: false,
       protectionProductId: null,
       price: 490,
       toggleColor: '#2196F3',

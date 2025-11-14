@@ -55,7 +55,8 @@ export async function POST(request: NextRequest) {
       domain: shopInfo.domain,
       myshopify_domain: shopInfo.myshopify_domain,
       name: shopInfo.name,
-      id: shopInfo.id
+      id: shopInfo.id,
+      currency: shopInfo.currency
     });
 
     // Step 2: Get the CANONICAL domain from Shopify (this is the source of truth)
@@ -143,6 +144,7 @@ export async function POST(request: NextRequest) {
         email: shopInfo.email || null,
         api_token: api_token,
         user_id: user.id,
+        shop_currency: shopInfo.currency || 'USD',  // Store's base currency
         subscription_status: 'active',
         updated_at: new Date().toISOString()
       }, {

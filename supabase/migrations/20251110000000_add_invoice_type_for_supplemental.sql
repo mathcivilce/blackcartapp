@@ -28,3 +28,4 @@ COMMENT ON COLUMN invoices.invoice_type IS 'Type of invoice: regular (weekly aut
 
 
 
+

@@ -1,4 +1,4 @@
-# Admin Invoices Feature
+# Admin Invoices Featuree
 
 ## Overview
 A new admin page has been created that allows administrators to view invoices for all users in the system. This is similar to the Admin Sales page but focused on invoice data.

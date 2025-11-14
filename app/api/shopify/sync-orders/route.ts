@@ -4,6 +4,7 @@ import {
   fetchShopifyOrders, 
   isProtectionProduct, 
   priceStringToCents, 
+  convertCurrencyToUSDCents,
   calculateCommission,
   getDateRange,
   getMonthIdentifier 
@@ -115,7 +116,18 @@ export async function POST(request: NextRequest) {
             continue; // No protection product in this order
           }
 
-          const protectionPrice = priceStringToCents(protectionItem.price);
+          // 💱 CURRENCY CONVERSION: Convert protection price to USD
+          // Use order.currency (e.g., "JPY", "USD") to properly convert the price
+          const orderCurrency = order.currency || store.shop_currency || 'USD';
+          const { priceInUSDCents: protectionPrice, exchangeRate } = await convertCurrencyToUSDCents(
+            protectionItem.price,
+            orderCurrency
+          );
+
+          if (orderCurrency !== 'USD') {
+            console.log(`💱 Converted ${protectionItem.price} ${orderCurrency} -> ${protectionPrice / 100} USD (rate: ${exchangeRate})`);
+          }
+
           const commission = calculateCommission(protectionPrice);
           
           // Count all protection sales found (for accurate reporting)

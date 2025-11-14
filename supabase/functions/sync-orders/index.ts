@@ -13,6 +13,7 @@ interface ShopifyOrder {
   id: number;
   name: string;
   created_at: string;
+  currency: string; // ISO 4217 currency code (e.g., "USD", "JPY")
   line_items: Array<{
     id: number;
     product_id: number | null;
@@ -189,11 +190,104 @@ function isProtectionProductByContent(
   return false;
 }
 
-// Helper: Convert price string to cents
+// Helper: Convert price string to cents (deprecated - use convertCurrencyToUSDCents)
 function priceStringToCents(priceString: string): number {
   const price = parseFloat(priceString);
   if (isNaN(price)) return 0;
   return Math.round(price * 100);
+}
+
+// Exchange rate cache (in-memory, valid for 24 hours)
+let exchangeRateCache: { [key: string]: { rate: number; timestamp: number } } = {};
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+// Helper: Fetch exchange rate from source currency to USD
+async function getExchangeRateToUSD(fromCurrency: string): Promise<{ rate: number; error?: string }> {
+  // If already USD, rate is 1
+  if (fromCurrency === 'USD') {
+    return { rate: 1 };
+  }
+
+  // Check cache first
+  const cached = exchangeRateCache[fromCurrency];
+  if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+    console.log(`💰 Using cached exchange rate: ${fromCurrency} -> USD = ${cached.rate}`);
+    return { rate: cached.rate };
+  }
+
+  try {
+    // Free API - no key required
+    const response = await fetch(
+      `https://api.exchangerate-api.com/v4/latest/${fromCurrency}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`❌ Exchange rate API error: ${response.status}`);
+      return {
+        rate: 1, // Fallback to 1:1 if API fails
+        error: `Failed to fetch exchange rate: ${response.statusText}`,
+      };
+    }
+
+    const data = await response.json();
+    const rateToUSD = data.rates?.USD || 1;
+
+    // Cache the rate
+    exchangeRateCache[fromCurrency] = {
+      rate: rateToUSD,
+      timestamp: Date.now(),
+    };
+
+    console.log(`💱 Fetched exchange rate: ${fromCurrency} -> USD = ${rateToUSD}`);
+    return { rate: rateToUSD };
+  } catch (error) {
+    console.error('❌ Error fetching exchange rate:', error);
+    return {
+      rate: 1, // Fallback to 1:1 if error
+      error: error.message,
+    };
+  }
+}
+
+// Helper: Convert price from any currency to USD cents
+async function convertCurrencyToUSDCents(
+  priceString: string,
+  currency: string
+): Promise<{ priceInUSDCents: number; exchangeRate?: number; error?: string }> {
+  const price = parseFloat(priceString);
+  
+  if (isNaN(price) || price < 0) {
+    return { priceInUSDCents: 0, error: 'Invalid price' };
+  }
+
+  // If already USD, just convert to cents
+  if (currency === 'USD') {
+    return { priceInUSDCents: Math.round(price * 100), exchangeRate: 1 };
+  }
+
+  // Get exchange rate
+  const { rate, error } = await getExchangeRateToUSD(currency);
+
+  if (error) {
+    console.warn(`⚠️ Currency conversion warning: ${error}. Using 1:1 rate.`);
+  }
+
+  // Convert: price in foreign currency * exchange rate = price in USD
+  const priceInUSD = price * rate;
+  const priceInUSDCents = Math.round(priceInUSD * 100);
+
+  console.log(`💵 Converted ${price} ${currency} -> ${priceInUSD.toFixed(2)} USD (${priceInUSDCents} cents) @ rate ${rate}`);
+
+  return {
+    priceInUSDCents,
+    exchangeRate: rate,
+    error,
+  };
 }
 
 // Helper: Calculate commission based on platform fee percentage
@@ -370,7 +464,18 @@ serve(async (req) => {
             continue; // No protection in this order
           }
 
-          const protectionPrice = priceStringToCents(protectionItem.price);
+          // 💱 CURRENCY CONVERSION: Convert protection price to USD
+          // Use order.currency (e.g., "JPY", "USD") to properly convert the price
+          const orderCurrency = order.currency || store.shop_currency || 'USD';
+          const { priceInUSDCents: protectionPrice, exchangeRate } = await convertCurrencyToUSDCents(
+            protectionItem.price,
+            orderCurrency
+          );
+
+          if (orderCurrency !== 'USD') {
+            console.log(`💱 Converted ${protectionItem.price} ${orderCurrency} -> ${protectionPrice / 100} USD (rate: ${exchangeRate})`);
+          }
+
           const commission = calculateCommission(protectionPrice, platformFee);
           
           // Count all protection sales found (for accurate reporting)
