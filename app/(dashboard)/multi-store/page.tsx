@@ -200,7 +200,7 @@ export default function MultiStorePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-gray-400">Loading...</div>
+        <div style={{ color: '#fff', fontSize: '16px' }}>Loading...</div>
       </div>
     );
   }
@@ -212,8 +212,19 @@ export default function MultiStorePage() {
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Multi-Store Checkout</h1>
-          <p className="text-gray-400">
+          <h1 style={{
+            fontSize: '32px',
+            fontWeight: '700',
+            color: '#fff',
+            marginBottom: '8px',
+          }}>
+            Multi-Store Checkout
+          </h1>
+          <p style={{
+            fontSize: '16px',
+            color: '#fff',
+            marginBottom: '32px',
+          }}>
             Redirect checkout traffic to backup stores for business continuity
           </p>
         </div>
@@ -253,10 +264,19 @@ export default function MultiStorePage() {
         }}>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-white mb-1">
+              <h2 style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#fff',
+                marginBottom: '8px',
+              }}>
                 Feature Status
               </h2>
-              <p className="text-sm text-gray-400">
+              <p style={{
+                fontSize: '14px',
+                color: '#fff',
+                marginBottom: '0',
+              }}>
                 Enable multi-store checkout redirect for your cart
               </p>
             </div>
@@ -304,10 +324,19 @@ export default function MultiStorePage() {
         }}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-white mb-1">
+              <h2 style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#fff',
+                marginBottom: '8px',
+              }}>
                 Backup Stores ({backupStores.length}/5)
               </h2>
-              <p className="text-sm text-gray-400">
+              <p style={{
+                fontSize: '14px',
+                color: '#fff',
+                marginBottom: '0',
+              }}>
                 Add up to 5 backup stores to redirect checkout traffic
               </p>
             </div>
@@ -561,10 +590,19 @@ export default function MultiStorePage() {
         }}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-white mb-1">
+              <h2 style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#fff',
+                marginBottom: '8px',
+              }}>
                 Product Mapping
               </h2>
-              <p className="text-sm text-gray-400">
+              <p style={{
+                fontSize: '14px',
+                color: '#fff',
+                marginBottom: '0',
+              }}>
                 Sync products from your primary store to backup stores using SKUs
               </p>
             </div>
@@ -607,7 +645,11 @@ export default function MultiStorePage() {
           </div>
 
           {lastSyncTime && (
-            <div className="text-sm text-gray-400">
+            <div style={{
+              fontSize: '14px',
+              color: '#fff',
+              marginTop: '8px',
+            }}>
               Last synced: {new Date(lastSyncTime).toLocaleString()}
             </div>
           )}
