@@ -102,6 +102,7 @@ export interface Settings {
   description: string;
   enabled: boolean;
   cart_active?: boolean;
+  multi_store_enabled?: boolean;
   created_at: string;
   updated_at: string;
   
