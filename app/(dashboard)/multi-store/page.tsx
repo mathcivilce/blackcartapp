@@ -453,12 +453,25 @@ export default function MultiStorePage() {
 
           {/* Store List */}
           {backupStores.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <svg className="mx-auto h-12 w-12 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              <p className="text-gray-400">No backup stores added yet</p>
-              <p className="text-sm mt-1 text-gray-500">Click "Add Store" to get started</p>
+            <div style={{
+              textAlign: 'center',
+              padding: '48px 0',
+              color: '#666',
+            }}>
+              <p style={{ 
+                fontSize: '14px',
+                color: '#666',
+                marginBottom: '4px'
+              }}>
+                No backup stores added yet
+              </p>
+              <p style={{ 
+                fontSize: '13px',
+                color: '#888',
+                marginTop: '4px'
+              }}>
+                Click "Add Store" to get started
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
