@@ -199,8 +199,8 @@ export default function MultiStorePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-gray-400">Loading...</div>
       </div>
     );
   }
@@ -208,42 +208,62 @@ export default function MultiStorePage() {
   const activeStores = backupStores.filter(s => s.enabled).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-black py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Multi-Store Checkout</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-white mb-2">Multi-Store Checkout</h1>
+          <p className="text-gray-400">
             Redirect checkout traffic to backup stores for business continuity
           </p>
         </div>
 
         {/* Save Message */}
         {saveMessage && (
-          <div className={`mb-6 p-4 rounded-lg ${
-            saveMessage.includes('Failed') || saveMessage.includes('Error') 
-              ? 'bg-red-50 text-red-800 border border-red-200'
-              : 'bg-green-50 text-green-800 border border-green-200'
-          }`}>
+          <div style={{
+            padding: '12px 16px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: '500',
+            marginBottom: '16px',
+            textAlign: 'center' as const,
+            ...(saveMessage.includes('Failed') || saveMessage.includes('Error') 
+              ? {
+                  background: '#f8d7da',
+                  color: '#721c24',
+                  border: '1px solid #f5c6cb',
+                }
+              : {
+                  background: '#d4edda',
+                  color: '#155724',
+                  border: '1px solid #c3e6cb',
+                })
+          }}>
             {saveMessage}
           </div>
         )}
 
         {/* Enable/Disable Feature */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div style={{
+          background: '#111',
+          border: '1px solid #222',
+          borderRadius: '12px',
+          padding: '24px',
+          marginBottom: '20px',
+        }}>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-1">
+              <h2 className="text-lg font-semibold text-white mb-1">
                 Feature Status
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-400">
                 Enable multi-store checkout redirect for your cart
               </p>
             </div>
             <button
               onClick={() => handleToggleFeature(!enabled)}
               className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-                enabled ? 'bg-blue-600' : 'bg-gray-300'
+                enabled ? 'bg-blue-600' : 'bg-gray-700'
               }`}
             >
               <span
@@ -255,8 +275,19 @@ export default function MultiStorePage() {
           </div>
           
           {enabled && (
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
+            <div style={{
+              marginTop: '16px',
+              padding: '12px',
+              backgroundColor: '#d4edda',
+              border: '1px solid #c3e6cb',
+              borderRadius: '8px',
+            }}>
+              <p style={{ 
+                margin: 0, 
+                fontSize: '14px', 
+                color: '#155724',
+                fontWeight: '500'
+              }}>
                 ✓ Multi-Store Checkout is active. Traffic will be randomly distributed across {activeStores} active backup store{activeStores !== 1 ? 's' : ''}.
               </p>
             </div>
@@ -264,20 +295,36 @@ export default function MultiStorePage() {
         </div>
 
         {/* Backup Stores */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div style={{
+          background: '#111',
+          border: '1px solid #222',
+          borderRadius: '12px',
+          padding: '24px',
+          marginBottom: '20px',
+        }}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-1">
+              <h2 className="text-lg font-semibold text-white mb-1">
                 Backup Stores ({backupStores.length}/5)
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-400">
                 Add up to 5 backup stores to redirect checkout traffic
               </p>
             </div>
             {backupStores.length < 5 && (
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                style={{
+                  padding: '10px 20px',
+                  background: '#fff',
+                  color: '#000',
+                  border: '1px solid #333',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s',
+                }}
               >
                 + Add Store
               </button>
@@ -286,10 +333,22 @@ export default function MultiStorePage() {
 
           {/* Add Store Form */}
           {showAddForm && (
-            <form onSubmit={handleAddStore} className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <form onSubmit={handleAddStore} style={{
+              marginBottom: '24px',
+              padding: '16px',
+              background: '#1a1a1a',
+              border: '1px solid #333',
+              borderRadius: '8px',
+            }}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#fff',
+                    marginBottom: '8px',
+                  }}>
                     Store Domain
                   </label>
                   <input
@@ -297,12 +356,28 @@ export default function MultiStorePage() {
                     value={newStoreDomain}
                     onChange={(e) => setNewStoreDomain(e.target.value)}
                     placeholder="backup-store.myshopify.com"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      fontSize: '14px',
+                      border: '1px solid #333',
+                      borderRadius: '6px',
+                      fontFamily: 'inherit',
+                      boxSizing: 'border-box' as const,
+                      background: '#000',
+                      color: '#fff',
+                    }}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#fff',
+                    marginBottom: '8px',
+                  }}>
                     API Token
                   </label>
                   <input
@@ -310,18 +385,43 @@ export default function MultiStorePage() {
                     value={newStoreToken}
                     onChange={(e) => setNewStoreToken(e.target.value)}
                     placeholder="shpat_xxxxx"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      fontSize: '14px',
+                      border: '1px solid #333',
+                      borderRadius: '6px',
+                      fontFamily: 'inherit',
+                      boxSizing: 'border-box' as const,
+                      background: '#000',
+                      color: '#fff',
+                    }}
                     required
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p style={{ 
+                    fontSize: '12px', 
+                    color: '#666', 
+                    marginTop: '6px' 
+                  }}>
                     API token must have read_products permission
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div style={{ display: 'flex', gap: '12px' }}>
                   <button
                     type="submit"
                     disabled={adding}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    style={{
+                      padding: '10px 20px',
+                      background: '#fff',
+                      color: '#000',
+                      border: '1px solid #333',
+                      borderRadius: '6px',
+                      cursor: adding ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      transition: 'all 0.2s',
+                      opacity: adding ? 0.6 : 1,
+                    }}
                   >
                     {adding ? 'Adding...' : 'Add Store'}
                   </button>
@@ -332,7 +432,17 @@ export default function MultiStorePage() {
                       setNewStoreDomain('');
                       setNewStoreToken('');
                     }}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                    style={{
+                      padding: '10px 20px',
+                      background: 'transparent',
+                      color: '#fff',
+                      border: '1px solid #666',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      transition: 'all 0.2s',
+                    }}
                   >
                     Cancel
                   </button>
@@ -344,42 +454,80 @@ export default function MultiStorePage() {
           {/* Store List */}
           {backupStores.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
-              <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="mx-auto h-12 w-12 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              <p>No backup stores added yet</p>
-              <p className="text-sm mt-1">Click "Add Store" to get started</p>
+              <p className="text-gray-400">No backup stores added yet</p>
+              <p className="text-sm mt-1 text-gray-500">Click "Add Store" to get started</p>
             </div>
           ) : (
             <div className="space-y-3">
               {backupStores.map((store, index) => (
-                <div key={store.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="text-sm font-medium text-gray-400">
+                <div key={store.id} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '16px',
+                  border: '1px solid #333',
+                  borderRadius: '8px',
+                  background: '#1a1a1a',
+                  transition: 'all 0.2s',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ 
+                      fontSize: '14px', 
+                      fontWeight: '500',
+                      color: '#666'
+                    }}>
                       #{index + 1}
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">{store.shop_domain}</div>
-                      <div className="text-sm text-gray-500">Added {new Date(store.created_at).toLocaleDateString()}</div>
+                      <div style={{ 
+                        fontWeight: '500', 
+                        color: '#fff',
+                        marginBottom: '4px'
+                      }}>
+                        {store.shop_domain}
+                      </div>
+                      <div style={{ 
+                        fontSize: '13px', 
+                        color: '#666'
+                      }}>
+                        Added {new Date(store.created_at).toLocaleDateString()}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <button
                       onClick={() => handleToggleStore(store.id, store.enabled)}
-                      className={`px-3 py-1 text-sm rounded-full ${
-                        store.enabled 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
+                      style={{
+                        padding: '6px 16px',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        borderRadius: '20px',
+                        border: store.enabled ? '1px solid #4CAF50' : '1px solid #666',
+                        background: store.enabled ? '#1a3a1a' : '#1a1a1a',
+                        color: store.enabled ? '#4CAF50' : '#666',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
                     >
                       {store.enabled ? 'Active' : 'Disabled'}
                     </button>
                     <button
                       onClick={() => handleRemoveStore(store.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      style={{
+                        padding: '8px',
+                        color: '#f44336',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
                       title="Remove store"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
@@ -391,20 +539,40 @@ export default function MultiStorePage() {
         </div>
 
         {/* Product Mapping Sync */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div style={{
+          background: '#111',
+          border: '1px solid #222',
+          borderRadius: '12px',
+          padding: '24px',
+          marginBottom: '20px',
+        }}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-1">
+              <h2 className="text-lg font-semibold text-white mb-1">
                 Product Mapping
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-400">
                 Sync products from your primary store to backup stores using SKUs
               </p>
             </div>
             <button
               onClick={handleSyncProducts}
               disabled={syncing || backupStores.length === 0}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
+              style={{
+                padding: '10px 20px',
+                background: '#4CAF50',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: (syncing || backupStores.length === 0) ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                transition: 'all 0.2s',
+                opacity: (syncing || backupStores.length === 0) ? 0.6 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
             >
               {syncing ? (
                 <>
@@ -426,14 +594,34 @@ export default function MultiStorePage() {
           </div>
 
           {lastSyncTime && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-400">
               Last synced: {new Date(lastSyncTime).toLocaleString()}
             </div>
           )}
 
-          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <h3 className="text-sm font-medium text-yellow-900 mb-2">Important Notes:</h3>
-            <ul className="text-sm text-yellow-800 space-y-1 list-disc list-inside">
+          <div style={{
+            marginTop: '16px',
+            padding: '12px',
+            backgroundColor: '#000',
+            borderRadius: '8px',
+            border: '1px solid #fff',
+          }}>
+            <h3 style={{ 
+              margin: 0, 
+              fontSize: '14px', 
+              color: '#fff',
+              fontWeight: '600',
+              marginBottom: '8px'
+            }}>
+              Important Notes:
+            </h3>
+            <ul style={{ 
+              margin: '8px 0 0 0', 
+              paddingLeft: '20px', 
+              fontSize: '13px', 
+              color: '#fff',
+              lineHeight: '1.6'
+            }}>
               <li>Products must have matching SKUs across all stores</li>
               <li>Ensure products exist in backup stores before syncing</li>
               <li>Sync runs automatically when adding new stores</li>
@@ -443,9 +631,29 @@ export default function MultiStorePage() {
         </div>
 
         {/* Help Section */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h3 className="text-sm font-medium text-blue-900 mb-2">How it works:</h3>
-          <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+        <div style={{
+          marginTop: '24px',
+          padding: '12px',
+          backgroundColor: '#000',
+          borderRadius: '8px',
+          border: '1px solid #fff',
+        }}>
+          <h3 style={{ 
+            margin: 0, 
+            fontSize: '14px', 
+            color: '#fff',
+            fontWeight: '600',
+            marginBottom: '8px'
+          }}>
+            📚 How it works:
+          </h3>
+          <ol style={{ 
+            margin: '8px 0 0 0', 
+            paddingLeft: '20px', 
+            fontSize: '13px', 
+            color: '#fff',
+            lineHeight: '1.6'
+          }}>
             <li>Customers shop on your primary store</li>
             <li>When clicking "Proceed to Checkout", they're redirected to a random backup store</li>
             <li>Cart contents are automatically transferred using SKU matching</li>
