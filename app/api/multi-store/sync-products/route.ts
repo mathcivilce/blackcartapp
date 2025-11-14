@@ -111,7 +111,15 @@ export async function POST(request: NextRequest) {
       }
 
       // Match SKUs and create mappings
-      const mappings = [];
+      const mappings: Array<{
+        store_id: string;
+        backup_store_id: string;
+        sku: string;
+        primary_variant_id: string;
+        backup_variant_id: string;
+        primary_product_title: string;
+        last_synced_at: string;
+      }> = [];
 
       backupProducts.forEach((product: any) => {
         product.variants.forEach((variant: any) => {
